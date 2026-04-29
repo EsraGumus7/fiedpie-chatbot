@@ -1,5 +1,188 @@
 {
-  "domain": "client",
+  "domain": "musteri_bilgileri",
   "version": "1.0.0",
-  "intents": []
+  "intents": [
+    {
+      "intent": "clientCountActive",
+      "description_tr": "Aktif müşteri sayısı sorulari",
+      "keywords": ["aktif", "calisan", "musteri", "sayisi", "kac"],
+      "priority": 15,
+      "metric_id": "client_count_active"
+    },
+    {
+      "intent": "clientCountTotal",
+      "description_tr": "Toplam müşteri sayısı sorulari",
+      "keywords": ["toplam", "musteri", "sayisi", "adet", "kac", "firma", "kurum"],
+      "priority": 10,
+      "metric_id": "client_count_total"
+    },
+    {
+      "intent": "clientCountPassive",
+      "description_tr": "Pasif müşteri sayısı sorulari",
+      "keywords": ["pasif", "durdurulmus", "musteri", "sayisi", "kac"],
+      "priority": 15,
+      "metric_id": "client_count_passive"
+    },
+    {
+      "intent": "clientCountArchived",
+      "description_tr": "Arşivlenmiş müşteri sayısı sorulari",
+      "keywords": ["arsiv", "arşiv", "arsivlenmis", "musteri", "sayisi"],
+      "priority": 15,
+      "metric_id": "client_count_archived"
+    },
+    {
+      "intent": "clientsByGroup",
+      "description_tr": "Gruba göre müşteri dağılımı sorulari",
+      "keywords": ["grup", "kategori", "dagilim", "musteri", "gruplara"],
+      "priority": 20,
+      "metric_id": "client_by_group"
+    },
+    {
+      "intent": "clientsByState",
+      "description_tr": "Duruma/Seviyeye göre müşteri dağılımı sorulari",
+      "keywords": ["durum", "statu", "seviye", "dagilim", "musteri", "state"],
+      "priority": 20,
+      "metric_id": "client_by_state"
+    },
+    {
+      "intent": "clientsByCountry",
+      "description_tr": "Ülkeye göre müşteri dağılımı sorulari",
+      "keywords": ["ulke", "ülke", "lokasyon", "dagilim", "musteri", "hangi", "ulkede"],
+      "priority": 20,
+      "metric_id": "client_by_country"
+    },
+    {
+      "intent": "clientsByProgramType",
+      "description_tr": "Program tipine göre müşteri dağılımı sorulari",
+      "keywords": ["program", "tip", "tur", "dagilim", "musteri", "programlara"],
+      "priority": 20,
+      "metric_id": "client_by_program_type"
+    },
+    {
+      "intent": "totalClientDealAmount",
+      "description_tr": "Toplam anlaşma tutarı sorulari",
+      "keywords": ["anlasma", "tutar", "ciro", "para", "deal", "amount", "toplam"],
+      "priority": 20,
+      "metric_id": "client_deal_amount_total"
+    },
+    {
+      "intent": "clientTrend",
+      "description_tr": "Müşteri kazanım trendi sorulari",
+      "keywords": ["trend", "gunluk", "aylik", "kazanim", "gidisat", "zaman"],
+      "priority": 30,
+      "metric_id": "client_daily_trend"
+    },
+    {
+      "intent": "totalDistributors",
+      "description_tr": "Toplam distribütör sayısı sorulari",
+      "keywords": ["toplam", "distributor", "distribütör", "bayi", "sayisi", "kac"],
+      "priority": 10,
+      "metric_id": "distributor_count_total"
+    },
+    {
+      "intent": "distributorsByRegion",
+      "description_tr": "Bölgeye göre distribütör dağılımı sorulari",
+      "keywords": ["bolge", "bölge", "dagilim", "distributor", "hangi", "bolgede"],
+      "priority": 20,
+      "metric_id": "distributor_by_region"
+    },
+    {
+      "intent": "distributorsByGroup",
+      "description_tr": "Gruba göre distribütör dağılımı sorulari",
+      "keywords": ["grup", "kategori", "dagilim", "distributor"],
+      "priority": 20,
+      "metric_id": "distributor_by_group"
+    },
+    {
+      "intent": "distributorsByType",
+      "description_tr": "Tipine göre distribütör dağılımı sorulari",
+      "keywords": ["tip", "tur", "dagilim", "distributor"],
+      "priority": 20,
+      "metric_id": "distributor_by_type"
+    },
+    {
+      "intent": "distributorsByStatus",
+      "description_tr": "Durumlarına göre distribütör dağılımı sorulari",
+      "keywords": ["durum", "statu", "dagilim", "distributor"],
+      "priority": 20,
+      "metric_id": "distributor_by_status"
+    },
+    {
+      "intent": "distributorsExperienceStores",
+      "description_tr": "Deneyim mağazası olan distribütör sorulari",
+      "keywords": ["deneyim", "magaza", "store", "distributor", "experience"],
+      "priority": 30,
+      "metric_id": "distributor_experience_stores"
+    },
+    {
+      "intent": "distributorTrend",
+      "description_tr": "Distribütör eklenme trendi sorulari",
+      "keywords": ["trend", "gunluk", "aylik", "eklenme", "distributor"],
+      "priority": 30,
+      "metric_id": "distributor_daily_trend"
+    },
+    {
+      "intent": "consumerCountTotal",
+      "description_tr": "Toplam tüketici sayısı sorulari",
+      "keywords": ["toplam", "tuketici", "tüketici", "kullanici", "sayisi", "kac"],
+      "priority": 10,
+      "metric_id": "consumer_count_total"
+    },
+    {
+      "intent": "consumersBySegment",
+      "description_tr": "Değer segmentlerine göre tüketici sorulari",
+      "keywords": ["segment", "deger", "dagilim", "tuketici", "value"],
+      "priority": 20,
+      "metric_id": "consumer_by_segment"
+    },
+    {
+      "intent": "consumerTrend",
+      "description_tr": "Tüketici kazanım trendi sorulari",
+      "keywords": ["trend", "gunluk", "aylik", "kazanim", "tuketici"],
+      "priority": 30,
+      "metric_id": "consumer_daily_trend"
+    },
+    {
+      "intent": "totalDataChanges",
+      "description_tr": "Toplam veri değişikliği talebi sorulari",
+      "keywords": ["veri", "degisiklik", "talep", "change", "toplam"],
+      "priority": 10,
+      "metric_id": "data_change_count_total"
+    },
+    {
+      "intent": "dataChangesByType",
+      "description_tr": "Tipine göre veri değişiklik talepleri sorulari",
+      "keywords": ["tip", "tur", "degisiklik", "veri", "dagilim"],
+      "priority": 20,
+      "metric_id": "data_change_by_type"
+    },
+    {
+      "intent": "dataChangeTrend",
+      "description_tr": "Veri değişikliği talebi trendi sorulari",
+      "keywords": ["trend", "gunluk", "aylik", "degisiklik", "veri"],
+      "priority": 30,
+      "metric_id": "data_change_trend"
+    },
+    {
+      "intent": "totalClientInfoUpdates",
+      "description_tr": "Bilgi güncelleme sayısı sorulari",
+      "keywords": ["bilgi", "guncelleme", "update", "sayisi"],
+      "priority": 10,
+      "metric_id": "client_info_update_count"
+    },
+    {
+      "intent": "totalRniDevices",
+      "description_tr": "RNI donanım sayısı sorulari",
+      "keywords": ["rni", "donanim", "cihaz", "sayac", "radyo", "sayisi"],
+      "priority": 15,
+      "metric_id": "rni_device_count"
+    },
+    {
+      "intent": "totalClientFiles",
+      "description_tr": "Sistemdeki müşteri dosyası sayısı sorulari",
+      "keywords": ["dosya", "evrak", "belge", "file", "yuklenmis", "sayisi"],
+      "priority": 10,
+      "metric_id": "client_file_count"
+    }
+  ]
 }
