@@ -1,5 +1,175 @@
 {
-  "domain": "client",
+  "domain": "musteri_bilgileri",
   "version": "1.0.0",
-  "metrics": []
-}
+  "metrics": [
+    {
+      "_comment_metric_id": "Metrigin teknik benzersiz kimligi",
+      "metric_id": "client_count_active",
+      "_comment_intent": "Intent parser bu intenti bulursa bu metriği calistir",
+      "intent": "clientCountActive",
+      "_comment_description_tr": "Is birimine gostermek icin Turkce aciklama",
+      "description_tr": "Aktif musteri toplam sayisi",
+      "_comment_source_tables": "Bu metrik hangi tablo(lar)dan beslenir",
+      "source_tables": [
+        "dbo.Client"
+      ],
+      "_comment_aggregation": "Hesaplama tipi: sayma islemi (COUNT)",
+      "aggregation": "count",
+      "_comment_default_filters": "Varsayilan is kurali filtresi: sadece aktif ve silinmemis musteriler",
+      "default_filters": [
+        "Passive = 0",
+        "Deleted = 0"
+      ],
+      "_comment_security_scope": "Yetki modeli: tenant/kullanici kapsaminda calisir",
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_count_total",
+      "intent": "clientCountTotal",
+      "description_tr": "Toplam musteri sayisi",
+      "source_tables": [
+        "dbo.Client"
+      ],
+      "aggregation": "count",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_count_passive",
+      "intent": "clientCountPassive",
+      "description_tr": "Pasif musteri toplam sayisi",
+      "source_tables": [
+        "dbo.Client"
+      ],
+      "aggregation": "count",
+      "default_filters": [
+        "Passive = 1",
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_count_archived",
+      "intent": "clientCountArchived",
+      "description_tr": "Arsivlenmis musteri sayisi",
+      "source_tables": [
+        "dbo.Client"
+      ],
+      "aggregation": "count",
+      "default_filters": [
+        "Archived = 1",
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_by_group",
+      "intent": "clientsByGroup",
+      "description_tr": "Gruba gore musteri dagilimi",
+      "source_tables": [
+        "dbo.Client",
+        "dbo.ClientGroup"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_by_state",
+      "intent": "clientsByState",
+      "description_tr": "Duruma (seviyeye) gore musteri dagilimi",
+      "source_tables": [
+        "dbo.Client",
+        "dbo.ClientState"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_by_country",
+      "intent": "clientsByCountry",
+      "description_tr": "Ulkeye gore musteri dagilimi",
+      "source_tables": [
+        "dbo.Client",
+        "dbo.Country"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_by_program_type",
+      "intent": "clientsByProgramType",
+      "description_tr": "Program tipine gore musteri dagilimi",
+      "source_tables": [
+        "dbo.Client",
+        "dbo.ProgramType"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_deal_amount_total",
+      "intent": "totalClientDealAmount",
+      "description_tr": "Toplam musteri anlasma tutari",
+      "source_tables": [
+        "dbo.Client"
+      ],
+      "aggregation": "sum",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_daily_trend",
+      "intent": "clientTrend",
+      "description_tr": "Gunluk musteri kazanim trendi",
+      "source_tables": [
+        "dbo.Client"
+      ],
+      "aggregation": "count_group_by_date",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "distributor_count_total",
+      "intent": "totalDistributors",
+      "description_tr": "Toplam distributor sayisi",
+      "source_tables": [
+        "dbo.DistributorNetworkEntity"
+      ],
+      "aggregation": "count",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "distributor_by_region",
+      "intent": "distributorsByRegion",
+      "description_tr": "Bolgeye gore distributor dagilimi",
+      "source_tables": [
+        "dbo.DistributorNetworkEntity",
+        "dbo.Region"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "tenant_user_scope"
+    },
