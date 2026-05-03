@@ -25,6 +25,7 @@ function parseFilters(input = {}) {
     endDate: input.endDate || null,
     fieldName: input.fieldName || null,
     fieldId: input.fieldId || null,
+    limit: input.limit ? Number(input.limit) : null,
   };
 }
 
@@ -33,7 +34,7 @@ async function executeIntent(intent, params) {
   if (!templateBuilder) {
     throw new Error("Intent bulunamadi.");
   }
-  return queryDb(templateBuilder(params));
+  return queryDb(templateBuilder(params || {}));
 }
 
 function formatNumber(value) {
@@ -80,7 +81,9 @@ function summarizeRows(intent, rows, filters = {}) {
 
   if (intent === "visitsByType") {
     const top = rows.slice(0, 3);
-    const bullets = top.map((r) => `- ${r.visitType}: ${formatNumber(r.total)} ziyaret`).join("\n");
+    const bullets = top
+      .map((r) => `- ${r.visitType}: ${formatNumber(r.total)} ziyaret`)
+      .join("\n");
     return `${rangeInfo} araliginda ziyaret tip dagilimi:\n${bullets}`;
   }
 
@@ -99,6 +102,147 @@ function summarizeRows(intent, rows, filters = {}) {
     )} kayitta dolu.`;
   }
 
+  if (intent === "dynamicTopFields") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map((r) => `- Field-${r.fieldId}: ${formatNumber(r.responseCount)} cevap`)
+      .join("\n");
+    return `${rangeInfo} araliginda en cok doldurulan dynamic fieldlar:\n${bullets}`;
+  }
+
+  if (intent === "userTotalCount") {
+    const total = rows[0]?.totalUsers ?? 0;
+    return `${rangeInfo} icin toplam ${formatNumber(total)} silinmemis kullanici var.`;
+  }
+
+  if (intent === "userStatusSummary") {
+    const row = rows[0];
+    return `${rangeInfo} kullanici ozeti: toplam ${formatNumber(
+      row.totalUsers
+    )}, aktif ${formatNumber(row.activeUsers)}, bloke ${formatNumber(
+      row.blockedUsers
+    )}, silme talebi olan ${formatNumber(row.deleteRequestUsers)} kullanici var.`;
+  }
+
+  if (intent === "userAdminSummary") {
+    const row = rows[0];
+    return `${rangeInfo} yetki ozeti: admin ${formatNumber(
+      row.adminUsers
+    )}, API user ${formatNumber(row.apiUsers)}, client user ${formatNumber(
+      row.clientUsers
+    )}, contractor ${formatNumber(row.contractorUsers)} kullanici var.`;
+  }
+
+  if (intent === "usersByRole") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map((r) => `- ${r.roleName}: ${formatNumber(r.totalUsers)} kullanici`)
+      .join("\n");
+    return `${rangeInfo} rollere gore kullanici dagilimi:\n${bullets}`;
+  }
+
+  if (intent === "usersByTeam") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map(
+        (r) =>
+          `- ${r.teamName}: ${formatNumber(r.totalUsers)} kullanici, ${formatNumber(
+            r.managerCount
+          )} manager, ${formatNumber(r.memberCount)} member`
+      )
+      .join("\n");
+    return `${rangeInfo} takimlara gore kullanici dagilimi:\n${bullets}`;
+  }
+
+  if (intent === "usersByBrand") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map((r) => `- ${r.brandName}: ${formatNumber(r.totalUsers)} kullanici`)
+      .join("\n");
+    return `${rangeInfo} markalara gore kullanici dagilimi:\n${bullets}`;
+  }
+
+  if (intent === "usersByClient") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map((r) => `- ${r.clientName}: ${formatNumber(r.totalUsers)} kullanici`)
+      .join("\n");
+    return `${rangeInfo} clientlara gore kullanici dagilimi:\n${bullets}`;
+  }
+
+  if (intent === "userRecentLogins") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map(
+        (r) =>
+          `- ${String(r.loginDate).slice(0, 19)} / ${r.userName}: ${r.loginSuccess ? "Basarili" : "Basarisiz"
+          }`
+      )
+      .join("\n");
+    return `${rangeInfo} son login kayitlari:\n${bullets}`;
+  }
+
+  if (intent === "userLoginSuccessSummary") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map(
+        (r) =>
+          `- ${r.loginStatus} / ${r.app} / ${r.domain}: ${formatNumber(
+            r.totalLogins
+          )} login`
+      )
+      .join("\n");
+    return `${rangeInfo} login basari ozeti:\n${bullets}`;
+  }
+
+  if (intent === "userDeviceSummary") {
+    const row = rows[0];
+    return `${rangeInfo} cihaz ozeti: toplam ${formatNumber(
+      row.totalDeviceRecords
+    )} cihaz kaydi, ${formatNumber(row.usersWithDevice)} cihazli kullanici, ${formatNumber(
+      row.activeDeviceRecords
+    )} aktif cihaz kaydi var.`;
+  }
+
+  if (intent === "userSavedViewSummary") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map(
+        (r) =>
+          `- ${r.moduleName}: ${formatNumber(r.savedViewCount)} kayitli gorunum, ${formatNumber(
+            r.userCount
+          )} kullanici`
+      )
+      .join("\n");
+    return `${rangeInfo} modullere gore kayitli gorunum ozeti:\n${bullets}`;
+  }
+
+  if (intent === "userStepSummary") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map(
+        (r) =>
+          `- ${r.userName}: ${formatNumber(r.totalSteps)} toplam adim, ortalama ${Number(
+            r.avgSteps || 0
+          ).toFixed(1)}`
+      )
+      .join("\n");
+    return `${rangeInfo} kullanici adim ozeti:\n${bullets}`;
+  }
+
+  if (intent === "userVisitSummary") {
+    const top = rows.slice(0, 5);
+    const bullets = top
+      .map(
+        (r) =>
+          `- ${r.userName}: ${formatNumber(r.totalVisits)} ziyaret, ${formatNumber(
+            r.realizedVisits
+          )} gerceklesen`
+      )
+      .join("\n");
+    return `${rangeInfo} kullanici bazli ziyaret ozeti:\n${bullets}`;
+  }
+
   return `${rangeInfo} araliginda ${formatNumber(rows.length)} satir sonuc bulundu.`;
 }
 
@@ -107,7 +251,7 @@ router.get("/health", (_req, res) => {
 });
 
 router.get("/planner/metrics", (_req, res) => {
-  res.json({ domain: "saha_operasyonlari", metrics: listMetrics() });
+  res.json({ domain: "fieldpie_chatbot", metrics: listMetrics() });
 });
 
 router.post("/planner/plan", (req, res) => {
@@ -144,6 +288,148 @@ router.post("/planner/query", async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/count", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userTotalCount", filters);
+    res.json({ intent: "userTotalCount", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/status-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userStatusSummary", filters);
+    res.json({ intent: "userStatusSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/admin-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userAdminSummary", filters);
+    res.json({ intent: "userAdminSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/by-role", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("usersByRole", filters);
+    res.json({ intent: "usersByRole", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/by-team", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("usersByTeam", filters);
+    res.json({ intent: "usersByTeam", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/by-brand", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("usersByBrand", filters);
+    res.json({ intent: "usersByBrand", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/by-client", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("usersByClient", {
+      ...filters,
+      limit: filters.limit || 20,
+    });
+    res.json({ intent: "usersByClient", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/recent-logins", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userRecentLogins", {
+      ...filters,
+      limit: filters.limit || 20,
+    });
+    res.json({ intent: "userRecentLogins", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/login-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userLoginSuccessSummary", filters);
+    res.json({ intent: "userLoginSuccessSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/device-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userDeviceSummary", filters);
+    res.json({ intent: "userDeviceSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/saved-view-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userSavedViewSummary", filters);
+    res.json({ intent: "userSavedViewSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/step-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userStepSummary", {
+      ...filters,
+      limit: filters.limit || 20,
+    });
+    res.json({ intent: "userStepSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/users/visit-summary", async (req, res) => {
+  try {
+    const filters = parseFilters(req.query);
+    const result = await executeIntent("userVisitSummary", {
+      ...filters,
+      limit: filters.limit || 20,
+    });
+    res.json({ intent: "userVisitSummary", rows: result.recordset });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -225,10 +511,9 @@ router.get("/dynamic-data/top-fields", async (req, res) => {
     const filters = parseFilters(req.query);
     const recentRange =
       filters.startDate || filters.endDate ? filters : getDefaultRecentRange(30);
-    const limit = Number(req.query?.limit || 20);
     const result = await executeIntent("dynamicTopFields", {
       ...recentRange,
-      limit,
+      limit: filters.limit || 20,
     });
     res.json({
       intent: "dynamicTopFields",

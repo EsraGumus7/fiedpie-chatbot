@@ -1,5 +1,204 @@
 {
-  "domain": "users",
+  "domain": "user_yonetimi",
   "version": "1.0.0",
-  "intents": []
+  "intents": [
+    {
+      "intent": "userTotalCount",
+      "description_tr": "Toplam kullanıcı sayısı soruları",
+      "keywords": [
+        "toplam",
+        "kullanici",
+        "user",
+        "personel",
+        "calisan",
+        "sayisi",
+        "kac",
+        "adet"
+      ],
+      "priority": 10,
+      "metric_id": "user_total_count"
+    },
+    {
+      "intent": "userStatusSummary",
+      "description_tr": "Aktif, bloke ve silme talebi olan kullanıcı özeti soruları",
+      "keywords": [
+        "aktif",
+        "pasif",
+        "bloke",
+        "blocked",
+        "silme",
+        "delete",
+        "durum",
+        "status",
+        "ozet",
+        "kullanici"
+      ],
+      "priority": 20,
+      "metric_id": "user_status_summary"
+    },
+    {
+      "intent": "userAdminSummary",
+      "description_tr": "Admin, API user, client user, contractor ve tüm takımları yöneten kullanıcı özeti soruları",
+      "keywords": [
+        "admin",
+        "api user",
+        "client user",
+        "contractor",
+        "yonetici",
+        "manager",
+        "yetki",
+        "kullanici"
+      ],
+      "priority": 20,
+      "metric_id": "user_admin_summary"
+    },
+    {
+      "intent": "usersByRole",
+      "description_tr": "Kullanıcıların rollere göre dağılımı soruları",
+      "keywords": [
+        "rol",
+        "role",
+        "gore",
+        "dagilim",
+        "kullanici",
+        "personel",
+        "hangi rol"
+      ],
+      "priority": 30,
+      "metric_id": "user_by_role"
+    },
+    {
+      "intent": "usersByTeam",
+      "description_tr": "Kullanıcıların takımlara göre dağılımı ve manager/member sayıları soruları",
+      "keywords": [
+        "takim",
+        "team",
+        "ekip",
+        "manager",
+        "member",
+        "uye",
+        "yonetici",
+        "dagilim",
+        "kullanici"
+      ],
+      "priority": 30,
+      "metric_id": "user_by_team"
+    },
+    {
+      "intent": "usersByBrand",
+      "description_tr": "Kullanıcıların markalara göre dağılımı soruları",
+      "keywords": [
+        "marka",
+        "brand",
+        "dagilim",
+        "kullanici",
+        "personel"
+      ],
+      "priority": 30,
+      "metric_id": "user_by_brand"
+    },
+    {
+      "intent": "usersByClient",
+      "description_tr": "Kullanıcıların client/müşterilere göre dağılımı soruları",
+      "keywords": [
+        "client",
+        "musteri",
+        "customer",
+        "firma",
+        "kurum",
+        "dagilim",
+        "kullanici"
+      ],
+      "priority": 30,
+      "metric_id": "user_by_client"
+    },
+    {
+      "intent": "userRecentLogins",
+      "description_tr": "Son kullanıcı giriş kayıtları soruları",
+      "keywords": [
+        "son",
+        "giris",
+        "login",
+        "recent",
+        "kayit",
+        "gecmis",
+        "kullanici"
+      ],
+      "priority": 30,
+      "metric_id": "user_recent_logins"
+    },
+    {
+      "intent": "userLoginSuccessSummary",
+      "description_tr": "Başarılı ve başarısız login dağılımı soruları",
+      "keywords": [
+        "login",
+        "giris",
+        "basari",
+        "basarisiz",
+        "success",
+        "fail",
+        "dagilim"
+      ],
+      "priority": 30,
+      "metric_id": "user_login_success_summary"
+    },
+    {
+      "intent": "userDeviceSummary",
+      "description_tr": "Kullanıcı cihaz kayıt özeti soruları",
+      "keywords": [
+        "cihaz",
+        "device",
+        "app version",
+        "uygulama",
+        "versiyon",
+        "kullanici"
+      ],
+      "priority": 25,
+      "metric_id": "user_device_summary"
+    },
+    {
+      "intent": "userSavedViewSummary",
+      "description_tr": "Kullanıcı kayıtlı görünüm ve filtre özeti soruları",
+      "keywords": [
+        "kayitli",
+        "gorunum",
+        "saved view",
+        "view",
+        "filtre",
+        "filter",
+        "modul",
+        "kullanici"
+      ],
+      "priority": 25,
+      "metric_id": "user_saved_view_summary"
+    },
+    {
+      "intent": "userStepSummary",
+      "description_tr": "Kullanıcı adım/hareket geçmişi özeti soruları",
+      "keywords": [
+        "adim",
+        "step",
+        "hareket",
+        "saha",
+        "kullanici",
+        "personel"
+      ],
+      "priority": 25,
+      "metric_id": "user_step_summary"
+    },
+    {
+      "intent": "userVisitSummary",
+      "description_tr": "Kullanıcı bazlı atanmış/gerçekleşmiş ziyaret özeti soruları",
+      "keywords": [
+        "ziyaret",
+        "visit",
+        "gerceklesen",
+        "atanmis",
+        "kullanici",
+        "personel"
+      ],
+      "priority": 30,
+      "metric_id": "user_visit_summary"
+    }
+  ]
 }

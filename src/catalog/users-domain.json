@@ -1,9 +1,930 @@
 {
-  "domain": "users",
+  "domain": "user_yonetimi",
   "version": "1.0.0",
-  "owner": "",
-  "refresh_frequency": "",
-  "tables": [],
-  "relations": [],
-  "business_glossary_tr": []
+  "owner": "field-operations-team",
+  "refresh_frequency": "near-real-time",
+  "description_tr": "Kullanıcı profilleri, roller, takımlar, marka/client ilişkileri, login, cihaz, kayıtlı görünüm ve kullanıcı bazlı ziyaret ilişkilerini kapsayan domain.",
+  "tables": [
+    {
+      "table": "dbo.User",
+      "description_tr": "Sistemdeki kullanıcı ana kaydı. Kullanıcının profil, durum, abonelik ve temel erişim bilgilerini içerir.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": "high",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "CreateTime",
+          "type": "datetime",
+          "business_name_tr": "Oluşturulma zamanı",
+          "pii": false
+        },
+        {
+          "name": "UpdateTime",
+          "type": "datetime",
+          "business_name_tr": "Güncellenme zamanı",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "Email",
+          "type": "varchar",
+          "business_name_tr": "E-posta",
+          "pii": true,
+          "sensitive": true
+        },
+        {
+          "name": "Name",
+          "type": "varchar",
+          "business_name_tr": "Kullanıcı adı",
+          "pii": true
+        },
+        {
+          "name": "Blocked",
+          "type": "bit",
+          "business_name_tr": "Bloke edildi mi",
+          "pii": false
+        },
+        {
+          "name": "Admin",
+          "type": "bit",
+          "business_name_tr": "Admin kullanıcı mı",
+          "pii": false
+        },
+        {
+          "name": "ApiUser",
+          "type": "bit",
+          "business_name_tr": "API kullanıcısı mı",
+          "pii": false
+        },
+        {
+          "name": "ClientUser",
+          "type": "bit",
+          "business_name_tr": "Client kullanıcısı mı",
+          "pii": false
+        },
+        {
+          "name": "ManagerOfAllTeams",
+          "type": "bit",
+          "business_name_tr": "Tüm takımların yöneticisi mi",
+          "pii": false
+        },
+        {
+          "name": "LastWebLoginDate",
+          "type": "datetime",
+          "business_name_tr": "Son web giriş tarihi",
+          "pii": false
+        },
+        {
+          "name": "DeleteRequest",
+          "type": "bit",
+          "business_name_tr": "Silme talebi var mı",
+          "pii": false
+        },
+        {
+          "name": "InformationForTeamId",
+          "type": "bigint",
+          "business_name_tr": "Bilgilendirme takımı",
+          "pii": false
+        },
+        {
+          "name": "Contractor",
+          "type": "bit",
+          "business_name_tr": "Yüklenici/contractor kullanıcı mı",
+          "pii": false
+        },
+        {
+          "name": "LastUpdate",
+          "type": "datetime",
+          "business_name_tr": "Son güncelleme",
+          "pii": false
+        }
+      ],
+      "excluded_columns_for_chatbot": [
+        "Password",
+        "PasswordResetCode",
+        "PasswordResetCodeValidityEndDate",
+        "ApiKey",
+        "PaymentAccountId",
+        "PaymentCustomerId",
+        "DeviceId",
+        "GCMRegistrationId",
+        "Phone",
+        "MobilePhone",
+        "Address",
+        "Latitude",
+        "Longitude"
+      ]
+    },
+    {
+      "table": "dbo.Role",
+      "description_tr": "Kullanıcı rollerini ve rol tiplerini tutar.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Rol ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "Name",
+          "type": "varchar",
+          "business_name_tr": "Rol adı",
+          "pii": false
+        },
+        {
+          "name": "DefaultAdmin",
+          "type": "bit",
+          "business_name_tr": "Varsayılan admin rolü mü",
+          "pii": false
+        },
+        {
+          "name": "DefaultFieldForce",
+          "type": "bit",
+          "business_name_tr": "Varsayılan saha rolü mü",
+          "pii": false
+        },
+        {
+          "name": "Tester",
+          "type": "bit",
+          "business_name_tr": "Tester rolü mü",
+          "pii": false
+        },
+        {
+          "name": "Code",
+          "type": "varchar",
+          "business_name_tr": "Rol kodu",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.UserRole",
+      "description_tr": "Kullanıcı ve rol eşleştirme tablosu.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "RoleId",
+          "type": "bigint",
+          "business_name_tr": "Rol ID",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.Team",
+      "description_tr": "Kullanıcıların bağlı olabileceği takım kayıtları.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Takım ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "Name",
+          "type": "varchar",
+          "business_name_tr": "Takım adı",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.UserTeam",
+      "description_tr": "Kullanıcı ve takım eşleştirme tablosu. Kullanıcının takımda manager/member olup olmadığını da tutar.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "TeamId",
+          "type": "bigint",
+          "business_name_tr": "Takım ID",
+          "pii": false
+        },
+        {
+          "name": "Manager",
+          "type": "bit",
+          "business_name_tr": "Takım yöneticisi mi",
+          "pii": false
+        },
+        {
+          "name": "Member",
+          "type": "bit",
+          "business_name_tr": "Takım üyesi mi",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.Brand",
+      "description_tr": "Marka kayıtları.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Marka ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "Name",
+          "type": "varchar",
+          "business_name_tr": "Marka adı",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.UserBrand",
+      "description_tr": "Kullanıcı ve marka eşleştirme tablosu.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "BrandId",
+          "type": "bigint",
+          "business_name_tr": "Marka ID",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.Client",
+      "description_tr": "Müşteri/client kayıtları.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": "mixed",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Client ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "Name",
+          "type": "varchar",
+          "business_name_tr": "Client adı",
+          "pii": false
+        },
+        {
+          "name": "Code",
+          "type": "varchar",
+          "business_name_tr": "Client kodu",
+          "pii": false
+        },
+        {
+          "name": "Passive",
+          "type": "bit",
+          "business_name_tr": "Pasif mi",
+          "pii": false
+        },
+        {
+          "name": "Archived",
+          "type": "bit",
+          "business_name_tr": "Arşivlendi mi",
+          "pii": false
+        },
+        {
+          "name": "RegisteredBy",
+          "type": "bigint",
+          "business_name_tr": "Kaydeden kullanıcı",
+          "pii": false
+        },
+        {
+          "name": "DefaultUserId",
+          "type": "bigint",
+          "business_name_tr": "Varsayılan kullanıcı",
+          "pii": false
+        },
+        {
+          "name": "CustomerRepresentativeUserId",
+          "type": "bigint",
+          "business_name_tr": "Müşteri temsilcisi kullanıcı",
+          "pii": false
+        }
+      ],
+      "excluded_columns_for_chatbot": [
+        "Email",
+        "Phone",
+        "Latitude",
+        "Longitude",
+        "Address",
+        "WebAddress",
+        "StripeCustomerId",
+        "Tax"
+      ]
+    },
+    {
+      "table": "dbo.ClientUser",
+      "description_tr": "Kullanıcı ve client eşleştirme tablosu.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "ClientId",
+          "type": "bigint",
+          "business_name_tr": "Client ID",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.UserLogin",
+      "description_tr": "Kullanıcı login geçmişi. Başarılı/başarısız giriş, app ve domain bilgilerini içerir.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": "high",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Login kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "CreateTime",
+          "type": "datetime",
+          "business_name_tr": "Login zamanı",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "Email",
+          "type": "varchar",
+          "business_name_tr": "Login e-postası",
+          "pii": true,
+          "sensitive": true
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "LoginSuccess",
+          "type": "bit",
+          "business_name_tr": "Login başarılı mı",
+          "pii": false
+        },
+        {
+          "name": "App",
+          "type": "varchar",
+          "business_name_tr": "Uygulama",
+          "pii": false
+        },
+        {
+          "name": "Domain",
+          "type": "varchar",
+          "business_name_tr": "Domain",
+          "pii": false
+        }
+      ],
+      "excluded_columns_for_chatbot": [
+        "Ip",
+        "Email"
+      ]
+    },
+    {
+      "table": "dbo.UserDevice",
+      "description_tr": "Kullanıcı cihaz kayıtları.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": "high",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Cihaz kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "DeviceId",
+          "type": "varchar",
+          "business_name_tr": "Cihaz ID",
+          "pii": true,
+          "sensitive": true
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "TerminationDate",
+          "type": "datetime",
+          "business_name_tr": "Cihaz sonlandırma tarihi",
+          "pii": false
+        },
+        {
+          "name": "AppVersion",
+          "type": "varchar",
+          "business_name_tr": "Uygulama versiyonu",
+          "pii": false
+        },
+        {
+          "name": "OnlyAllowCriticalWebServices",
+          "type": "bit",
+          "business_name_tr": "Sadece kritik web servislerine izin ver",
+          "pii": false
+        }
+      ],
+      "excluded_columns_for_chatbot": [
+        "DeviceId"
+      ]
+    },
+    {
+      "table": "dbo.UserSavedView",
+      "description_tr": "Kullanıcıların kaydettiği özel görünüm kayıtları.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": "mixed",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "Module",
+          "type": "varchar",
+          "business_name_tr": "Modül",
+          "pii": false
+        },
+        {
+          "name": "Name",
+          "type": "varchar",
+          "business_name_tr": "Görünüm adı",
+          "pii": false
+        }
+      ],
+      "excluded_columns_for_chatbot": [
+        "QueryString",
+        "Headers",
+        "DynamicFilter"
+      ]
+    },
+    {
+      "table": "dbo.UserStepHistory",
+      "description_tr": "Kullanıcı adım/saha hareket geçmişi.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": false,
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Kayıt ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "StartDate",
+          "type": "datetime",
+          "business_name_tr": "Başlangıç zamanı",
+          "pii": false
+        },
+        {
+          "name": "EndDate",
+          "type": "datetime",
+          "business_name_tr": "Bitiş zamanı",
+          "pii": false
+        },
+        {
+          "name": "StepCount",
+          "type": "int",
+          "business_name_tr": "Adım sayısı",
+          "pii": false
+        }
+      ]
+    },
+    {
+      "table": "dbo.Visit",
+      "description_tr": "Kullanıcıya atanmış ya da kullanıcı tarafından gerçekleştirilen ziyaret kayıtları.",
+      "primary_key": [
+        "Id"
+      ],
+      "pii": "mixed",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "bigint",
+          "business_name_tr": "Ziyaret ID",
+          "pii": false
+        },
+        {
+          "name": "Deleted",
+          "type": "bit",
+          "business_name_tr": "Silindi mi",
+          "pii": false
+        },
+        {
+          "name": "SubscriptionId",
+          "type": "bigint",
+          "business_name_tr": "Abonelik ID",
+          "pii": false
+        },
+        {
+          "name": "ClientId",
+          "type": "bigint",
+          "business_name_tr": "Client ID",
+          "pii": false
+        },
+        {
+          "name": "UserId",
+          "type": "bigint",
+          "business_name_tr": "Atanan kullanıcı ID",
+          "pii": false
+        },
+        {
+          "name": "Realized",
+          "type": "bit",
+          "business_name_tr": "Gerçekleşti mi",
+          "pii": false
+        },
+        {
+          "name": "StartedAt",
+          "type": "datetime",
+          "business_name_tr": "Başlangıç zamanı",
+          "pii": false
+        },
+        {
+          "name": "EndedAt",
+          "type": "datetime",
+          "business_name_tr": "Bitiş zamanı",
+          "pii": false
+        },
+        {
+          "name": "VisitTypeId",
+          "type": "bigint",
+          "business_name_tr": "Ziyaret tipi",
+          "pii": false
+        },
+        {
+          "name": "VisitStateId",
+          "type": "bigint",
+          "business_name_tr": "Ziyaret durumu",
+          "pii": false
+        },
+        {
+          "name": "BrandId",
+          "type": "bigint",
+          "business_name_tr": "Marka ID",
+          "pii": false
+        }
+      ],
+      "excluded_columns_for_chatbot": [
+        "Latitude",
+        "Longitude",
+        "StripeReceiptEmail",
+        "StripeReceiptUrl",
+        "StripeCardLast4"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "from": "dbo.User.SubscriptionId",
+      "to": "dbo.Subscription.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.User.ClientGroupId",
+      "to": "dbo.ClientGroup.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.User.InformationForTeamId",
+      "to": "dbo.Team.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserRole.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserRole.RoleId",
+      "to": "dbo.Role.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserTeam.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserTeam.TeamId",
+      "to": "dbo.Team.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserBrand.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserBrand.BrandId",
+      "to": "dbo.Brand.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.ClientUser.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.ClientUser.ClientId",
+      "to": "dbo.Client.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserLogin.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserDevice.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserSavedView.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.UserStepHistory.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.Visit.UserId",
+      "to": "dbo.User.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.Visit.BrandId",
+      "to": "dbo.Brand.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.Visit.ClientId",
+      "to": "dbo.Client.Id",
+      "type": "N:1"
+    }
+  ],
+  "business_glossary_tr": [
+    {
+      "term": "Aktif kullanıcı",
+      "maps_to": "dbo.User.Deleted = 0 AND dbo.User.Blocked = 0 AND dbo.User.DeleteRequest = 0"
+    },
+    {
+      "term": "Bloke kullanıcı",
+      "maps_to": "dbo.User.Deleted = 0 AND dbo.User.Blocked = 1"
+    },
+    {
+      "term": "Admin kullanıcı",
+      "maps_to": "dbo.User.Deleted = 0 AND dbo.User.Admin = 1"
+    },
+    {
+      "term": "API kullanıcısı",
+      "maps_to": "dbo.User.Deleted = 0 AND dbo.User.ApiUser = 1"
+    },
+    {
+      "term": "Client kullanıcısı",
+      "maps_to": "dbo.User.Deleted = 0 AND dbo.User.ClientUser = 1"
+    },
+    {
+      "term": "Takım yöneticisi",
+      "maps_to": "dbo.UserTeam.Manager = 1"
+    },
+    {
+      "term": "Takım üyesi",
+      "maps_to": "dbo.UserTeam.Member = 1"
+    },
+    {
+      "term": "Başarılı login",
+      "maps_to": "dbo.UserLogin.LoginSuccess = 1"
+    },
+    {
+      "term": "Başarısız login",
+      "maps_to": "dbo.UserLogin.LoginSuccess = 0"
+    },
+    {
+      "term": "Aktif cihaz",
+      "maps_to": "dbo.UserDevice.Deleted = 0 AND dbo.UserDevice.TerminationDate IS NULL"
+    }
+  ],
+  "security_notes_tr": [
+    "Password, ApiKey, PasswordResetCode, DeviceId, IP, telefon, adres ve ödeme alanları chatbot cevabında gösterilmemelidir.",
+    "Kullanıcı adı ve e-posta PII kabul edilmelidir. Listeleme endpointlerinde e-posta dönülmemesi tercih edilir.",
+    "Varsayılan kullanıcı filtresi Deleted = 0 olmalıdır.",
+    "Aktif kullanıcı tanımı iş birimiyle doğrulanmalıdır; geçici varsayım Deleted = 0 AND Blocked = 0 AND DeleteRequest = 0 şeklindedir."
+  ]
 }

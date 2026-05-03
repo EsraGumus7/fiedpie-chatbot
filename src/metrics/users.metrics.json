@@ -1,5 +1,197 @@
 {
-  "domain": "users",
+  "domain": "user_yonetimi",
   "version": "1.0.0",
-  "metrics": []
+  "metrics": [
+    {
+      "metric_id": "user_total_count",
+      "intent": "userTotalCount",
+      "description_tr": "Silinmemiş toplam kullanıcı sayısı",
+      "source_tables": [
+        "dbo.User"
+      ],
+      "aggregation": "count",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_status_summary",
+      "intent": "userStatusSummary",
+      "description_tr": "Aktif, bloke, silme talebi olan, admin, API ve client user kullanıcı özeti",
+      "source_tables": [
+        "dbo.User"
+      ],
+      "aggregation": "count_with_conditions",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_admin_summary",
+      "intent": "userAdminSummary",
+      "description_tr": "Admin, API user, client user, contractor ve tüm takımları yöneten kullanıcı özeti",
+      "source_tables": [
+        "dbo.User"
+      ],
+      "aggregation": "count_with_conditions",
+      "default_filters": [
+        "Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_by_role",
+      "intent": "usersByRole",
+      "description_tr": "Kullanıcıların rollere göre dağılımı",
+      "source_tables": [
+        "dbo.User",
+        "dbo.UserRole",
+        "dbo.Role"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "User.Deleted = 0",
+        "UserRole.Deleted = 0",
+        "Role.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_by_team",
+      "intent": "usersByTeam",
+      "description_tr": "Kullanıcıların takımlara göre dağılımı ve manager/member sayıları",
+      "source_tables": [
+        "dbo.User",
+        "dbo.UserTeam",
+        "dbo.Team"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "User.Deleted = 0",
+        "UserTeam.Deleted = 0",
+        "Team.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_by_brand",
+      "intent": "usersByBrand",
+      "description_tr": "Kullanıcıların markalara göre dağılımı",
+      "source_tables": [
+        "dbo.User",
+        "dbo.UserBrand",
+        "dbo.Brand"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "User.Deleted = 0",
+        "UserBrand.Deleted = 0",
+        "Brand.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_by_client",
+      "intent": "usersByClient",
+      "description_tr": "Kullanıcıların client/müşterilere göre dağılımı",
+      "source_tables": [
+        "dbo.User",
+        "dbo.ClientUser",
+        "dbo.Client"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "User.Deleted = 0",
+        "ClientUser.Deleted = 0",
+        "Client.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_recent_logins",
+      "intent": "userRecentLogins",
+      "description_tr": "Son kullanıcı login kayıtları",
+      "source_tables": [
+        "dbo.UserLogin",
+        "dbo.User"
+      ],
+      "aggregation": "latest_records",
+      "default_filters": [
+        "UserLogin.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_login_success_summary",
+      "intent": "userLoginSuccessSummary",
+      "description_tr": "Başarılı ve başarısız login dağılımı",
+      "source_tables": [
+        "dbo.UserLogin"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "UserLogin.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_device_summary",
+      "intent": "userDeviceSummary",
+      "description_tr": "Kullanıcı cihaz kayıt özeti",
+      "source_tables": [
+        "dbo.UserDevice",
+        "dbo.User"
+      ],
+      "aggregation": "count_with_conditions",
+      "default_filters": [
+        "UserDevice.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_saved_view_summary",
+      "intent": "userSavedViewSummary",
+      "description_tr": "Modüle göre kullanıcı kayıtlı görünüm sayıları",
+      "source_tables": [
+        "dbo.UserSavedView",
+        "dbo.User"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "UserSavedView.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_step_summary",
+      "intent": "userStepSummary",
+      "description_tr": "Kullanıcı adım geçmişi özeti",
+      "source_tables": [
+        "dbo.UserStepHistory",
+        "dbo.User"
+      ],
+      "aggregation": "sum_avg_group_by",
+      "default_filters": [
+        "UserStepHistory.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    },
+    {
+      "metric_id": "user_visit_summary",
+      "intent": "userVisitSummary",
+      "description_tr": "Kullanıcı bazlı atanmış/gerçekleşmiş ziyaret özeti",
+      "source_tables": [
+        "dbo.User",
+        "dbo.Visit"
+      ],
+      "aggregation": "count_group_by",
+      "default_filters": [
+        "User.Deleted = 0",
+        "Visit.Deleted = 0"
+      ],
+      "security_scope": "subscription_user_scope"
+    }
+  ]
 }

@@ -86,6 +86,65 @@ function parseQuestion(question, filters = {}) {
     endDate: filters.endDate || relativeRange?.endDate || null,
   };
 
+  const isUserQuestion =
+    /(kullanici|user|personel|calisan|hesap|login|giris|rol|role|takim|team|cihaz|device|admin|client user|api user|contractor|adim|step|saved view|kayitli gorunum)/.test(
+      normalized
+    );
+
+  if (isUserQuestion) {
+    const limit = filters.limit || 20;
+
+    if (/(rol|role)/.test(normalized)) {
+      return { intent: "usersByRole", params: baseFilters };
+    }
+
+    if (/(takim|team|ekip|manager|member|yonetici|uye)/.test(normalized)) {
+      return { intent: "usersByTeam", params: baseFilters };
+    }
+
+    if (/(marka|brand)/.test(normalized)) {
+      return { intent: "usersByBrand", params: baseFilters };
+    }
+
+    if (/(client|musteri|customer)/.test(normalized)) {
+      return { intent: "usersByClient", params: { ...baseFilters, limit } };
+    }
+
+    if (/(son giris|recent login|login kaydi|login kayit|giris gecmisi)/.test(normalized)) {
+      return { intent: "userRecentLogins", params: { ...baseFilters, limit } };
+    }
+
+    if (/(login|giris).*(basari|basarisiz|success|fail)/.test(normalized)) {
+      return { intent: "userLoginSuccessSummary", params: baseFilters };
+    }
+
+    if (/(cihaz|device|app version|uygulama versiyon)/.test(normalized)) {
+      return { intent: "userDeviceSummary", params: baseFilters };
+    }
+
+    if (/(kayitli gorunum|saved view|view|filtre|filter)/.test(normalized)) {
+      return { intent: "userSavedViewSummary", params: baseFilters };
+    }
+
+    if (/(adim|step|hareket)/.test(normalized)) {
+      return { intent: "userStepSummary", params: { ...baseFilters, limit } };
+    }
+
+    if (/(ziyaret|visit)/.test(normalized)) {
+      return { intent: "userVisitSummary", params: { ...baseFilters, limit } };
+    }
+
+    if (/(admin|api user|client user|contractor|yonetici)/.test(normalized)) {
+      return { intent: "userAdminSummary", params: baseFilters };
+    }
+
+    if (/(aktif|pasif|bloke|blocked|silme|delete|durum|status|ozet)/.test(normalized)) {
+      return { intent: "userStatusSummary", params: baseFilters };
+    }
+
+    return { intent: "userTotalCount", params: baseFilters };
+  }
+
   if (/(trend|gunluk|zaman|haftalik|aylik|line)/.test(normalized)) {
     return { intent: "visitTrend", params: baseFilters };
   }

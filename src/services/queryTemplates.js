@@ -144,6 +144,254 @@ const TEMPLATES = {
     `,
     bind: { startDate, endDate, limit: Number(limit) || 20 },
   }),
+
+  userTotalCount: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS totalUsers
+      FROM dbo.[User] u
+      WHERE u.Deleted = 0
+        AND (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  userStatusSummary: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        COUNT(1) AS totalUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.Blocked = 0 AND u.DeleteRequest = 0 THEN 1 ELSE 0 END) AS activeUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.Blocked = 1 THEN 1 ELSE 0 END) AS blockedUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.DeleteRequest = 1 THEN 1 ELSE 0 END) AS deleteRequestUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.Admin = 1 THEN 1 ELSE 0 END) AS adminUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
+      FROM dbo.[User] u
+      WHERE (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  userAdminSummary: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        SUM(CASE WHEN u.Deleted = 0 AND u.Admin = 1 THEN 1 ELSE 0 END) AS adminUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
+      FROM dbo.[User] u
+      WHERE (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  usersByRole: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        COALESCE(r.Name, CONCAT('Role-', ur.RoleId)) AS roleName,
+        COUNT(DISTINCT u.Id) AS totalUsers,
+        COUNT(DISTINCT CASE WHEN u.Blocked = 0 AND u.DeleteRequest = 0 THEN u.Id END) AS activeUsers
+      FROM dbo.[User] u
+      INNER JOIN dbo.UserRole ur
+        ON ur.UserId = u.Id
+       AND ur.Deleted = 0
+      LEFT JOIN dbo.Role r
+        ON r.Id = ur.RoleId
+       AND r.Deleted = 0
+      WHERE u.Deleted = 0
+        AND (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(r.Name, CONCAT('Role-', ur.RoleId))
+      ORDER BY totalUsers DESC;
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  usersByTeam: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        COALESCE(t.Name, CONCAT('Team-', ut.TeamId)) AS teamName,
+        COUNT(DISTINCT u.Id) AS totalUsers,
+        COUNT(DISTINCT CASE WHEN ut.Manager = 1 THEN u.Id END) AS managerCount,
+        COUNT(DISTINCT CASE WHEN ut.Member = 1 THEN u.Id END) AS memberCount
+      FROM dbo.[User] u
+      INNER JOIN dbo.UserTeam ut
+        ON ut.UserId = u.Id
+       AND ut.Deleted = 0
+      LEFT JOIN dbo.Team t
+        ON t.Id = ut.TeamId
+       AND t.Deleted = 0
+      WHERE u.Deleted = 0
+        AND (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(t.Name, CONCAT('Team-', ut.TeamId))
+      ORDER BY totalUsers DESC;
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  usersByBrand: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        COALESCE(b.Name, CONCAT('Brand-', ub.BrandId)) AS brandName,
+        COUNT(DISTINCT u.Id) AS totalUsers
+      FROM dbo.[User] u
+      INNER JOIN dbo.UserBrand ub
+        ON ub.UserId = u.Id
+       AND ub.Deleted = 0
+      LEFT JOIN dbo.Brand b
+        ON b.Id = ub.BrandId
+       AND b.Deleted = 0
+      WHERE u.Deleted = 0
+        AND (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(b.Name, CONCAT('Brand-', ub.BrandId))
+      ORDER BY totalUsers DESC;
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  usersByClient: ({ startDate, endDate, limit }) => ({
+    query: `
+      SELECT TOP (@limit)
+        COALESCE(c.Name, CONCAT('Client-', cu.ClientId)) AS clientName,
+        COUNT(DISTINCT u.Id) AS totalUsers
+      FROM dbo.[User] u
+      INNER JOIN dbo.ClientUser cu
+        ON cu.UserId = u.Id
+       AND cu.Deleted = 0
+      LEFT JOIN dbo.Client c
+        ON c.Id = cu.ClientId
+       AND c.Deleted = 0
+      WHERE u.Deleted = 0
+        AND (@startDate IS NULL OR u.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(c.Name, CONCAT('Client-', cu.ClientId))
+      ORDER BY totalUsers DESC;
+    `,
+    bind: { startDate, endDate, limit: Number(limit) || 20 },
+  }),
+
+  userRecentLogins: ({ startDate, endDate, limit }) => ({
+    query: `
+      SELECT TOP (@limit)
+        ul.CreateTime AS loginDate,
+        ul.UserId AS userId,
+        COALESCE(u.Name, 'Bilinmeyen Kullanici') AS userName,
+        ul.LoginSuccess AS loginSuccess,
+        ul.App AS app,
+        ul.Domain AS domain
+      FROM dbo.UserLogin ul
+      LEFT JOIN dbo.[User] u
+        ON u.Id = ul.UserId
+       AND u.Deleted = 0
+      WHERE ul.Deleted = 0
+        AND (@startDate IS NULL OR ul.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR ul.CreateTime < DATEADD(day, 1, @endDate))
+      ORDER BY ul.CreateTime DESC;
+    `,
+    bind: { startDate, endDate, limit: Number(limit) || 20 },
+  }),
+
+  userLoginSuccessSummary: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        CASE WHEN ul.LoginSuccess = 1 THEN 'Basarili' ELSE 'Basarisiz' END AS loginStatus,
+        COALESCE(ul.App, 'Bilinmeyen App') AS app,
+        COALESCE(ul.Domain, 'Bilinmeyen Domain') AS domain,
+        COUNT(1) AS totalLogins
+      FROM dbo.UserLogin ul
+      WHERE ul.Deleted = 0
+        AND (@startDate IS NULL OR ul.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR ul.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY
+        CASE WHEN ul.LoginSuccess = 1 THEN 'Basarili' ELSE 'Basarisiz' END,
+        COALESCE(ul.App, 'Bilinmeyen App'),
+        COALESCE(ul.Domain, 'Bilinmeyen Domain')
+      ORDER BY totalLogins DESC;
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  userDeviceSummary: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        COUNT(1) AS totalDeviceRecords,
+        COUNT(DISTINCT ud.UserId) AS usersWithDevice,
+        SUM(CASE WHEN ud.TerminationDate IS NULL THEN 1 ELSE 0 END) AS activeDeviceRecords,
+        SUM(CASE WHEN ud.TerminationDate IS NOT NULL THEN 1 ELSE 0 END) AS terminatedDeviceRecords,
+        SUM(CASE WHEN ISNULL(ud.OnlyAllowCriticalWebServices, 0) = 1 THEN 1 ELSE 0 END) AS criticalOnlyDeviceRecords
+      FROM dbo.UserDevice ud
+      WHERE ud.Deleted = 0
+        AND (@startDate IS NULL OR ud.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR ud.CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  userSavedViewSummary: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        COALESCE(usv.Module, 'Bilinmeyen Modul') AS moduleName,
+        COUNT(1) AS savedViewCount,
+        COUNT(DISTINCT usv.UserId) AS userCount
+      FROM dbo.UserSavedView usv
+      WHERE usv.Deleted = 0
+        AND (@startDate IS NULL OR usv.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR usv.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(usv.Module, 'Bilinmeyen Modul')
+      ORDER BY savedViewCount DESC;
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  userStepSummary: ({ startDate, endDate, limit }) => ({
+    query: `
+      SELECT TOP (@limit)
+        ush.UserId AS userId,
+        COALESCE(u.Name, 'Bilinmeyen Kullanici') AS userName,
+        SUM(ISNULL(ush.StepCount, 0)) AS totalSteps,
+        AVG(CAST(ISNULL(ush.StepCount, 0) AS FLOAT)) AS avgSteps,
+        COUNT(1) AS recordCount
+      FROM dbo.UserStepHistory ush
+      LEFT JOIN dbo.[User] u
+        ON u.Id = ush.UserId
+       AND u.Deleted = 0
+      WHERE ush.Deleted = 0
+        AND (@startDate IS NULL OR ush.StartDate >= @startDate)
+        AND (@endDate IS NULL OR ush.StartDate < DATEADD(day, 1, @endDate))
+      GROUP BY ush.UserId, COALESCE(u.Name, 'Bilinmeyen Kullanici')
+      ORDER BY totalSteps DESC;
+    `,
+    bind: { startDate, endDate, limit: Number(limit) || 20 },
+  }),
+
+  userVisitSummary: ({ startDate, endDate, limit }) => ({
+    query: `
+      SELECT TOP (@limit)
+        v.UserId AS userId,
+        COALESCE(u.Name, 'Bilinmeyen Kullanici') AS userName,
+        COUNT(1) AS totalVisits,
+        SUM(CASE WHEN v.Realized = 1 THEN 1 ELSE 0 END) AS realizedVisits,
+        SUM(CASE WHEN v.Realized = 0 THEN 1 ELSE 0 END) AS unrealizedVisits
+      FROM dbo.Visit v
+      LEFT JOIN dbo.[User] u
+        ON u.Id = v.UserId
+       AND u.Deleted = 0
+      WHERE v.Deleted = 0
+        AND v.UserId IS NOT NULL
+        AND (@startDate IS NULL OR v.StartedAt >= @startDate)
+        AND (@endDate IS NULL OR v.StartedAt < DATEADD(day, 1, @endDate))
+      GROUP BY v.UserId, COALESCE(u.Name, 'Bilinmeyen Kullanici')
+      ORDER BY totalVisits DESC;
+    `,
+    bind: { startDate, endDate, limit: Number(limit) || 20 },
+  }),
 };
 
 module.exports = TEMPLATES;

@@ -1,7 +1,13 @@
-const metricDefinitions = require("../metrics/visit.metrics.json");
+const visitMetricDefinitions = require("../metrics/visit.metrics.json");
+const userMetricDefinitions = require("../metrics/users.metrics.json");
+
+const ALL_METRICS = [
+  ...visitMetricDefinitions.metrics,
+  ...userMetricDefinitions.metrics,
+];
 
 const METRIC_BY_INTENT = Object.fromEntries(
-  metricDefinitions.metrics.map((item) => [item.intent, item])
+  ALL_METRICS.map((item) => [item.intent, item])
 );
 
 function getMetricByIntent(intent) {
@@ -9,7 +15,7 @@ function getMetricByIntent(intent) {
 }
 
 function listMetrics() {
-  return metricDefinitions.metrics;
+  return ALL_METRICS;
 }
 
 module.exports = { getMetricByIntent, listMetrics };
