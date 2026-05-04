@@ -1,5 +1,195 @@
 {
-  "domain": "sales",
+  "domain": "satis_finans",
   "version": "1.0.0",
-  "intents": []
+  "intents": [
+    {
+      "intent": "totalPurchaseOrders",
+      "description_tr": "Toplam sipariş sayısı soruları",
+      "keywords": ["siparis", "sipariş", "sayisi", "kac", "adet", "toplam"],
+      "priority": 10,
+      "metric_id": "purchase_order_count_total"
+    },
+    {
+      "intent": "totalPurchaseOrderAmount",
+      "description_tr": "Toplam sipariş tutarı / ciro soruları",
+      "keywords": ["siparis", "sipariş", "tutari", "tutar", "ciro", "para", "deger", "hacim"],
+      "priority": 25,
+      "metric_id": "purchase_order_amount_total"
+    },
+    {
+      "intent": "purchaseOrdersByStatus",
+      "description_tr": "Duruma göre sipariş dağılımı soruları",
+      "keywords": ["siparis", "sipariş", "durum", "statu", "onaylanan", "bekleyen", "iptal", "dagilim"],
+      "priority": 20,
+      "metric_id": "purchase_order_by_status"
+    },
+    {
+      "intent": "purchaseOrderTrend",
+      "description_tr": "Günlük sipariş trendi soruları",
+      "keywords": ["siparis", "sipariş", "trend", "gunluk", "aylik", "zaman", "grafik"],
+      "priority": 30,
+      "metric_id": "purchase_order_daily_trend"
+    },
+    {
+      "intent": "totalPurchaseOrderDetails",
+      "description_tr": "Sipariş kalem detayları soruları",
+      "keywords": ["siparis", "sipariş", "kalem", "detay", "urun", "icerik"],
+      "priority": 10,
+      "metric_id": "purchase_order_detail_count"
+    },
+    {
+      "intent": "totalInvoices",
+      "description_tr": "Toplam fatura sayısı soruları",
+      "keywords": ["fatura", "kesilen", "sayisi", "kac", "adet"],
+      "priority": 10,
+      "metric_id": "invoice_count_total"
+    },
+    {
+      "intent": "totalInvoiceAmount",
+      "description_tr": "Toplam fatura tutarı / gerçekleşen ciro soruları",
+      "keywords": ["fatura", "tutari", "tutar", "kesilen", "ciro", "hacim", "toplam"],
+      "priority": 25,
+      "metric_id": "invoice_amount_total"
+    },
+    {
+      "intent": "totalInvoiceBalance",
+      "description_tr": "Ödenmemiş fatura / bakiye / alacak soruları",
+      "keywords": ["fatura", "bakiye", "odenmemis", "ödenmemiş", "kalan", "alacak", "borc", "borç"],
+      "priority": 35,
+      "metric_id": "invoice_balance_total"
+    },
+    {
+      "intent": "invoicesByStatus",
+      "description_tr": "Duruma göre fatura soruları",
+      "keywords": ["fatura", "durum", "statu", "odendi", "iptal", "dagilim"],
+      "priority": 20,
+      "metric_id": "invoice_by_status"
+    },
+    {
+      "intent": "invoiceTrend",
+      "description_tr": "Günlük fatura trendi soruları",
+      "keywords": ["fatura", "trend", "gunluk", "aylik", "kesim", "zaman"],
+      "priority": 30,
+      "metric_id": "invoice_daily_trend"
+    },
+    {
+      "intent": "totalInvoiceDetails",
+      "description_tr": "Fatura kalem detayları soruları",
+      "keywords": ["fatura", "kalem", "detay", "satir"],
+      "priority": 10,
+      "metric_id": "invoice_detail_count"
+    },
+    {
+      "intent": "totalInvoicePayments",
+      "description_tr": "Fatura tahsilat tutarları soruları",
+      "keywords": ["tahsilat", "odeme", "ödeme", "fatura", "nakit", "tutar", "giren"],
+      "priority": 25,
+      "metric_id": "invoice_payment_amount_total"
+    },
+    {
+      "intent": "invoicePaymentTrend",
+      "description_tr": "Tahsilat trendi soruları",
+      "keywords": ["tahsilat", "odeme", "ödeme", "trend", "gunluk", "aylik", "zaman"],
+      "priority": 30,
+      "metric_id": "invoice_payment_daily_trend"
+    },
+    {
+      "intent": "totalPayments",
+      "description_tr": "Genel ödeme ve abonelik tahsilat tutarı soruları",
+      "keywords": ["odeme", "ödeme", "abonelik", "genel", "tutar", "tahsilat"],
+      "priority": 25,
+      "metric_id": "payment_amount_total"
+    },
+    {
+      "intent": "paymentsByState",
+      "description_tr": "Duruma göre genel ödeme soruları",
+      "keywords": ["odeme", "ödeme", "durum", "statu", "basarili", "basarisiz"],
+      "priority": 20,
+      "metric_id": "payment_by_state"
+    },
+    {
+      "intent": "activeCampaigns",
+      "description_tr": "Aktif kampanya sayısı soruları",
+      "keywords": ["aktif", "guncel", "devam", "eden", "kampanya", "sayisi"],
+      "priority": 35,
+      "metric_id": "campaign_count_active"
+    },
+    {
+      "intent": "totalCampaigns",
+      "description_tr": "Toplam kampanya sayısı soruları",
+      "keywords": ["toplam", "kampanya", "sayisi", "kac"],
+      "priority": 10,
+      "metric_id": "campaign_count_total"
+    },
+    {
+      "intent": "totalCampaignProducts",
+      "description_tr": "Kampanyalı ürün sayısı soruları",
+      "keywords": ["kampanyali", "kampanya", "urun", "indirimli", "sayisi"],
+      "priority": 20,
+      "metric_id": "campaign_product_count"
+    },
+    {
+      "intent": "totalClientProductPrices",
+      "description_tr": "Müşteriye özel fiyat tanım sayısı soruları",
+      "keywords": ["ozel", "özel", "fiyat", "musteri", "iskonto", "tanim"],
+      "priority": 15,
+      "metric_id": "client_product_price_count"
+    },
+    {
+      "intent": "totalCosts",
+      "description_tr": "Toplam maliyet tutarı soruları",
+      "keywords": ["maliyet", "gider", "harcama", "tutar", "toplam"],
+      "priority": 25,
+      "metric_id": "cost_amount_total"
+    },
+    {
+      "intent": "costsByCategory",
+      "description_tr": "Kategoriye göre maliyet soruları",
+      "keywords": ["maliyet", "kategori", "tur", "dagilim", "gider"],
+      "priority": 20,
+      "metric_id": "cost_by_category"
+    },
+    {
+      "intent": "totalCommissions",
+      "description_tr": "Toplam komisyon tutarı soruları",
+      "keywords": ["komisyon", "prim", "temsilci", "hak", "edis", "tutar"],
+      "priority": 25,
+      "metric_id": "commission_amount_total"
+    },
+    {
+      "intent": "totalTrackedOrders",
+      "description_tr": "Takip edilen teslimat kayıtları soruları",
+      "keywords": ["teslimat", "kargo", "takip", "durumu", "siparis", "tracker"],
+      "priority": 15,
+      "metric_id": "purchase_order_tracker_count"
+    },
+    {
+      "intent": "totalBipPromotions",
+      "description_tr": "Bip Promosyon kodu soruları",
+      "keywords": ["bip", "promosyon", "kod", "indirim", "kupon"],
+      "priority": 15,
+      "metric_id": "bip_promotion_count"
+    },
+    {
+      "intent": "totalDistributorCommercials",
+      "description_tr": "Distribütör risk ve ticari bilgi soruları",
+      "keywords": ["distributor", "distribütör", "ticari", "risk", "limit", "kredi", "teminat"],
+      "priority": 20,
+      "metric_id": "distributor_commercial_record_count"
+    },
+    {
+      "intent": "totalIyzicoTransactions",
+      "description_tr": "Toplam İyzico işlem sayısı soruları",
+      "keywords": ["iyzico", "sanal", "pos", "islem", "odeme"],
+      "priority": 10,
+      "metric_id": "iyzico_transaction_count"
+    },
+    {
+      "intent": "iyzicoTransactionsByStatus",
+      "description_tr": "Duruma göre İyzico işlem soruları",
+      "keywords": ["iyzico", "durum", "statu", "basarili", "hata"],
+      "priority": 20,
+      "metric_id": "iyzico_transaction_by_status"
+    }
+  ]
 }
