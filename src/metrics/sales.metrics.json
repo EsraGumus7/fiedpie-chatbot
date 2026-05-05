@@ -1,0 +1,256 @@
+{
+  "domain": "satis_finans",
+  "version": "1.0.0",
+  "metrics": [
+    {
+      "_comment_metric_id": "Metrigin teknik benzersiz kimligi",
+      "metric_id": "purchase_order_count_total",
+      "_comment_intent": "Intent parser bu intenti bulursa bu metriği calistir",
+      "intent": "totalPurchaseOrders",
+      "_comment_description_tr": "Is birimine gostermek icin Turkce aciklama",
+      "description_tr": "Toplam sipariş sayısı",
+      "_comment_source_tables": "Bu metrik hangi tablo(lar)dan beslenir",
+      "source_tables": ["dbo.PurchaseOrder"],
+      "_comment_aggregation": "Hesaplama tipi",
+      "aggregation": "count",
+      "_comment_default_filters": "Varsayilan filtreler",
+      "default_filters": ["Deleted = 0"],
+      "_comment_security_scope": "Yetki modeli",
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "purchase_order_amount_total",
+      "intent": "totalPurchaseOrderAmount",
+      "description_tr": "Toplam sipariş tutarı (Ciro hedefi)",
+      "source_tables": ["dbo.PurchaseOrder"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "purchase_order_by_status",
+      "intent": "purchaseOrdersByStatus",
+      "description_tr": "Duruma göre sipariş dağılımı",
+      "source_tables": ["dbo.PurchaseOrder"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "purchase_order_daily_trend",
+      "intent": "purchaseOrderTrend",
+      "description_tr": "Günlük sipariş trendi",
+      "source_tables": ["dbo.PurchaseOrder"],
+      "aggregation": "count_group_by_date",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "purchase_order_detail_count",
+      "intent": "totalPurchaseOrderDetails",
+      "description_tr": "Toplam sipariş kalemi sayısı",
+      "source_tables": ["dbo.PurchaseOrderDetail"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_count_total",
+      "intent": "totalInvoices",
+      "description_tr": "Kesilen toplam fatura sayısı",
+      "source_tables": ["dbo.Invoice"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_amount_total",
+      "intent": "totalInvoiceAmount",
+      "description_tr": "Faturalanan toplam tutar (Gerçekleşen Ciro)",
+      "source_tables": ["dbo.Invoice"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_balance_total",
+      "intent": "totalInvoiceBalance",
+      "description_tr": "Ödenmemiş toplam fatura bakiyesi (Alacaklar)",
+      "source_tables": ["dbo.Invoice"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0", "Paid = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_by_status",
+      "intent": "invoicesByStatus",
+      "description_tr": "Duruma göre fatura dağılımı",
+      "source_tables": ["dbo.Invoice", "dbo.InvoiceState"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_daily_trend",
+      "intent": "invoiceTrend",
+      "description_tr": "Günlük fatura kesim trendi",
+      "source_tables": ["dbo.Invoice"],
+      "aggregation": "count_group_by_date",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_detail_count",
+      "intent": "totalInvoiceDetails",
+      "description_tr": "Toplam fatura kalemi sayısı",
+      "source_tables": ["dbo.InvoiceDetail"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_payment_amount_total",
+      "intent": "totalInvoicePayments",
+      "description_tr": "Fatura tahsilatları toplam tutarı (Nakit Akışı)",
+      "source_tables": ["dbo.InvoicePayment"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "invoice_payment_daily_trend",
+      "intent": "invoicePaymentTrend",
+      "description_tr": "Günlük fatura tahsilat trendi",
+      "source_tables": ["dbo.InvoicePayment"],
+      "aggregation": "count_group_by_date",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "payment_amount_total",
+      "intent": "totalPayments",
+      "description_tr": "Genel ödemeler ve abonelik tahsilatları toplamı",
+      "source_tables": ["dbo.Payment"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "payment_by_state",
+      "intent": "paymentsByState",
+      "description_tr": "Duruma göre genel ödeme dağılımı",
+      "source_tables": ["dbo.Payment", "dbo.PaymentState"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "campaign_count_active",
+      "intent": "activeCampaigns",
+      "description_tr": "Aktif kampanya sayısı",
+      "source_tables": ["dbo.Campaign"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0", "Passive = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "campaign_count_total",
+      "intent": "totalCampaigns",
+      "description_tr": "Toplam kampanya kayıt sayısı",
+      "source_tables": ["dbo.Campaign"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "campaign_product_count",
+      "intent": "totalCampaignProducts",
+      "description_tr": "Kampanyaya dahil edilen ürün sayısı",
+      "source_tables": ["dbo.CampaignProduct"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0", "Active = 1"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "client_product_price_count",
+      "intent": "totalClientProductPrices",
+      "description_tr": "Müşteriye özel fiyat tanımları sayısı",
+      "source_tables": ["dbo.ClientProductPrice"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "cost_amount_total",
+      "intent": "totalCosts",
+      "description_tr": "Toplam maliyet tutarı",
+      "source_tables": ["dbo.Cost"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "cost_by_category",
+      "intent": "costsByCategory",
+      "description_tr": "Kategoriye göre maliyet dağılımı",
+      "source_tables": ["dbo.Cost"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "commission_amount_total",
+      "intent": "totalCommissions",
+      "description_tr": "Toplam hak edilen komisyon tutarı",
+      "source_tables": ["dbo.Commission"],
+      "aggregation": "sum",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "purchase_order_tracker_count",
+      "intent": "totalTrackedOrders",
+      "description_tr": "Takip edilen teslimat/sipariş kayıt sayısı",
+      "source_tables": ["dbo.PurchaseOrderTracker"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "bip_promotion_count",
+      "intent": "totalBipPromotions",
+      "description_tr": "Tanımlı Bip Promosyon kodu sayısı",
+      "source_tables": ["dbo.BipPromotion"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "distributor_commercial_record_count",
+      "intent": "totalDistributorCommercials",
+      "description_tr": "Distribütör ticari ve risk kayıtları sayısı",
+      "source_tables": ["dbo.DistributorCommercial"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "iyzico_transaction_count",
+      "intent": "totalIyzicoTransactions",
+      "description_tr": "Toplam İyzico sanal pos işlemi",
+      "source_tables": ["dbo.IyzicoPaymentTransaction"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "iyzico_transaction_by_status",
+      "intent": "iyzicoTransactionsByStatus",
+      "description_tr": "Duruma göre İyzico işlem dağılımı",
+      "source_tables": ["dbo.IyzicoPaymentTransaction"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    }
+  ]
+}
