@@ -1,3 +1,4 @@
+const { listResolvedIntentCandidates } = require("../planner/metricRegistry");
 function normalizeText(text) {
   return String(text || "")
     .toLowerCase()
@@ -7,6 +8,9 @@ function normalizeText(text) {
     .replace(/ç/g, "c")
     .replace(/ö/g, "o")
     .replace(/ü/g, "u")
+    .replace(/â/g, "a")
+    .replace(/î/g, "i")
+    .replace(/û/g, "u")
     .trim();
 }
 
@@ -67,6 +71,7 @@ function getRelativeDateRange(normalizedQuestion) {
 
 function resolveFieldName(rawValue = "") {
   const val = normalizeText(rawValue);
+
   const aliases = [
     { canonical: "Raf Sayisi", patterns: ["raf sayisi", "raf", "raf adet"] },
     { canonical: "Stok", patterns: ["stok", "stock"] },
@@ -74,48 +79,122 @@ function resolveFieldName(rawValue = "") {
     { canonical: "Promosyon", patterns: ["promosyon", "kampanya"] },
   ];
 
-  const hit = aliases.find((item) => item.patterns.some((p) => val.includes(p)));
+  const hit = aliases.find((item) =>
+    item.patterns.some((p) => val.includes(normalizeText(p)))
+  );
+
   return hit ? hit.canonical : rawValue;
+}
+
+function scoreIntent(question, candidate) {
+  const normalizedQuestion = normalizeText(question);
+
+  const keywords = candidate.keywords || [];
+  const aliases = candidate.aliases || [];
+  const negativeKeywords = candidate.negative_keywords || [];
+
+  let score = candidate.priority || 0;
+
+  for (const alias of aliases) {
+    const normalizedAlias = normalizeText(alias);
+
+    if (normalizedQuestion === normalizedAlias) {
+      score += 100;
+    } else if (normalizedQuestion.includes(normalizedAlias)) {
+      score += 60;
+    }
+  }
+
+  for (const keyword of keywords) {
+    const normalizedKeyword = normalizeText(keyword);
+
+    if (!normalizedKeyword) continue;
+
+    if (normalizedQuestion.includes(normalizedKeyword)) {
+      score += 10;
+    }
+  }
+
+  for (const negative of negativeKeywords) {
+    const normalizedNegative = normalizeText(negative);
+
+    if (!normalizedNegative) continue;
+
+    if (normalizedQuestion.includes(normalizedNegative)) {
+      score -= 25;
+    }
+  }
+
+  return score;
+}
+
+function extractDynamicFieldParams(normalizedQuestion, filters, baseFilters) {
+  const match = normalizedQuestion.match(/["']([^"']+)["']/);
+  const fieldIdMatch = normalizedQuestion.match(/field[-\s]?(\d{3,})/);
+
+  const rawField = match?.[1] || filters.fieldName || "Raf";
+  const fieldName = resolveFieldName(rawField);
+
+  const dynamicRange =
+    baseFilters.startDate || baseFilters.endDate
+      ? baseFilters
+      : getLastNDaysRange(30);
+
+  return {
+    ...dynamicRange,
+    fieldName,
+    fieldId: filters.fieldId || fieldIdMatch?.[1] || null,
+  };
 }
 
 function parseQuestion(question, filters = {}) {
   const normalized = normalizeText(question);
+
   const relativeRange = getRelativeDateRange(normalized);
+
   const baseFilters = {
     startDate: filters.startDate || relativeRange?.startDate || null,
     endDate: filters.endDate || relativeRange?.endDate || null,
   };
 
-  if (/(trend|gunluk|zaman|haftalik|aylik|line)/.test(normalized)) {
-    return { intent: "visitTrend", params: baseFilters };
-  }
+  const candidates = listResolvedIntentCandidates();
 
-  if (/(ortalama|süre|sure|duration)/.test(normalized)) {
-    return { intent: "avgVisitDuration", params: baseFilters };
-  }
+  const scoredCandidates = candidates
+    .map((candidate) => ({
+      ...candidate,
+      score: scoreIntent(question, candidate),
+    }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((a, b) => b.score - a.score);
 
-  if (/(durum|state|statü|statu)/.test(normalized)) {
-    return { intent: "visitsByState", params: baseFilters };
-  }
+  const best = scoredCandidates[0];
 
-  if (/(tip|type|ziyaret tipi)/.test(normalized)) {
-    return { intent: "visitsByType", params: baseFilters };
-  }
-
-  if (/(form|alan|field|dynamic|anket|raf)/.test(normalized)) {
-    const match = normalized.match(/["']([^"']+)["']/);
-    const fieldIdMatch = normalized.match(/field[-\s]?(\d{3,})/);
-    const rawField = match?.[1] || filters.fieldName || "Raf";
-    const fieldName = resolveFieldName(rawField);
-    const dynamicRange =
-      baseFilters.startDate || baseFilters.endDate ? baseFilters : getLastNDaysRange(30);
+  if (!best) {
     return {
-      intent: "dynamicFieldSummary",
-      params: { ...dynamicRange, fieldName, fieldId: filters.fieldId || fieldIdMatch?.[1] || null },
+      intent: null,
+      metric_id: null,
+      params: baseFilters,
+      error: "Intent bulunamadi",
     };
   }
 
-  return { intent: "visitCountRealized", params: baseFilters };
+  let params = baseFilters;
+
+  if (best.intent === "dynamicFieldSummary") {
+    params = extractDynamicFieldParams(normalized, filters, baseFilters);
+  }
+
+  return {
+    intent: best.intent,
+    metric_id: best.metric_id,
+    domain: best.domain || null,
+    score: best.score,
+    params,
+  };
 }
 
-module.exports = { parseQuestion, resolveFieldName };
+module.exports = {
+  parseQuestion,
+  resolveFieldName,
+  normalizeText,
+};
