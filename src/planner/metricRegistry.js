@@ -9,29 +9,37 @@ const clientIntentDefinitions = require("../intents/client.intents.json");
 const salesIntentDefinitions = require("../intents/sales.intents.json");
 
 const ALL_METRICS = [
-  ...visitMetricDefinitions.metrics,
-  ...userMetricDefinitions.metrics,
-  ...clientMetricDefinitions.metrics,
-  ...salesMetricDefinitions.metrics,
+  ...(visitMetricDefinitions.metrics || []),
+  ...(userMetricDefinitions.metrics || []),
+  ...(clientMetricDefinitions.metrics || []),
+  ...(salesMetricDefinitions.metrics || []),
 ];
 
 const ALL_INTENTS = [
-  ...visitIntentDefinitions.intents,
-  ...userIntentDefinitions.intents,
-  ...clientIntentDefinitions.intents,
-  ...salesIntentDefinitions.intents,
+  ...(visitIntentDefinitions.intents || []),
+  ...(userIntentDefinitions.intents || []),
+  ...(clientIntentDefinitions.intents || []),
+  ...(salesIntentDefinitions.intents || []),
 ];
 
-const METRIC_BY_INTENT = Object.fromEntries(
-  ALL_METRICS.map((item) => [item.intent, item])
-);
+// EŞLEŞTİRME SİSTEMİ: Niyet ismini anahtar yaparak metrikleri bir sözlüğe alıyoruz.
+const METRIC_BY_INTENT = {};
+ALL_METRICS.forEach((m) => {
+  if (m.intent) {
+    METRIC_BY_INTENT[m.intent] = m;
+  }
+});
 
-const INTENT_BY_NAME = Object.fromEntries(
-  ALL_INTENTS.map((item) => [item.intent, item])
-);
+const INTENT_BY_NAME = {};
+ALL_INTENTS.forEach((i) => {
+  if (i.intent) {
+    INTENT_BY_NAME[i.intent] = i;
+  }
+});
 
 function getMetricByIntent(intent) {
-  return METRIC_BY_INTENT[intent] || null;
+  // Hem sözlükten bak hem de emin olmak için diziyi manuel tara
+  return METRIC_BY_INTENT[intent] || ALL_METRICS.find(m => m.intent === intent) || null;
 }
 
 function getIntentDefinition(intent) {
@@ -48,11 +56,13 @@ function listIntentDefinitions() {
 
 function listResolvedIntentCandidates() {
   return ALL_INTENTS.map((intentDefinition) => {
+    // ÖNEMLİ: Niyet ismine göre metrik dosyasındaki tanımı bul
     const metric = getMetricByIntent(intentDefinition.intent);
 
     return {
       intent: intentDefinition.intent,
-      metric_id: intentDefinition.metric_id || metric?.metric_id || null,
+      // KRİTİK DÜZELTME: Seçim sonrası SQL'in tetiklenmesi için METRİK dosyasındaki metric_id öncelikli olmalı!
+      metric_id: metric?.metric_id || intentDefinition.metric_id || null,
       domain: intentDefinition.domain || null,
 
       description_tr:
