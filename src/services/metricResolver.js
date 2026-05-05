@@ -73,10 +73,6 @@ function tokenize(text) {
         .filter((token) => token.length >= 2);
 }
 
-function unique(items) {
-    return Array.from(new Set(items.filter(Boolean)));
-}
-
 function normalizeList(values = []) {
     return values.map((item) => normalizeText(item)).filter(Boolean);
 }
@@ -120,7 +116,6 @@ function scoreCandidate(question, candidate) {
         negativeKeywords: [],
     };
 
-    // 1. Alias / phrase eşleşmesi
     for (const alias of aliases) {
         if (containsPhrase(normalizedQuestion, alias)) {
             score += 40;
@@ -128,7 +123,6 @@ function scoreCandidate(question, candidate) {
         }
     }
 
-    // 2. Keyword eşleşmesi
     for (const keyword of keywords) {
         if (containsPhrase(normalizedQuestion, keyword)) {
             score += 10;
@@ -136,7 +130,6 @@ function scoreCandidate(question, candidate) {
         }
     }
 
-    // 3. Candidate text token eşleşmesi
     for (const token of questionTokens) {
         if (candidateTokens.includes(token)) {
             score += 3;
@@ -144,10 +137,8 @@ function scoreCandidate(question, candidate) {
         }
     }
 
-    // 4. Priority küçük katkı versin
     score += Number(candidate.priority || 0) / 10;
 
-    // 5. Negative keyword cezası
     for (const negativeKeyword of negativeKeywords) {
         if (containsPhrase(normalizedQuestion, negativeKeyword)) {
             score -= 15;
@@ -166,11 +157,7 @@ function scoreCandidate(question, candidate) {
 }
 
 function isStrongLegacyFallbackQuestion(normalizedQuestion) {
-    // Visit intent dosyası şu an zayıf/boş olabileceği için
-    // sadece güçlü saha/visit sinyallerinde eski parser'a fallback izni veriyoruz.
-    return /(ziyaret|visit|saha|raf|stok|form|anket|aktivite)/.test(
-        normalizedQuestion
-    );
+    return /(ziyaret|visit|saha|raf|stok|form|anket|aktivite)/.test(normalizedQuestion);
 }
 
 function buildClarification(candidates, reason) {
@@ -197,20 +184,57 @@ function buildClarification(candidates, reason) {
     };
 }
 
-function resolveIntent(question, filters = {}) {
-    const normalizedQuestion = normalizeText(question);
+function buildBaseFilters(normalizedQuestion, filters = {}) {
     const relativeRange = getRelativeDateRange(normalizedQuestion);
 
-    const baseFilters = {
+    return {
         startDate: filters.startDate || relativeRange?.startDate || null,
         endDate: filters.endDate || relativeRange?.endDate || null,
         limit: filters.limit ? Number(filters.limit) : null,
         fieldName: filters.fieldName || null,
         fieldId: filters.fieldId || null,
     };
+}
 
-    const candidates = listResolvedIntentCandidates()
-        .filter((candidate) => candidate.intent && candidate.metric_id)
+function resolveIntent(question, filters = {}) {
+    const normalizedQuestion = normalizeText(question);
+    const baseFilters = buildBaseFilters(normalizedQuestion, filters);
+
+    const allCandidates = listResolvedIntentCandidates().filter(
+        (candidate) => candidate.intent && candidate.metric_id
+    );
+
+    // UI seçimi veya direkt intent/metric_id gelirse skorlama yapmadan direkt yakala
+    const exactCandidate = allCandidates.find(
+        (candidate) =>
+            candidate.intent === question ||
+            candidate.metric_id === question ||
+            normalizeText(candidate.intent) === normalizedQuestion ||
+            normalizeText(candidate.metric_id) === normalizedQuestion
+    );
+
+    if (exactCandidate) {
+        return {
+            intent: exactCandidate.intent,
+            params: baseFilters,
+            confidence: 1,
+            score: 999,
+            source: "exactIntentMatch",
+            candidates: [
+                {
+                    intent: exactCandidate.intent,
+                    metric_id: exactCandidate.metric_id,
+                    score: 999,
+                    description_tr: exactCandidate.description_tr,
+                    matched: {
+                        exact: true,
+                    },
+                },
+            ],
+        };
+    }
+
+    const candidates = allCandidates
         .map((candidate) => scoreCandidate(question, candidate))
         .sort((a, b) => b.score - a.score);
 
@@ -220,7 +244,6 @@ function resolveIntent(question, filters = {}) {
     const MIN_SCORE = 10;
     const AMBIGUITY_MARGIN = 5;
 
-    // Hiç aday yoksa kontrollü fallback
     if (!best) {
         if (isStrongLegacyFallbackQuestion(normalizedQuestion)) {
             const legacy = parseQuestion(question, filters);
@@ -237,9 +260,6 @@ function resolveIntent(question, filters = {}) {
         return buildClarification([], "NO_CANDIDATE");
     }
 
-    // En iyi skor çok düşükse:
-    // Eğer soru güçlü visit/saha sinyali taşıyorsa eski parser'a izin ver.
-    // Yoksa yanlış cevap üretmemek için clarification dön.
     if (best.score < MIN_SCORE) {
         if (isStrongLegacyFallbackQuestion(normalizedQuestion)) {
             const legacy = parseQuestion(question, filters);
@@ -262,7 +282,6 @@ function resolveIntent(question, filters = {}) {
         return buildClarification(candidates, "LOW_SCORE");
     }
 
-    // En iyi iki skor birbirine çok yakınsa clarification dön.
     if (second && best.score - second.score < AMBIGUITY_MARGIN) {
         return buildClarification(candidates, "AMBIGUOUS_SCORE");
     }
