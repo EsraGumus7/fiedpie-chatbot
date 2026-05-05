@@ -1,8 +1,25 @@
-const { parseQuestion } = require("../services/intentParser");
+const { resolveIntent } = require("../services/metricResolver");
 const { getMetricByIntent } = require("./metricRegistry");
 
 function buildQueryPlan(question, filters = {}, userContext = {}) {
-  const { intent, params } = parseQuestion(question, filters);
+  const resolved = resolveIntent(question, filters);
+
+  if (resolved.needsClarification) {
+    return {
+      question,
+      needsClarification: true,
+      message: resolved.message,
+      options: resolved.options,
+      candidates: resolved.candidates,
+      user_scope: {
+        tenantId: userContext.tenantId || null,
+        userId: userContext.userId || null,
+        role: userContext.role || "viewer",
+      },
+    };
+  }
+
+  const { intent, params } = resolved;
   const metric = getMetricByIntent(intent);
 
   if (!metric) {
@@ -19,6 +36,12 @@ function buildQueryPlan(question, filters = {}, userContext = {}) {
     security_scope: metric.security_scope,
     default_filters: metric.default_filters,
     params,
+    resolver: {
+      confidence: resolved.confidence,
+      score: resolved.score,
+      source: resolved.source,
+      candidates: resolved.candidates,
+    },
     user_scope: {
       tenantId: userContext.tenantId || null,
       userId: userContext.userId || null,
