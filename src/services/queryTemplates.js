@@ -393,15 +393,17 @@ const TEMPLATES = {
     bind: { startDate, endDate, limit: Number(limit) || 20 },
   }),
 
-  // =============================
+    // =============================
   // CLIENT (MÜŞTERİ) TEMPLATES
+  // Sadece client.intents.json içindeki intentler entegre edildi
   // =============================
+
   clientCountActive: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.Client 
-      WHERE Deleted = 0 AND Passive = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.Client
+      WHERE Deleted = 0 AND Passive = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -409,10 +411,32 @@ const TEMPLATES = {
 
   clientCountTotal: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.Client 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.Client
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  clientCountPassive: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.Client
+      WHERE Deleted = 0 AND Passive = 1
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  clientCountArchived: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.Client
+      WHERE Deleted = 0 AND Archived = 1
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -420,26 +444,79 @@ const TEMPLATES = {
 
   clientsByGroup: ({ startDate, endDate }) => ({
     query: `
-      SELECT COALESCE(cg.Name, 'Bilinmeyen Grup') AS groupName, COUNT(1) AS total 
-      FROM dbo.Client c 
-      LEFT JOIN dbo.ClientGroup cg ON cg.Id = c.ClientGroupId 
-      WHERE c.Deleted = 0 
-        AND (@startDate IS NULL OR c.CreateTime >= @startDate) 
-        AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate)) 
-      GROUP BY COALESCE(cg.Name, 'Bilinmeyen Grup') 
+      SELECT COALESCE(cg.Name, 'Bilinmeyen Grup') AS groupName, COUNT(1) AS total
+      FROM dbo.Client c
+      LEFT JOIN dbo.ClientGroup cg ON cg.Id = c.ClientGroupId
+      WHERE c.Deleted = 0
+        AND (@startDate IS NULL OR c.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(cg.Name, 'Bilinmeyen Grup')
       ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  clientsByState: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(cs.Name, 'Bilinmeyen Durum') AS groupName, COUNT(1) AS total
+      FROM dbo.Client c
+      LEFT JOIN dbo.ClientState cs ON cs.Id = c.ClientStateId
+      WHERE c.Deleted = 0
+        AND (@startDate IS NULL OR c.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(cs.Name, 'Bilinmeyen Durum')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  clientsByCountry: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(co.Name, 'Bilinmeyen Ulke') AS groupName, COUNT(1) AS total
+      FROM dbo.Client c
+      LEFT JOIN dbo.Country co ON co.Id = c.CountryId
+      WHERE c.Deleted = 0
+        AND (@startDate IS NULL OR c.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(co.Name, 'Bilinmeyen Ulke')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  clientsByProgramType: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(pt.Name, 'Bilinmeyen Program') AS groupName, COUNT(1) AS total
+      FROM dbo.Client c
+      LEFT JOIN dbo.ProgramType pt ON pt.Id = c.ProgramTypeId
+      WHERE c.Deleted = 0
+        AND (@startDate IS NULL OR c.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(pt.Name, 'Bilinmeyen Program')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalClientDealAmount: ({ startDate, endDate }) => ({
+    query: `
+      SELECT SUM(ISNULL(DealAmount, 0)) AS totalAmount
+      FROM dbo.Client
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
   }),
 
   clientTrend: ({ startDate, endDate }) => ({
     query: `
-      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total 
-      FROM dbo.Client 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
-        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate)) 
-      GROUP BY CONVERT(date, CreateTime) 
+      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total
+      FROM dbo.Client
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, CreateTime)
       ORDER BY createDate;
     `,
     bind: { startDate, endDate }
@@ -447,10 +524,10 @@ const TEMPLATES = {
 
   totalDistributors: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.DistributorNetworkEntity 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -458,24 +535,191 @@ const TEMPLATES = {
 
   distributorsByRegion: ({ startDate, endDate }) => ({
     query: `
-      SELECT COALESCE(r.Name, 'Bilinmeyen Bolge') AS regionName, COUNT(1) AS total 
-      FROM dbo.DistributorNetworkEntity d 
-      LEFT JOIN dbo.Region r ON r.Id = d.RegionId 
-      WHERE d.Deleted = 0 
-        AND (@startDate IS NULL OR d.CreateTime >= @startDate) 
-        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate)) 
-      GROUP BY COALESCE(r.Name, 'Bilinmeyen Bolge') 
+      SELECT COALESCE(r.Name, 'Bilinmeyen Bolge') AS groupName, COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity d
+      LEFT JOIN dbo.Region r ON r.Id = d.RegionId
+      WHERE d.Deleted = 0
+        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(r.Name, 'Bilinmeyen Bolge')
       ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  distributorsByGroup: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(dg.Name, 'Bilinmeyen Grup') AS groupName, COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity d
+      LEFT JOIN dbo.DistributorGroup dg ON dg.Id = d.DistributorGroupId
+      WHERE d.Deleted = 0
+        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(dg.Name, 'Bilinmeyen Grup')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  distributorsByType: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(CAST(d.Type AS nvarchar(100)), 'Bilinmeyen Tip') AS groupName, COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity d
+      WHERE d.Deleted = 0
+        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(CAST(d.Type AS nvarchar(100)), 'Bilinmeyen Tip')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  distributorsByStatus: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        CASE WHEN ISNULL(d.Passive, 0) = 1 THEN 'Pasif' ELSE 'Aktif' END AS groupName,
+        COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity d
+      WHERE d.Deleted = 0
+        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CASE WHEN ISNULL(d.Passive, 0) = 1 THEN 'Pasif' ELSE 'Aktif' END
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  distributorsExperienceStores: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity d
+      INNER JOIN dbo.DistributorAdditionalInfo dai
+        ON dai.DistributorNetworkEntityId = d.Id
+       AND dai.Deleted = 0
+      WHERE d.Deleted = 0
+        AND ISNULL(dai.IsExperienceStore, 0) = 1
+        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  distributorTrend: ({ startDate, endDate }) => ({
+    query: `
+      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total
+      FROM dbo.DistributorNetworkEntity
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, CreateTime)
+      ORDER BY createDate;
     `,
     bind: { startDate, endDate }
   }),
 
   consumerCountTotal: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.Consumer 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.Consumer
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  consumersBySegment: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(cs.Name, 'Bilinmeyen Segment') AS groupName, COUNT(1) AS total
+      FROM dbo.Consumer c
+      LEFT JOIN dbo.ConsumerSegment cs ON cs.Id = c.ConsumerSegmentId
+      WHERE c.Deleted = 0
+        AND (@startDate IS NULL OR c.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(cs.Name, 'Bilinmeyen Segment')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  consumerTrend: ({ startDate, endDate }) => ({
+    query: `
+      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total
+      FROM dbo.Consumer
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, CreateTime)
+      ORDER BY createDate;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalDataChanges: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.ClientDataChange
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  dataChangesByType: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(CAST(ChangeTypeId AS nvarchar(100)), 'Bilinmeyen Tip') AS groupName, COUNT(1) AS total
+      FROM dbo.ClientDataChange
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(CAST(ChangeTypeId AS nvarchar(100)), 'Bilinmeyen Tip')
+      ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  dataChangeTrend: ({ startDate, endDate }) => ({
+    query: `
+      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total
+      FROM dbo.ClientDataChange
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, CreateTime)
+      ORDER BY createDate;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalClientInfoUpdates: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.ClientInfoUpdate
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalRniDevices: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.RNI
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalClientFiles: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.ClientFile
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -484,12 +728,12 @@ const TEMPLATES = {
   // =============================
   // SALES & FINANCE TEMPLATES
   // =============================
-  totalPurchaseOrders: ({ startDate, endDate }) => ({
+   totalPurchaseOrders: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.PurchaseOrder 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.PurchaseOrder
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -497,10 +741,10 @@ const TEMPLATES = {
 
   totalPurchaseOrderAmount: ({ startDate, endDate }) => ({
     query: `
-      SELECT SUM(TotalWithTax) AS totalAmount 
-      FROM dbo.PurchaseOrder 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT SUM(ISNULL(TotalWithTax, 0)) AS totalAmount
+      FROM dbo.PurchaseOrder
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -508,24 +752,50 @@ const TEMPLATES = {
 
   purchaseOrdersByStatus: ({ startDate, endDate }) => ({
     query: `
-      SELECT COALESCE(pos.Name, 'Bilinmeyen Durum') AS statusName, COUNT(1) AS total 
-      FROM dbo.PurchaseOrder p 
-      LEFT JOIN dbo.PurchaseOrderStatus pos ON pos.Id = p.PurchaseOrderStatusId 
-      WHERE p.Deleted = 0 
-        AND (@startDate IS NULL OR p.CreateTime >= @startDate) 
-        AND (@endDate IS NULL OR p.CreateTime < DATEADD(day, 1, @endDate)) 
-      GROUP BY COALESCE(pos.Name, 'Bilinmeyen Durum') 
+      SELECT COALESCE(pos.Name, 'Bilinmeyen Durum') AS statusName, COUNT(1) AS total
+      FROM dbo.PurchaseOrder po
+      LEFT JOIN dbo.PurchaseOrderStatus pos
+        ON pos.Id = po.PurchaseOrderStatusId
+       AND pos.Deleted = 0
+      WHERE po.Deleted = 0
+        AND (@startDate IS NULL OR po.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR po.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(pos.Name, 'Bilinmeyen Durum')
       ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  purchaseOrderTrend: ({ startDate, endDate }) => ({
+    query: `
+      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total
+      FROM dbo.PurchaseOrder
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, CreateTime)
+      ORDER BY createDate;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalPurchaseOrderDetails: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.PurchaseOrderDetail
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
   }),
 
   totalInvoices: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.Invoice 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.Invoice
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -533,10 +803,10 @@ const TEMPLATES = {
 
   totalInvoiceAmount: ({ startDate, endDate }) => ({
     query: `
-      SELECT SUM(TotalAmountWithTax) AS totalAmount 
-      FROM dbo.Invoice 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT SUM(ISNULL(TotalAmountWithTax, 0)) AS totalAmount
+      FROM dbo.Invoice
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -544,10 +814,11 @@ const TEMPLATES = {
 
   totalInvoiceBalance: ({ startDate, endDate }) => ({
     query: `
-      SELECT SUM(Balance) AS totalBalance 
-      FROM dbo.Invoice 
-      WHERE Deleted = 0 AND Paid = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT SUM(ISNULL(Balance, 0)) AS totalBalance
+      FROM dbo.Invoice
+      WHERE Deleted = 0
+        AND ISNULL(Paid, 0) = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -555,35 +826,102 @@ const TEMPLATES = {
 
   invoicesByStatus: ({ startDate, endDate }) => ({
     query: `
-      SELECT COALESCE(s.Name, 'Bilinmeyen Durum') AS statusName, COUNT(1) AS total 
-      FROM dbo.Invoice i 
-      LEFT JOIN dbo.InvoiceState s ON s.Id = i.InvoiceStateId 
-      WHERE i.Deleted = 0 
-        AND (@startDate IS NULL OR i.CreateTime >= @startDate) 
-        AND (@endDate IS NULL OR i.CreateTime < DATEADD(day, 1, @endDate)) 
-      GROUP BY COALESCE(s.Name, 'Bilinmeyen Durum') 
+      SELECT COALESCE(s.Name, 'Bilinmeyen Durum') AS statusName, COUNT(1) AS total
+      FROM dbo.Invoice i
+      LEFT JOIN dbo.InvoiceState s
+        ON s.Id = i.InvoiceStateId
+       AND s.Deleted = 0
+      WHERE i.Deleted = 0
+        AND (@startDate IS NULL OR i.CreateTime >= @startDate)
+        AND (@endDate IS NULL OR i.CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(s.Name, 'Bilinmeyen Durum')
       ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  invoiceTrend: ({ startDate, endDate }) => ({
+    query: `
+      SELECT CONVERT(date, CreateTime) AS createDate, COUNT(1) AS total
+      FROM dbo.Invoice
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, CreateTime)
+      ORDER BY createDate;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalInvoiceDetails: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.InvoiceDetail
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
   }),
 
   totalInvoicePayments: ({ startDate, endDate }) => ({
     query: `
-      SELECT SUM(Amount) AS totalAmount 
-      FROM dbo.InvoicePayment 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR PaymentDate >= @startDate) 
+      SELECT SUM(ISNULL(Amount, 0)) AS totalAmount
+      FROM dbo.InvoicePayment
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR PaymentDate >= @startDate)
         AND (@endDate IS NULL OR PaymentDate < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  invoicePaymentTrend: ({ startDate, endDate }) => ({
+    query: `
+      SELECT CONVERT(date, PaymentDate) AS createDate, COUNT(1) AS total
+      FROM dbo.InvoicePayment
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR PaymentDate >= @startDate)
+        AND (@endDate IS NULL OR PaymentDate < DATEADD(day, 1, @endDate))
+      GROUP BY CONVERT(date, PaymentDate)
+      ORDER BY createDate;
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalPayments: ({ startDate, endDate }) => ({
+    query: `
+      SELECT SUM(ISNULL(Amount, 0)) AS totalAmount
+      FROM dbo.Payment
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR PaymentDate >= @startDate)
+        AND (@endDate IS NULL OR PaymentDate < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  paymentsByState: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(ps.Name, 'Bilinmeyen Durum') AS statusName, COUNT(1) AS total
+      FROM dbo.Payment p
+      LEFT JOIN dbo.PaymentState ps
+        ON ps.Id = p.PaymentStateId
+       AND ps.Deleted = 0
+      WHERE p.Deleted = 0
+        AND (@startDate IS NULL OR p.PaymentDate >= @startDate)
+        AND (@endDate IS NULL OR p.PaymentDate < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(ps.Name, 'Bilinmeyen Durum')
+      ORDER BY total DESC;
     `,
     bind: { startDate, endDate }
   }),
 
   activeCampaigns: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.Campaign 
-      WHERE Deleted = 0 AND Passive = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.Campaign
+      WHERE Deleted = 0
+        AND ISNULL(Passive, 0) = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -591,10 +929,33 @@ const TEMPLATES = {
 
   totalCampaigns: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.Campaign 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.Campaign
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalCampaignProducts: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.CampaignProduct
+      WHERE Deleted = 0
+        AND ISNULL(Active, 0) = 1
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalClientProductPrices: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.ClientProductPrice
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -602,21 +963,67 @@ const TEMPLATES = {
 
   totalCosts: ({ startDate, endDate }) => ({
     query: `
-      SELECT SUM(Amount) AS totalAmount 
-      FROM dbo.Cost 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT SUM(ISNULL(Amount, 0)) AS totalAmount
+      FROM dbo.Cost
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  costsByCategory: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(Category, 'Bilinmeyen Kategori') AS groupName, COUNT(1) AS total
+      FROM dbo.Cost
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(Category, 'Bilinmeyen Kategori')
+      ORDER BY total DESC;
     `,
     bind: { startDate, endDate }
   }),
 
   totalCommissions: ({ startDate, endDate }) => ({
     query: `
-      SELECT SUM(TotalCommission) AS totalAmount 
-      FROM dbo.Commission 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT SUM(ISNULL(TotalCommission, 0)) AS totalAmount
+      FROM dbo.Commission
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalTrackedOrders: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.PurchaseOrderTracker
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalBipPromotions: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.BipPromotion
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  totalDistributorCommercials: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COUNT(1) AS total
+      FROM dbo.DistributorCommercial
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
     `,
     bind: { startDate, endDate }
@@ -624,11 +1031,24 @@ const TEMPLATES = {
 
   totalIyzicoTransactions: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total 
-      FROM dbo.IyzicoPaymentTransaction 
-      WHERE Deleted = 0 
-        AND (@startDate IS NULL OR CreateTime >= @startDate) 
+      SELECT COUNT(1) AS total
+      FROM dbo.IyzicoPaymentTransaction
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
         AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate));
+    `,
+    bind: { startDate, endDate }
+  }),
+
+  iyzicoTransactionsByStatus: ({ startDate, endDate }) => ({
+    query: `
+      SELECT COALESCE(PaymentStatus, 'Bilinmeyen Durum') AS statusName, COUNT(1) AS total
+      FROM dbo.IyzicoPaymentTransaction
+      WHERE Deleted = 0
+        AND (@startDate IS NULL OR CreateTime >= @startDate)
+        AND (@endDate IS NULL OR CreateTime < DATEADD(day, 1, @endDate))
+      GROUP BY COALESCE(PaymentStatus, 'Bilinmeyen Durum')
+      ORDER BY total DESC;
     `,
     bind: { startDate, endDate }
   }),
