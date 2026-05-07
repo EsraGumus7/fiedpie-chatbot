@@ -77,44 +77,62 @@ function summarizeRows(intent, rows, filters = {}) {
 
   // 1. Genel Sayım (Count) İşlemleri
   const countIntents = [
-  "clientCountActive",
-  "clientCountTotal",
-  "clientCountPassive",
-  "clientCountArchived",
-  "totalDistributors",
-  "consumerCountTotal",
-  "totalClientInfoUpdates",
-  "totalRniDevices",
-  "totalClientFiles",
+    "clientCountActive",
+    "clientCountTotal",
+    "clientCountPassive",
+    "clientCountArchived",
+    "totalDistributors",
+    "consumerCountTotal",
+    "totalClientInfoUpdates",
+    "totalRniDevices",
+    "totalClientFiles",
 
-  "totalPurchaseOrders",
-  "totalInvoices",
-  "activeCampaigns",
-  "totalCampaigns",
-  "totalIyzicoTransactions",
-  "totalPurchaseOrderDetails",
-  "invoice_detail_count",
-  "totalCampaignProducts",
-  "totalClientProductPrices",
-  "totalTrackedOrders",
-  "totalBipPromotions",
-  "totalDistributorCommercials"
+    "totalPurchaseOrders",
+    "totalInvoices",
+    "activeCampaigns",
+    "totalCampaigns",
+    "totalIyzicoTransactions",
+    "totalPurchaseOrderDetails",
+    "invoice_detail_count",
+    "totalCampaignProducts",
+    "totalClientProductPrices",
+    "totalTrackedOrders",
+    "totalBipPromotions",
+    "totalDistributorCommercials"
   ];
   if (countIntents.includes(intent)) {
     const total = rows[0]?.total ?? rows[0]?.responseCount ?? 0;
-    return `${rangeInfo} araliginda toplam ${formatNumber(total)} kayit bulundu.`;
+
+    const countLabels = {
+      clientCountActive: "aktif firma",
+      clientCountTotal: "firma",
+      distributorCountActive: "aktif distributor",
+      distributorCountTotal: "distributor",
+      branchCountActive: "aktif sube",
+      branchCountTotal: "sube",
+      totalInvoices: "kesilen fatura",
+      totalSalesOrders: "satis siparisi",
+      totalPurchaseOrders: "satinalma siparisi",
+      totalPayments: "odeme kaydi",
+      totalCollections: "tahsilat kaydi",
+      activeCampaigns: "aktif kampanya",
+    };
+
+    const label = countLabels[intent] || "kayit";
+
+    return `${rangeInfo} araliginda toplam ${formatNumber(total)} ${label} bulundu.`;
   }
 
   // 2. Genel Tutar (Sum/Amount) İşlemleri
   const amountIntents = [
-  "totalClientDealAmount",
+    "totalClientDealAmount",
 
-  "totalPurchaseOrderAmount",
-  "totalInvoiceAmount",
-  "totalInvoicePayments",
-  "totalCosts",
-  "totalCommissions",
-  "totalPayments"
+    "totalPurchaseOrderAmount",
+    "totalInvoiceAmount",
+    "totalInvoicePayments",
+    "totalCosts",
+    "totalCommissions",
+    "totalPayments"
   ];
   if (amountIntents.includes(intent)) {
     const total = rows[0]?.totalAmount ?? 0;
@@ -129,24 +147,24 @@ function summarizeRows(intent, rows, filters = {}) {
 
   // 4. Dağılım ve Gruplama (Group By) İşlemleri
   const groupIntents = [
-  "clientsByGroup",
-  "clientsByState",
-  "clientsByCountry",
-  "clientsByProgramType",
+    "clientsByGroup",
+    "clientsByState",
+    "clientsByCountry",
+    "clientsByProgramType",
 
-  "distributorsByRegion",
-  "distributorsByGroup",
-  "distributorsByType",
-  "distributorsByStatus",
+    "distributorsByRegion",
+    "distributorsByGroup",
+    "distributorsByType",
+    "distributorsByStatus",
 
-  "consumersBySegment",
-  "dataChangesByType",
+    "consumersBySegment",
+    "dataChangesByType",
 
-  "purchaseOrdersByStatus",
-  "invoicesByStatus",
-  "costsByCategory",
-  "iyzicoTransactionsByStatus",
-  "paymentsByState"
+    "purchaseOrdersByStatus",
+    "invoicesByStatus",
+    "costsByCategory",
+    "iyzicoTransactionsByStatus",
+    "paymentsByState"
   ];
   if (groupIntents.includes(intent)) {
     const top = rows.slice(0, 5);
@@ -158,17 +176,17 @@ function summarizeRows(intent, rows, filters = {}) {
   }
 
   // 5. Trend (Zaman Serisi) İşlemleri
-const trendIntents = [
-  "clientTrend",
-  "distributorTrend",
-  "consumerTrend",
-  "dataChangeTrend",
+  const trendIntents = [
+    "clientTrend",
+    "distributorTrend",
+    "consumerTrend",
+    "dataChangeTrend",
 
-  // SALES TREND
-  "purchaseOrderTrend",
-  "invoiceTrend",
-  "invoicePaymentTrend"
-];
+    // SALES TREND
+    "purchaseOrderTrend",
+    "invoiceTrend",
+    "invoicePaymentTrend"
+  ];
   if (trendIntents.includes(intent)) {
     const total = rows.reduce((sum, item) => sum + Number(item.total || 0), 0);
     return `${rangeInfo} araliginda toplam ${formatNumber(total)} kayit/islem gerceklesti.`;

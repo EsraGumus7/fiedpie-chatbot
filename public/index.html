@@ -1,723 +1,951 @@
 <!doctype html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Saha Operasyonlari Chatbot</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        background: #f3f4f7;
-      }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saha Operasyonlari Chatbot</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f3f4f7;
+    }
+
+    .app {
+      max-width: 1380px;
+      margin: 18px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 220px 1fr 360px;
+      gap: 14px;
+      border-top: 6px solid #f26a2e;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin-top: 0;
+    }
+
+    .panel {
+      border: 1px solid #e4e7ef;
+      border-radius: 10px;
+      padding: 12px;
+      background: #fcfcfd;
+    }
+
+    .left-panel h3 {
+      margin-bottom: 8px;
+      letter-spacing: 0.8px;
+      color: #4b5c78;
+    }
+
+    input,
+    textarea,
+    button {
+      width: 100%;
+      padding: 9px;
+      border: 1px solid #d2d9e5;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    button {
+      background: #1d4ed8;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #ffffff;
+      color: #1f335f;
+      border: 1px solid #ccdaf5;
+    }
+
+    button.chart-btn {
+      margin-bottom: 8px;
+      text-align: center;
+      background: #ffffff;
+      color: #344767;
+      border: 1px solid #d9deea;
+      border-radius: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button.chart-btn.active {
+      background: #fff4ef;
+      color: #e55a1e;
+      border: 1px solid #f2b091;
+      box-shadow: 0 0 0 2px rgba(242, 106, 46, 0.1) inset;
+    }
+
+    button.chart-btn:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    button.chart-btn.locked {
+      opacity: 0.36;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+    }
+
+    .muted {
+      color: #5d6b8a;
+      font-size: 13px;
+    }
+
+    .center-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .chart-wrap {
+      background: #ffffff;
+      border: 1px solid #e4e9f3;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 360px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .kpi-card {
+      background: #fff7f3;
+      border: 1px solid #f5c7ae;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .kpi-title {
+      color: #46608f;
+      font-size: 12px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #cc4f1c;
+      margin-top: 4px;
+    }
+
+    .chat-log {
+      height: 430px;
+      overflow-y: auto;
+      border: 1px solid #d7e1f2;
+      border-radius: 10px;
+      padding: 10px 10px 2px;
+      background: #f5f8fc;
+      margin-bottom: 10px;
+    }
+
+    .msg {
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      line-height: 1.45;
+      font-size: 14px;
+      border: 1px solid transparent;
+    }
+
+    .msg.user {
+      background: #fff0e9;
+      border: 1px solid #f5d2c0;
+      margin-left: 28px;
+    }
+
+    .msg.bot {
+      background: #f2f5fa;
+      border: 1px solid #dce3f0;
+      margin-right: 28px;
+    }
+
+    .msg-role {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .msg-content {
+      white-space: normal;
+    }
+
+    .msg-content ul {
+      margin: 6px 0 0 16px;
+      padding: 0;
+    }
+
+    .msg-content li {
+      margin-bottom: 2px;
+    }
+
+    .msg.user .msg-role {
+      color: #c34e1e;
+    }
+
+    .msg.bot .msg-role {
+      color: #4f6386;
+    }
+
+    .chat-input {
+      border: 1px solid #d7e1f2;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .chat-input label {
+      font-size: 12px;
+      color: #5d6b8a;
+      font-weight: 600;
+    }
+
+    .send-row {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .send-row button {
+      width: 130px;
+      background: #f26a2e;
+    }
+
+    .send-row button:hover {
+      background: #e05c20;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chart-grid .chart-btn {
+      height: 82px;
+      margin-bottom: 0;
+    }
+
+    .chart-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chart-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 1px solid #c8d6ec;
+      color: #6e819f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: #f8fbff;
+    }
+
+    button.chart-btn.active .chart-icon {
+      border-color: #f2b091;
+      color: #e55a1e;
+      background: #fff3ec;
+    }
+
+    .chart-name {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .chart-sub {
+      font-size: 11px;
+      color: #8492a9;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    @media (max-width: 1180px) {
       .app {
-        max-width: 1380px;
-        margin: 18px auto;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        padding: 14px;
-        display: grid;
-        grid-template-columns: 220px 1fr 360px;
-        gap: 14px;
-        border-top: 6px solid #f26a2e;
+        grid-template-columns: 1fr;
       }
-      h1,
-      h2,
-      h3 {
-        margin-top: 0;
-      }
-      .panel {
-        border: 1px solid #e4e7ef;
-        border-radius: 10px;
-        padding: 12px;
-        background: #fcfcfd;
-      }
-      .left-panel h3 {
-        margin-bottom: 8px;
-        letter-spacing: 0.8px;
-        color: #4b5c78;
-      }
-      input,
-      textarea,
-      button {
-        width: 100%;
-        padding: 9px;
-        border: 1px solid #d2d9e5;
-        border-radius: 8px;
-        box-sizing: border-box;
-        font-size: 14px;
-      }
-      textarea {
-        min-height: 96px;
-        resize: vertical;
-      }
-      button {
-        background: #1d4ed8;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-      }
-      button.secondary {
-        background: #ffffff;
-        color: #1f335f;
-        border: 1px solid #ccdaf5;
-      }
-      button.chart-btn {
-        margin-bottom: 8px;
-        text-align: center;
-        background: #ffffff;
-        color: #344767;
-        border: 1px solid #d9deea;
-        border-radius: 10px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      button.chart-btn.active {
-        background: #fff4ef;
-        color: #e55a1e;
-        border: 1px solid #f2b091;
-        box-shadow: 0 0 0 2px rgba(242, 106, 46, 0.1) inset;
-      }
-      button.chart-btn:disabled {
-        opacity: 0.48;
-        cursor: not-allowed;
-      }
-      button.chart-btn.locked {
-        opacity: 0.36;
-        cursor: not-allowed;
-        filter: grayscale(0.2);
-      }
-      .muted {
-        color: #5d6b8a;
-        font-size: 13px;
-      }
-      .center-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
-      }
-      .chart-wrap {
-        background: #ffffff;
-        border: 1px solid #e4e9f3;
-        border-radius: 10px;
-        padding: 10px;
-        min-height: 360px;
-      }
-      .kpi-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-      .kpi-card {
-        background: #fff7f3;
-        border: 1px solid #f5c7ae;
-        border-radius: 10px;
-        padding: 10px;
-      }
-      .kpi-title {
-        color: #46608f;
-        font-size: 12px;
-      }
-      .kpi-value {
-        font-size: 22px;
-        font-weight: 700;
-        color: #cc4f1c;
-        margin-top: 4px;
-      }
-      .chat-log {
-        height: 430px;
-        overflow-y: auto;
-        border: 1px solid #d7e1f2;
-        border-radius: 10px;
-        padding: 10px 10px 2px;
-        background: #f5f8fc;
-        margin-bottom: 10px;
-      }
-      .msg {
-        border-radius: 10px;
-        padding: 8px 10px;
-        margin-bottom: 8px;
-        line-height: 1.45;
-        font-size: 14px;
-        border: 1px solid transparent;
-      }
-      .msg.user {
-        background: #fff0e9;
-        border: 1px solid #f5d2c0;
-        margin-left: 28px;
-      }
-      .msg.bot {
-        background: #f2f5fa;
-        border: 1px solid #dce3f0;
-        margin-right: 28px;
-      }
-      .msg-role {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-      }
-      .msg-content {
-        white-space: normal;
-      }
-      .msg-content ul {
-        margin: 6px 0 0 16px;
-        padding: 0;
-      }
-      .msg-content li {
-        margin-bottom: 2px;
-      }
-      .msg.user .msg-role {
-        color: #c34e1e;
-      }
-      .msg.bot .msg-role {
-        color: #4f6386;
-      }
-      .chat-input {
-        border: 1px solid #d7e1f2;
-        border-radius: 10px;
-        background: #ffffff;
-        padding: 10px;
-      }
-      .chat-input label {
-        font-size: 12px;
-        color: #5d6b8a;
-        font-weight: 600;
-      }
-      .send-row {
-        margin-top: 8px;
-        display: flex;
-        justify-content: flex-end;
-      }
-      .send-row button {
-        width: 130px;
-        background: #f26a2e;
-      }
-      .send-row button:hover {
-        background: #e05c20;
-      }
-      .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-      .chart-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-      .chart-grid .chart-btn {
-        height: 82px;
-        margin-bottom: 0;
-      }
-      .chart-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-      }
-      .chart-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 999px;
-        border: 1px solid #c8d6ec;
-        color: #6e819f;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        background: #f8fbff;
-      }
-      button.chart-btn.active .chart-icon {
-        border-color: #f2b091;
-        color: #e55a1e;
-        background: #fff3ec;
-      }
-      .chart-name {
-        font-size: 14px;
-        line-height: 1;
-      }
-      .chart-sub {
-        font-size: 11px;
-        color: #8492a9;
-        font-weight: 500;
-        line-height: 1;
-      }
-      @media (max-width: 1180px) {
-        .app {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <section class="panel left-panel">
-        <h3>Gorunum</h3>
-        <p class="muted">Sonuc geldikten sonra bir ture tiklayin; orta panel guncellenir.</p>
-        <div class="chart-grid">
-          <button class="chart-btn active" data-chart="stateBar">
-            <span class="chart-card">
-              <span class="chart-icon">▦</span>
-              <span class="chart-name">Bar</span>
-              <span class="chart-sub">Durum sayisi</span>
-            </span>
-          </button>
-          <button class="chart-btn" data-chart="statePie">
-            <span class="chart-card">
-              <span class="chart-icon">◔</span>
-              <span class="chart-name">Pie</span>
-              <span class="chart-sub">Kategori payi</span>
-            </span>
-          </button>
-          <button class="chart-btn" data-chart="fieldBar">
-            <span class="chart-card">
-              <span class="chart-icon">▤</span>
-              <span class="chart-name">Field</span>
-              <span class="chart-sub">Alan dagilimi</span>
-            </span>
-          </button>
-          <button class="chart-btn" data-chart="kpiCards">
-            <span class="chart-card">
-              <span class="chart-icon">☰</span>
-              <span class="chart-name">KPI</span>
-              <span class="chart-sub">Kart ozeti</span>
-            </span>
-          </button>
-          <button class="chart-btn" data-chart="visitTrend">
-            <span class="chart-card">
-              <span class="chart-icon">╱</span>
-              <span class="chart-name">Line</span>
-              <span class="chart-sub">Gunluk trend</span>
-            </span>
-          </button>
-          <button class="chart-btn" data-chart="typeBar">
-            <span class="chart-card">
-              <span class="chart-icon">◫</span>
-              <span class="chart-name">Type</span>
-              <span class="chart-sub">Visit tipi</span>
-            </span>
-          </button>
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <section class="panel left-panel">
+      <h3>Gorunum</h3>
+      <p class="muted">Sonuc geldikten sonra bir ture tiklayin; orta panel guncellenir.</p>
+      <div class="chart-grid">
+        <button class="chart-btn active" data-chart="stateBar">
+          <span class="chart-card">
+            <span class="chart-icon">▦</span>
+            <span class="chart-name">Bar</span>
+            <span class="chart-sub">Durum sayisi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="statePie">
+          <span class="chart-card">
+            <span class="chart-icon">◔</span>
+            <span class="chart-name">Pie</span>
+            <span class="chart-sub">Kategori payi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="fieldBar">
+          <span class="chart-card">
+            <span class="chart-icon">▤</span>
+            <span class="chart-name">Field</span>
+            <span class="chart-sub">Alan dagilimi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="kpiCards">
+          <span class="chart-card">
+            <span class="chart-icon">☰</span>
+            <span class="chart-name">KPI</span>
+            <span class="chart-sub">Kart ozeti</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="visitTrend">
+          <span class="chart-card">
+            <span class="chart-icon">╱</span>
+            <span class="chart-name">Line</span>
+            <span class="chart-sub">Gunluk trend</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="typeBar">
+          <span class="chart-card">
+            <span class="chart-icon">◫</span>
+            <span class="chart-name">Type</span>
+            <span class="chart-sub">Visit tipi</span>
+          </span>
+        </button>
+      </div>
+      <hr />
+      <label for="fieldName">Form Alani</label>
+      <input id="fieldName" type="text" placeholder="Orn: Raf" />
+      <label for="fieldId" style="margin-top:8px;display:block;">Field ID (opsiyonel)</label>
+      <input id="fieldId" type="number" placeholder="Orn: 64547" />
+      <p class="muted">Grafikler secilen tarih araligina gore ceker.</p>
+    </section>
+
+    <section class="panel">
+      <div class="center-header">
+        <h2 id="chartTitle">Duruma Gore Ziyaretler (Bar)</h2>
+        <button id="refreshBtn" class="secondary">Grafigi Yenile</button>
+      </div>
+      <div class="row">
+        <div>
+          <label for="startDate">Baslangic</label>
+          <input id="startDate" type="date" />
         </div>
-        <hr />
-        <label for="fieldName">Form Alani</label>
-        <input id="fieldName" type="text" placeholder="Orn: Raf" />
-        <label for="fieldId" style="margin-top:8px;display:block;">Field ID (opsiyonel)</label>
-        <input id="fieldId" type="number" placeholder="Orn: 64547" />
-        <p class="muted">Grafikler secilen tarih araligina gore ceker.</p>
-      </section>
-
-      <section class="panel">
-        <div class="center-header">
-          <h2 id="chartTitle">Duruma Gore Ziyaretler (Bar)</h2>
-          <button id="refreshBtn" class="secondary">Grafigi Yenile</button>
+        <div>
+          <label for="endDate">Bitis</label>
+          <input id="endDate" type="date" />
         </div>
-        <div class="row">
-          <div>
-            <label for="startDate">Baslangic</label>
-            <input id="startDate" type="date" />
-          </div>
-          <div>
-            <label for="endDate">Bitis</label>
-            <input id="endDate" type="date" />
-          </div>
+      </div>
+      <div class="chart-wrap" id="chartArea">
+        <canvas id="mainChart"></canvas>
+        <div id="kpiArea" style="display:none;" class="kpi-grid"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Asistan</h2>
+      <p class="muted">Veri backendden, anlatim LLM'den gelir.</p>
+      <div class="chat-log" id="chatLog">
+        <div class="msg bot">
+          <div class="msg-role">Asistan</div>
+          Merhaba! Soru yazarak baslayabilirsin.
         </div>
-        <div class="chart-wrap" id="chartArea">
-          <canvas id="mainChart"></canvas>
-          <div id="kpiArea" style="display:none;" class="kpi-grid"></div>
+      </div>
+      <div class="chat-input">
+        <label for="question">Soru</label>
+        <textarea id="question" placeholder="Orn: Bu ay gerceklesen ziyaret sayisi nedir?"></textarea>
+        <div class="send-row">
+          <button id="askBtn">Gonder</button>
         </div>
-      </section>
+      </div>
+    </section>
+  </div>
 
-      <section class="panel">
-        <h2>Asistan</h2>
-        <p class="muted">Veri backendden, anlatim LLM'den gelir.</p>
-        <div class="chat-log" id="chatLog">
-          <div class="msg bot">
-            <div class="msg-role">Asistan</div>
-            Merhaba! Soru yazarak baslayabilirsin.
-          </div>
-        </div>
-        <div class="chat-input">
-          <label for="question">Soru</label>
-          <textarea id="question" placeholder="Orn: Bu ay gerceklesen ziyaret sayisi nedir?"></textarea>
-          <div class="send-row">
-            <button id="askBtn">Gonder</button>
-          </div>
-        </div>
-      </section>
-    </div>
+  <script>
+    const chartTitle = document.getElementById("chartTitle");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const chartArea = document.getElementById("chartArea");
+    const kpiArea = document.getElementById("kpiArea");
+    const chartButtons = document.querySelectorAll(".chart-btn[data-chart]");
+    const askBtn = document.getElementById("askBtn");
+    const chatLog = document.getElementById("chatLog");
+    const startDateEl = document.getElementById("startDate");
+    const endDateEl = document.getElementById("endDate");
+    const fieldNameEl = document.getElementById("fieldName");
+    const fieldIdEl = document.getElementById("fieldId");
+    const questionEl = document.getElementById("question");
 
-    <script>
-      const chartTitle = document.getElementById("chartTitle");
-      const refreshBtn = document.getElementById("refreshBtn");
-      const chartArea = document.getElementById("chartArea");
-      const kpiArea = document.getElementById("kpiArea");
-      const chartButtons = document.querySelectorAll(".chart-btn[data-chart]");
-      const askBtn = document.getElementById("askBtn");
-      const chatLog = document.getElementById("chatLog");
-      const startDateEl = document.getElementById("startDate");
-      const endDateEl = document.getElementById("endDate");
-      const fieldNameEl = document.getElementById("fieldName");
-      const fieldIdEl = document.getElementById("fieldId");
-      const questionEl = document.getElementById("question");
+    let selectedChart = "stateBar";
+    let chartInstance = null;
+    let chartLoadSeq = 0;
+    let allowedCharts = new Set(["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"]);
+    let lastChatResult = null;
 
-      let selectedChart = "stateBar";
-      let chartInstance = null;
-      let chartLoadSeq = 0;
-      let allowedCharts = new Set(["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"]);
+    function addMessage(text, role) {
+      const div = document.createElement("div");
+      div.className = `msg ${role}`;
+      const roleLabel = role === "user" ? "Siz" : "Asistan";
+      div.innerHTML = `<div class="msg-role">${roleLabel}</div><div class="msg-content">${formatBotText(text, role)}</div>`;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
 
-      function addMessage(text, role) {
-        const div = document.createElement("div");
-        div.className = `msg ${role}`;
-        const roleLabel = role === "user" ? "Siz" : "Asistan";
-        div.innerHTML = `<div class="msg-role">${roleLabel}</div><div class="msg-content">${formatBotText(text, role)}</div>`;
-        chatLog.appendChild(div);
-        chatLog.scrollTop = chatLog.scrollHeight;
+    function escapeHtml(raw) {
+      return String(raw)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function formatBotText(text, role) {
+      const escaped = escapeHtml(text || "");
+      if (role !== "bot") {
+        return escaped.replace(/\n/g, "<br>");
       }
 
-      function escapeHtml(raw) {
-        return String(raw)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
+      const lines = escaped.split("\n").map((line) => line.trimEnd());
+      const listItems = [];
+      const normalLines = [];
+      lines.forEach((line) => {
+        if (line.startsWith("- ")) {
+          listItems.push(line.slice(2));
+        } else {
+          normalLines.push(line);
+        }
+      });
+
+      let html = normalLines.filter(Boolean).join("<br>");
+      if (listItems.length) {
+        html += `<ul>${listItems.map((item) => `<li>${item}</li>`).join("")}</ul>`;
       }
+      return html || escaped.replace(/\n/g, "<br>");
+    }
 
-      function formatBotText(text, role) {
-        const escaped = escapeHtml(text || "");
-        if (role !== "bot") {
-          return escaped.replace(/\n/g, "<br>");
-        }
+    function cleanAssistantAnswer(text) {
+      return String(text || "")
+        .replace(/\*\*/g, "")
+        .replace(/\r/g, "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line, idx, arr) => line || (idx > 0 && arr[idx - 1]))
+        .join("\n")
+        .trim();
+    }
 
-        const lines = escaped.split("\n").map((line) => line.trimEnd());
-        const listItems = [];
-        const normalLines = [];
-        lines.forEach((line) => {
-          if (line.startsWith("- ")) {
-            listItems.push(line.slice(2));
-          } else {
-            normalLines.push(line);
-          }
-        });
-
-        let html = normalLines.filter(Boolean).join("<br>");
-        if (listItems.length) {
-          html += `<ul>${listItems.map((item) => `<li>${item}</li>`).join("")}</ul>`;
-        }
-        return html || escaped.replace(/\n/g, "<br>");
+    function applyFiltersToInputs(filters = {}) {
+      if (filters.startDate) {
+        startDateEl.value = String(filters.startDate).slice(0, 10);
       }
-
-      function cleanAssistantAnswer(text) {
-        return String(text || "")
-          .replace(/\*\*/g, "")
-          .replace(/\r/g, "")
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line, idx, arr) => line || (idx > 0 && arr[idx - 1]))
-          .join("\n")
-          .trim();
+      if (filters.endDate) {
+        endDateEl.value = String(filters.endDate).slice(0, 10);
       }
-
-      function applyFiltersToInputs(filters = {}) {
-        if (filters.startDate) {
-          startDateEl.value = String(filters.startDate).slice(0, 10);
-        }
-        if (filters.endDate) {
-          endDateEl.value = String(filters.endDate).slice(0, 10);
-        }
-        if (filters.fieldName) {
-          fieldNameEl.value = filters.fieldName;
-        }
-        if (filters.fieldId) {
-          fieldIdEl.value = filters.fieldId;
-        }
+      if (filters.fieldName) {
+        fieldNameEl.value = filters.fieldName;
       }
-
-      function getAllowedChartsForIntent(intent) {
-        const normalized = String(intent || "").trim().toLowerCase();
-        const map = {
-          visitcountrealized: ["kpiCards"],
-          avgvisitduration: ["kpiCards"],
-          visitsbystate: ["stateBar", "statePie"],
-          visitsbytype: ["typeBar", "statePie"],
-          visittrend: ["visitTrend"],
-          dynamicfieldsummary: ["fieldBar"],
-          dynamictopfields: ["fieldBar"],
-        };
-        return map[normalized] || ["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"];
+      if (filters.fieldId) {
+        fieldIdEl.value = filters.fieldId;
       }
+    }
 
-      function applyChartAvailability(allowedList) {
-        allowedCharts = new Set(allowedList);
-        chartButtons.forEach((btn) => {
-          const key = btn.dataset.chart;
-          const isAllowed = allowedCharts.has(key);
-          btn.classList.toggle("locked", !isAllowed);
-          btn.setAttribute("aria-disabled", isAllowed ? "false" : "true");
-        });
+    function getAllowedChartsForIntent(intent) {
+      const normalized = String(intent || "").trim().toLowerCase();
+      const map = {
+        visitcountrealized: ["kpiCards"],
+        avgvisitduration: ["kpiCards"],
+        visitsbystate: ["stateBar", "statePie"],
+        visitsbytype: ["typeBar", "statePie"],
+        visittrend: ["visitTrend"],
+        dynamicfieldsummary: ["fieldBar"],
+        dynamictopfields: ["fieldBar"],
+      };
+      return map[normalized] || ["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"];
+    }
 
-        if (!allowedCharts.has(selectedChart)) {
-          const firstAllowed = allowedList[0];
-          if (firstAllowed) {
-            applySelectedChart(firstAllowed);
-          }
+    function applyChartAvailability(allowedList) {
+      allowedCharts = new Set(allowedList);
+      chartButtons.forEach((btn) => {
+        const key = btn.dataset.chart;
+        const isAllowed = allowedCharts.has(key);
+        btn.classList.toggle("locked", !isAllowed);
+        btn.setAttribute("aria-disabled", isAllowed ? "false" : "true");
+      });
+
+      if (!allowedCharts.has(selectedChart)) {
+        const firstAllowed = allowedList[0];
+        if (firstAllowed) {
+          applySelectedChart(firstAllowed);
         }
       }
+    }
 
-      function getFilters() {
-        return {
-          startDate: startDateEl.value || null,
-          endDate: endDateEl.value || null,
-          fieldName: fieldNameEl.value || null,
-          fieldId: fieldIdEl.value || null,
-        };
+    function getFilters() {
+      return {
+        startDate: startDateEl.value || null,
+        endDate: endDateEl.value || null,
+        fieldName: fieldNameEl.value || null,
+        fieldId: fieldIdEl.value || null,
+      };
+    }
+
+    async function fetchJson(url, options = null) {
+      const response = await fetch(url, options || undefined);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Bilinmeyen hata");
       }
+      return data;
+    }
 
-      async function fetchJson(url, options = null) {
-        const response = await fetch(url, options || undefined);
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Bilinmeyen hata");
-        }
-        return data;
+    function resetChartArea(showKpi) {
+      const canvas = document.getElementById("mainChart");
+      const existing = Chart.getChart(canvas);
+      if (existing) {
+        existing.destroy();
       }
-
-      function resetChartArea(showKpi) {
-        const canvas = document.getElementById("mainChart");
-        const existing = Chart.getChart(canvas);
-        if (existing) {
-          existing.destroy();
-        }
-        if (chartInstance) {
-          chartInstance.destroy();
-          chartInstance = null;
-        }
-        canvas.style.display = showKpi ? "none" : "block";
-        kpiArea.style.display = showKpi ? "grid" : "none";
-        kpiArea.innerHTML = "";
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
       }
+      canvas.style.display = showKpi ? "none" : "block";
+      kpiArea.style.display = showKpi ? "grid" : "none";
+      kpiArea.innerHTML = "";
+    }
 
-      function createChart(type, labels, values, label) {
-        const ctx = document.getElementById("mainChart");
-        const existing = Chart.getChart(ctx);
-        if (existing) {
-          existing.destroy();
-        }
-        const isLine = type === "line";
-        chartInstance = new Chart(ctx, {
-          type,
-          data: {
-            labels,
-            datasets: [
-              {
-                label,
-                data: values,
-                backgroundColor: isLine
-                  ? "rgba(29, 78, 216, 0.18)"
-                  : ["#1d4ed8", "#0ea5e9", "#14b8a6", "#8b5cf6", "#22c55e", "#f59e0b"],
-                borderColor: isLine ? "#f26a2e" : undefined,
-                borderWidth: isLine ? 3 : 1,
-                tension: isLine ? 0.25 : 0,
-                fill: isLine,
-              },
-            ],
-          },
-          options: { responsive: true, maintainAspectRatio: false },
-        });
+    function createChart(type, labels, values, label) {
+      const ctx = document.getElementById("mainChart");
+      const existing = Chart.getChart(ctx);
+      if (existing) {
+        existing.destroy();
       }
-
-      function applySelectedChart(chartKey) {
-        if (!allowedCharts.has(chartKey)) {
-          return;
-        }
-        selectedChart = chartKey;
-        chartButtons.forEach((b) => b.classList.remove("active"));
-        const activeBtn = document.querySelector(`.chart-btn[data-chart="${chartKey}"]`);
-        if (activeBtn) {
-          activeBtn.classList.add("active");
-        }
-        const titles = {
-          stateBar: "Duruma Gore Ziyaretler (Bar)",
-          statePie: "Duruma Gore Ziyaretler (Pie)",
-          visitTrend: "Gunluk Ziyaret Trendi (Line)",
-          typeBar: "Ziyaret Tipi Dagilimi (Bar)",
-          fieldBar: "Dynamic Field Dagilimi (Bar)",
-          kpiCards: "KPI Ozet Kartlari",
-        };
-        chartTitle.textContent = titles[chartKey] || "Grafik";
-      }
-
-      function chartForIntent(intent) {
-        const normalized = String(intent || "").trim().toLowerCase();
-        const map = {
-          visitcountrealized: "kpiCards",
-          avgvisitduration: "kpiCards",
-          visitsbystate: "stateBar",
-          visitsbytype: "typeBar",
-          visittrend: "visitTrend",
-          dynamicfieldsummary: "fieldBar",
-          dynamictopfields: "fieldBar",
-        };
-        return map[normalized] || null;
-      }
-
-      function renderKpiCards(cards) {
-        cards.forEach((card) => {
-          const el = document.createElement("div");
-          el.className = "kpi-card";
-          el.innerHTML = `<div class="kpi-title">${card.title}</div><div class="kpi-value">${card.value}</div>`;
-          kpiArea.appendChild(el);
-        });
-      }
-
-      async function loadChartData() {
-        const seq = ++chartLoadSeq;
-        const filters = getFilters();
-        if (selectedChart === "visitTrend" && !filters.startDate && !filters.endDate) {
-          const today = new Date();
-          const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          start.setDate(start.getDate() - 30);
-          const s = start.toISOString().slice(0, 10);
-          const e = today.toISOString().slice(0, 10);
-          startDateEl.value = s;
-          endDateEl.value = e;
-          filters.startDate = s;
-          filters.endDate = e;
-        }
-        const params = new URLSearchParams();
-        if (filters.startDate) params.set("startDate", filters.startDate);
-        if (filters.endDate) params.set("endDate", filters.endDate);
-        if (filters.fieldName) params.set("fieldName", filters.fieldName);
-        if (filters.fieldId) params.set("fieldId", filters.fieldId);
-
-        if (selectedChart === "kpiCards") {
-          resetChartArea(true);
-          const [countRes, durationRes, stateRes, fieldRes] = await Promise.all([
-            fetchJson(`/api/visit/count?${params.toString()}`),
-            fetchJson(`/api/visit/duration/avg?${params.toString()}`),
-            fetchJson(`/api/visit/by-state?${params.toString()}`),
-            fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`),
-          ]);
-          if (seq !== chartLoadSeq) return;
-
-          renderKpiCards([
-            { title: "Gerceklesen Ziyaret", value: countRes.rows?.[0]?.total ?? "-" },
+      const isLine = type === "line";
+      chartInstance = new Chart(ctx, {
+        type,
+        data: {
+          labels,
+          datasets: [
             {
-              title: "Ort. Sure (dk)",
-              value:
-                durationRes.rows?.[0]?.avgDurationSec != null
-                  ? Math.round(durationRes.rows[0].avgDurationSec / 60)
-                  : "-",
+              label,
+              data: values,
+              backgroundColor: isLine
+                ? "rgba(29, 78, 216, 0.18)"
+                : ["#1d4ed8", "#0ea5e9", "#14b8a6", "#8b5cf6", "#22c55e", "#f59e0b"],
+              borderColor: isLine ? "#f26a2e" : undefined,
+              borderWidth: isLine ? 3 : 1,
+              tension: isLine ? 0.25 : 0,
+              fill: isLine,
             },
-            { title: "Ziyaret Durum Cesidi", value: stateRes.rows?.length ?? 0 },
-            { title: "Eslesen Field", value: fieldRes.rows?.length ?? 0 },
-          ]);
-          return;
-        }
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false },
+      });
+    }
+
+    function applySelectedChart(chartKey) {
+      if (!allowedCharts.has(chartKey)) {
+        return;
+      }
+      selectedChart = chartKey;
+      chartButtons.forEach((b) => b.classList.remove("active"));
+      const activeBtn = document.querySelector(`.chart-btn[data-chart="${chartKey}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add("active");
+      }
+      const titles = {
+        stateBar: "Duruma Gore Ziyaretler (Bar)",
+        statePie: "Duruma Gore Ziyaretler (Pie)",
+        visitTrend: "Gunluk Ziyaret Trendi (Line)",
+        typeBar: "Ziyaret Tipi Dagilimi (Bar)",
+        fieldBar: "Dynamic Field Dagilimi (Bar)",
+        kpiCards: "KPI Ozet Kartlari",
+      };
+      chartTitle.textContent = titles[chartKey] || "Grafik";
+    }
+
+    function chartForIntent(intent) {
+      const normalized = String(intent || "").trim().toLowerCase();
+      const map = {
+        visitcountrealized: "kpiCards",
+        avgvisitduration: "kpiCards",
+        visitsbystate: "stateBar",
+        visitsbytype: "typeBar",
+        visittrend: "visitTrend",
+        dynamicfieldsummary: "fieldBar",
+        dynamictopfields: "fieldBar",
+      };
+      return map[normalized] || null;
+    }
+
+    function renderKpiCards(cards) {
+      cards.forEach((card) => {
+        const el = document.createElement("div");
+        el.className = "kpi-card";
+        el.innerHTML = `<div class="kpi-title">${card.title}</div><div class="kpi-value">${card.value}</div>`;
+        kpiArea.appendChild(el);
+      });
+    }
+
+    function formatDisplayNumber(value) {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      const numeric = Number(value);
+      if (!Number.isNaN(numeric)) {
+        return numeric.toLocaleString("tr-TR");
+      }
+
+      return String(value);
+    }
+
+    function renderChatResultVisualization(data, preferredChart = "stateBar") {
+      if (!data || data.needsClarification) {
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = "Netleştirme Gerekli";
+        renderKpiCards([
+          {
+            title: "Sorgu net değil",
+            value: "Lütfen seçeneklerden birini belirtin.",
+          },
+        ]);
+        return true;
+      }
+
+      const normalizedIntent = String(data.intent || "").trim().toLowerCase();
+      const rows = Array.isArray(data.rows) ? data.rows : [];
+      const firstRow = rows[0] || {};
+
+      const kpiTitleMap = {
+        clientcountactive: "Aktif Firma Sayısı",
+        clientcounttotal: "Toplam Firma Sayısı",
+        totalinvoices: "Kesilen Fatura Adedi",
+        totalinvoicecount: "Kesilen Fatura Adedi",
+        invoicecount: "Kesilen Fatura Adedi",
+        usertotalcount: "Toplam Kullanıcı Sayısı",
+        visitcountrealized: "Gerçekleşen Ziyaret Sayısı",
+        activecampaigns: "Aktif Kampanya Sayısı",
+      };
+
+      const chartTitleMap = {
+        usersbyrole: "Rollere Göre Kullanıcı Dağılımı",
+        visitsbytype: "Ziyaret Tipi Dağılımı",
+        visitsbystate: "Duruma Göre Ziyaretler",
+        clientsbygroup: "Gruplara Göre Firma Dağılımı",
+        clientsbystate: "Duruma Göre Firma Dağılımı",
+        clientsbycountry: "Ülkelere Göre Firma Dağılımı",
+        distributorsbystatus: "Duruma Göre Distribütör Dağılımı",
+      };
+
+      if (!rows.length) {
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = "Sorgu Sonucu";
+        renderKpiCards([
+          {
+            title: data.intent || "Sorgu Sonucu",
+            value: "Veri bulunamadı.",
+          },
+        ]);
+        return true;
+      }
+
+      const labelCandidates = [
+        "roleName",
+        "groupName",
+        "statusName",
+        "visitType",
+        "visitState",
+        "countryName",
+        "stateName",
+        "cityName",
+        "regionName",
+        "clientName",
+        "name",
+        "label",
+        "type",
+        "category",
+      ];
+
+      const valueCandidates = [
+        "total",
+        "totalUsers",
+        "userCount",
+        "count",
+        "responseCount",
+        "value",
+        "amount",
+        "totalAmount",
+      ];
+
+      const numericKeys = Object.keys(firstRow).filter((key) => {
+        const value = firstRow[key];
+        return value !== null && value !== undefined && value !== "" && !Number.isNaN(Number(value));
+      });
+
+      const labelKey =
+        labelCandidates.find((key) => firstRow[key] !== undefined) ||
+        Object.keys(firstRow).find((key) => !numericKeys.includes(key));
+
+      const valueKey =
+        valueCandidates.find((key) => firstRow[key] !== undefined) ||
+        numericKeys[0];
+
+      // Tek satır + sayısal sonuç: KPI kartı
+      if (rows.length === 1 && valueKey) {
+        const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
+        const value = firstRow[valueKey];
+
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = title;
+
+        renderKpiCards([
+          {
+            title,
+            value: formatDisplayNumber(value),
+          },
+        ]);
+
+        return true;
+      }
+
+      // Çok satırlı sonuç: Bar/Pie grafik
+      if (rows.length > 1 && labelKey && valueKey) {
+        const title = chartTitleMap[normalizedIntent] || data.intent || "Dağılım Grafiği";
+        const allowed = ["stateBar", "statePie"];
+        const chartKey = allowed.includes(preferredChart) ? preferredChart : "stateBar";
+        const chartType = chartKey === "statePie" ? "pie" : "bar";
+
+        chartLoadSeq++;
+        applyChartAvailability(allowed);
+        applySelectedChart(chartKey);
+        chartTitle.textContent = chartKey === "statePie" ? `${title} (Pie)` : `${title} (Bar)`;
 
         resetChartArea(false);
 
-        if (selectedChart === "visitTrend") {
-          const data = await fetchJson(`/api/visit/trend?${params.toString()}`);
-          if (seq !== chartLoadSeq) return;
-          const labels = data.rows.map((x) => String(x.visitDate).slice(0, 10));
-          const values = data.rows.map((x) => x.total);
-          createChart("line", labels, values, "Gunluk Gerceklesen Ziyaret");
-          return;
-        }
+        const labels = rows.map((row) => String(row[labelKey] ?? "Bilinmeyen"));
+        const values = rows.map((row) => Number(row[valueKey] || 0));
 
-        if (selectedChart === "fieldBar") {
-          const data = await fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`);
-          if (seq !== chartLoadSeq) return;
-          const labels = data.rows.map((x) => x.fieldName);
-          const values = data.rows.map((x) => x.responseCount);
-          createChart("bar", labels, values, "Field Yanit Sayisi");
-          return;
-        }
+        createChart(chartType, labels, values, "Kayıt Sayısı");
 
-        if (selectedChart === "typeBar") {
-          const data = await fetchJson(`/api/visit/by-type?${params.toString()}`);
-          if (seq !== chartLoadSeq) return;
-          const labels = data.rows.map((x) => x.visitType);
-          const values = data.rows.map((x) => x.total);
-          createChart("bar", labels, values, "Visit Type Dagilimi");
-          return;
-        }
-
-        const data = await fetchJson(`/api/visit/by-state?${params.toString()}`);
-        if (seq !== chartLoadSeq) return;
-        const labels = data.rows.map((x) => x.visitState);
-        const values = data.rows.map((x) => x.total);
-        const type = selectedChart === "statePie" ? "pie" : "bar";
-        createChart(type, labels, values, "Ziyaret Sayisi");
+        return true;
       }
 
-      chartButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (!allowedCharts.has(btn.dataset.chart)) {
-            addMessage("Bu soru icin bu grafik tipi uygun degil.", "bot");
-            return;
-          }
-          applySelectedChart(btn.dataset.chart);
-          loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
-        });
-      });
+      chartLoadSeq++;
+      resetChartArea(true);
+      applyChartAvailability(["kpiCards"]);
+      applySelectedChart("kpiCards");
+      chartTitle.textContent = "Sorgu Sonucu";
 
-      refreshBtn.addEventListener("click", () => {
-        loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
-      });
+      renderKpiCards([
+        {
+          title: data.intent || "Sorgu Sonucu",
+          value: "Bu sonuç için uygun grafik oluşturulamadı.",
+        },
+      ]);
 
-      askBtn.addEventListener("click", async () => {
-        const question = questionEl.value;
-        const filters = getFilters();
+      return true;
+    }
 
-        if (!question.trim()) {
-          addMessage("Lutfen soru gir.", "bot");
+    async function loadChartData() {
+      const seq = ++chartLoadSeq;
+      const filters = getFilters();
+      if (selectedChart === "visitTrend" && !filters.startDate && !filters.endDate) {
+        const today = new Date();
+        const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        start.setDate(start.getDate() - 30);
+        const s = start.toISOString().slice(0, 10);
+        const e = today.toISOString().slice(0, 10);
+        startDateEl.value = s;
+        endDateEl.value = e;
+        filters.startDate = s;
+        filters.endDate = e;
+      }
+      const params = new URLSearchParams();
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
+      if (filters.fieldName) params.set("fieldName", filters.fieldName);
+      if (filters.fieldId) params.set("fieldId", filters.fieldId);
+
+      if (selectedChart === "kpiCards") {
+        resetChartArea(true);
+        const [countRes, durationRes, stateRes, fieldRes] = await Promise.all([
+          fetchJson(`/api/visit/count?${params.toString()}`),
+          fetchJson(`/api/visit/duration/avg?${params.toString()}`),
+          fetchJson(`/api/visit/by-state?${params.toString()}`),
+          fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`),
+        ]);
+        if (seq !== chartLoadSeq) return;
+
+        renderKpiCards([
+          { title: "Gerceklesen Ziyaret", value: countRes.rows?.[0]?.total ?? "-" },
+          {
+            title: "Ort. Sure (dk)",
+            value:
+              durationRes.rows?.[0]?.avgDurationSec != null
+                ? Math.round(durationRes.rows[0].avgDurationSec / 60)
+                : "-",
+          },
+          { title: "Ziyaret Durum Cesidi", value: stateRes.rows?.length ?? 0 },
+          { title: "Eslesen Field", value: fieldRes.rows?.length ?? 0 },
+        ]);
+        return;
+      }
+
+      resetChartArea(false);
+
+      if (selectedChart === "visitTrend") {
+        const data = await fetchJson(`/api/visit/trend?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => String(x.visitDate).slice(0, 10));
+        const values = data.rows.map((x) => x.total);
+        createChart("line", labels, values, "Gunluk Gerceklesen Ziyaret");
+        return;
+      }
+
+      if (selectedChart === "fieldBar") {
+        const data = await fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.fieldName);
+        const values = data.rows.map((x) => x.responseCount);
+        createChart("bar", labels, values, "Field Yanit Sayisi");
+        return;
+      }
+
+      if (selectedChart === "typeBar") {
+        const data = await fetchJson(`/api/visit/by-type?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.visitType);
+        const values = data.rows.map((x) => x.total);
+        createChart("bar", labels, values, "Visit Type Dagilimi");
+        return;
+      }
+
+      const data = await fetchJson(`/api/visit/by-state?${params.toString()}`);
+      if (seq !== chartLoadSeq) return;
+      const labels = data.rows.map((x) => x.visitState);
+      const values = data.rows.map((x) => x.total);
+      const type = selectedChart === "statePie" ? "pie" : "bar";
+      createChart(type, labels, values, "Ziyaret Sayisi");
+    }
+
+    chartButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chartKey = btn.dataset.chart;
+
+        if (!allowedCharts.has(chartKey)) {
+          addMessage("Bu soru icin bu grafik tipi uygun degil.", "bot");
           return;
         }
 
-        addMessage(question, "user");
-        addMessage("Sorgu calisiyor...", "bot");
-
-        try {
-          const data = await fetchJson("/api/chat/query", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              question,
-              filters,
-            }),
-          });
-          const dateInfo =
-            data.filters?.startDate || data.filters?.endDate
-              ? `\nTarih: ${data.filters?.startDate || "-"} / ${data.filters?.endDate || "-"}`
-              : "";
-          applyFiltersToInputs(data.filters || {});
-          const cleanAnswer = cleanAssistantAnswer(data.answer);
-          const botText = `${cleanAnswer}${dateInfo}`;
-          chatLog.lastElementChild.remove();
-          addMessage(botText, "bot");
-          const chartKey = chartForIntent(data.intent);
-          applyChartAvailability(getAllowedChartsForIntent(data.intent));
-          if (chartKey) {
-            applySelectedChart(chartKey);
-          }
-          questionEl.value = "";
-          await loadChartData();
-        } catch (error) {
-          chatLog.lastElementChild.remove();
-          addMessage(`Hata: ${error.message}`, "bot");
+        if (lastChatResult) {
+          renderChatResultVisualization(lastChatResult, chartKey);
+          return;
         }
+
+        applySelectedChart(chartKey);
+        loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
       });
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      if (lastChatResult) {
+        renderChatResultVisualization(lastChatResult, selectedChart);
+        return;
+      }
 
       loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
-    </script>
-  </body>
-  </html>
+    });
+
+    askBtn.addEventListener("click", async () => {
+      const question = questionEl.value;
+      const filters = getFilters();
+
+      if (!question.trim()) {
+        addMessage("Lutfen soru gir.", "bot");
+        return;
+      }
+
+      addMessage(question, "user");
+      addMessage("Sorgu calisiyor...", "bot");
+
+      try {
+        const data = await fetchJson("/api/chat/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question,
+            filters,
+          }),
+        });
+        const dateInfo =
+          data.filters?.startDate || data.filters?.endDate
+            ? `\nTarih: ${data.filters?.startDate || "-"} / ${data.filters?.endDate || "-"}`
+            : "";
+        applyFiltersToInputs(data.filters || {});
+        const cleanAnswer = cleanAssistantAnswer(data.answer);
+        const botText = `${cleanAnswer}${dateInfo}`;
+        chatLog.lastElementChild.remove();
+        addMessage(botText, "bot");
+
+        lastChatResult = data;
+        renderChatResultVisualization(data);
+
+        questionEl.value = "";
+
+      } catch (error) {
+        chatLog.lastElementChild.remove();
+        addMessage(`Hata: ${error.message}`, "bot");
+      }
+    });
+
+    loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
+  </script>
+</body>
+
+</html>
