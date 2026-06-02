@@ -1,9 +1,341 @@
 {
   "domain": "users",
-  "version": "1.0.0",
-  "owner": "",
-  "refresh_frequency": "",
-  "tables": [],
-  "relations": [],
-  "business_glossary_tr": []
+  "version": "1.1.0",
+  "owner": "Kisi 3 - AI Security Engine",
+  "refresh_frequency": "on_demand",
+  "tables": [
+    {
+      "name": "dbo.User",
+      "alias": "u",
+      "purpose": "Kullanici temel bilgileri ve bazi scope alanlari",
+      "key_columns": [
+        "Id",
+        "SubscriptionId",
+        "Deleted",
+        "Blocked",
+        "ClientUser",
+        "ManagerOfAllTeams",
+        "ProductGroupId"
+      ],
+      "sensitive_columns": [
+        "Email",
+        "Phone",
+        "MobilePhone",
+        "Password",
+        "ApiKey",
+        "Latitude",
+        "Longitude"
+      ]
+    },
+    {
+      "name": "dbo.UserRole",
+      "alias": "ur",
+      "purpose": "Kullanici-role ara tablosu",
+      "key_columns": [
+        "UserId",
+        "RoleId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.Role",
+      "alias": "r",
+      "purpose": "Role tanimlari ve DefaultAdmin/DefaultFieldForce flagleri",
+      "key_columns": [
+        "Id",
+        "Name",
+        "SubscriptionId",
+        "Deleted",
+        "DefaultAdmin",
+        "DefaultFieldForce"
+      ]
+    },
+    {
+      "name": "dbo.UserTeam",
+      "alias": "ut",
+      "purpose": "Kullanici-takim iliskisi; Member/Manager ayrimi burada tutulur",
+      "key_columns": [
+        "UserId",
+        "TeamId",
+        "Deleted",
+        "Member",
+        "Manager"
+      ]
+    },
+    {
+      "name": "dbo.Team",
+      "alias": "t",
+      "purpose": "Takim tanimlari",
+      "key_columns": [
+        "Id",
+        "Name",
+        "SubscriptionId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.ClientUser",
+      "alias": "cu",
+      "purpose": "Assigned Clients / direct client scope",
+      "key_columns": [
+        "UserId",
+        "ClientId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.Client",
+      "alias": "c",
+      "purpose": "Client/musteri kayitlari",
+      "key_columns": [
+        "Id",
+        "Name",
+        "SubscriptionId",
+        "Deleted",
+        "Passive",
+        "Archived"
+      ]
+    },
+    {
+      "name": "dbo.UserClientTag",
+      "alias": "uct",
+      "purpose": "Kullaniciya atanan client tag iliskisi",
+      "key_columns": [
+        "UserId",
+        "TagId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.ClientTag",
+      "alias": "ct",
+      "purpose": "Tag -> Client kapsam iliskisi",
+      "key_columns": [
+        "TagId",
+        "ClientId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.Tag",
+      "alias": "tg",
+      "purpose": "Client/Product/Skill tag tanimlari",
+      "key_columns": [
+        "Id",
+        "Name",
+        "SubscriptionId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.UserBrand",
+      "alias": "ub",
+      "purpose": "Assigned Main Customers / Brand scope",
+      "key_columns": [
+        "UserId",
+        "BrandId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.Brand",
+      "alias": "b",
+      "purpose": "Main Customer / Brand tanimlari",
+      "key_columns": [
+        "Id",
+        "Name",
+        "SubscriptionId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.UserProductTag",
+      "alias": "upt",
+      "purpose": "Kullanici-product tag iliskisi",
+      "key_columns": [
+        "UserId",
+        "TagId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.ProductTag",
+      "alias": "pt",
+      "purpose": "Tag -> Product kapsam iliskisi",
+      "key_columns": [
+        "TagId",
+        "ProductId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.Product",
+      "alias": "p",
+      "purpose": "Product/service kayitlari",
+      "key_columns": [
+        "Id",
+        "Name",
+        "SubscriptionId",
+        "Deleted"
+      ]
+    },
+    {
+      "name": "dbo.UserDevice",
+      "alias": "ud",
+      "purpose": "Kullanici cihaz kayitlari",
+      "key_columns": [
+        "UserId",
+        "Deleted",
+        "TerminationDate"
+      ],
+      "sensitive_columns": [
+        "DeviceId"
+      ]
+    },
+    {
+      "name": "dbo.UserLogin",
+      "alias": "ul",
+      "purpose": "Login gecmisi",
+      "key_columns": [
+        "UserId",
+        "CreateTime",
+        "LoginSuccess",
+        "App",
+        "Deleted"
+      ],
+      "sensitive_columns": [
+        "Ip",
+        "Email",
+        "Domain"
+      ]
+    },
+    {
+      "name": "dbo.UserTag",
+      "alias": "utg",
+      "purpose": "User Skills iliskisi",
+      "key_columns": [
+        "UserId",
+        "TagId",
+        "Deleted"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "name": "role",
+      "chain": "User -> UserRole -> Role",
+      "join": "u.Id = ur.UserId AND ur.RoleId = r.Id",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "ur.Deleted = 0",
+        "r.Deleted = 0",
+        "u.SubscriptionId = r.SubscriptionId"
+      ]
+    },
+    {
+      "name": "team",
+      "chain": "User -> UserTeam -> Team",
+      "join": "u.Id = ut.UserId AND ut.TeamId = t.Id",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "ut.Deleted = 0",
+        "t.Deleted = 0",
+        "u.SubscriptionId = t.SubscriptionId",
+        "(ut.Member = 1 OR ut.Manager = 1)"
+      ]
+    },
+    {
+      "name": "direct_client_scope",
+      "chain": "User -> ClientUser -> Client",
+      "join": "u.Id = cu.UserId AND cu.ClientId = c.Id",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "cu.Deleted = 0",
+        "c.Deleted = 0",
+        "u.SubscriptionId = c.SubscriptionId"
+      ]
+    },
+    {
+      "name": "client_tag_scope",
+      "chain": "User -> UserClientTag -> Tag -> ClientTag -> Client",
+      "join": "u.Id = uct.UserId AND uct.TagId = tg.Id AND tg.Id = ct.TagId AND ct.ClientId = c.Id",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "uct.Deleted = 0",
+        "tg.Deleted = 0",
+        "ct.Deleted = 0",
+        "c.Deleted = 0",
+        "u.SubscriptionId = tg.SubscriptionId",
+        "c.SubscriptionId = tg.SubscriptionId"
+      ]
+    },
+    {
+      "name": "main_customer_scope",
+      "chain": "User -> UserBrand -> Brand",
+      "join": "u.Id = ub.UserId AND ub.BrandId = b.Id",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "ub.Deleted = 0",
+        "b.Deleted = 0",
+        "u.SubscriptionId = b.SubscriptionId"
+      ]
+    },
+    {
+      "name": "product_group",
+      "chain": "User.ProductGroupId -> ProductGroup.Id",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "u.SubscriptionId = productGroup.SubscriptionId"
+      ]
+    },
+    {
+      "name": "product_tag_scope",
+      "chain": "User -> UserProductTag -> Tag -> ProductTag -> Product",
+      "safe_filters": [
+        "u.Deleted = 0",
+        "upt.Deleted = 0",
+        "tg.Deleted = 0",
+        "pt.Deleted = 0",
+        "p.Deleted = 0",
+        "u.SubscriptionId = tg.SubscriptionId",
+        "p.SubscriptionId = tg.SubscriptionId"
+      ]
+    }
+  ],
+  "business_glossary_tr": [
+    {
+      "term": "Role",
+      "meaning": "Modul/aksiyon/intent izni icin kullanilir; veri gorunurlugu icin tek basina yeterli degildir."
+    },
+    {
+      "term": "ManageAll / ManagerOfAllTeams",
+      "meaning": "UI testlerinde genis visibility saglar; tenant filtresi yine korunmalidir."
+    },
+    {
+      "term": "Assigned Clients",
+      "meaning": "dbo.ClientUser uzerinden direct client scope verir."
+    },
+    {
+      "term": "Client Tag",
+      "meaning": "UserClientTag -> Tag -> ClientTag -> Client zinciriyle client segment scope verir."
+    },
+    {
+      "term": "Team Manager",
+      "meaning": "UserTeam.Manager = 1 ile gelir; Role tablosundan gelmez."
+    },
+    {
+      "term": "Team Member",
+      "meaning": "Operasyonel iliski sinyalidir; UI testinde tek basina visibility genisletmemistir."
+    },
+    {
+      "term": "Sensitive columns",
+      "meaning": "Email, phone, password, api key, lokasyon, cihaz ve login detaylari AI tarafinda maskelenmeli veya engellenmelidir."
+    }
+  ],
+  "security_notes": [
+    "Role.Name tek basina guvenilir yetki sinyali degildir; DefaultAdmin/DefaultFieldForce flagleri dikkate alinmalidir.",
+    "Her tenant tablosunda SubscriptionId filtresi zorunlu kabul edilmelidir.",
+    "Soft delete kullanan tablolarda Deleted = 0 filtresi zorunludur.",
+    "UserContext olmadan AI sorgulari production'da calistirilmamalidir."
+  ]
 }

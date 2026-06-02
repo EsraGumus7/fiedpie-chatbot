@@ -12,9 +12,10 @@ function buildQueryPlan(question, filters = {}, userContext = {}) {
       options: resolved.options,
       candidates: resolved.candidates,
       user_scope: {
-        tenantId: userContext.tenantId || null,
+        subscriptionId: userContext.subscriptionId || userContext.tenantId || null,
         userId: userContext.userId || null,
-        role: userContext.role || "viewer",
+        roles: userContext.roles || (userContext.role ? [userContext.role] : ["viewer"]),
+        manageAll: Boolean(userContext.manageAll || userContext.managerOfAllTeams),
       },
     };
   }
@@ -43,9 +44,13 @@ function buildQueryPlan(question, filters = {}, userContext = {}) {
       candidates: resolved.candidates,
     },
     user_scope: {
-      tenantId: userContext.tenantId || null,
+      subscriptionId: userContext.subscriptionId || userContext.tenantId || null,
       userId: userContext.userId || null,
-      role: userContext.role || "viewer",
+      roles: userContext.roles || (userContext.role ? [userContext.role] : ["viewer"]),
+      manageAll: Boolean(userContext.manageAll || userContext.managerOfAllTeams),
+      assignedClientIds: userContext.assignedClientIds || [],
+      clientTagIds: userContext.clientTagIds || [],
+      managedTeamIds: userContext.managedTeamIds || [],
     },
   };
 }

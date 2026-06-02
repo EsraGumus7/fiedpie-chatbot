@@ -27,15 +27,33 @@ function parseFilters(input = {}) {
     fieldName: input.fieldName || null,
     fieldId: input.fieldId || null,
     limit: input.limit ? Number(input.limit) : null,
+    // Users/RBAC hazırlığı: production akışında UserContext'ten gelmeli.
+    // Geçiş döneminde GET endpointleri query param ile de test edilebilir.
+    subscriptionId: input.subscriptionId ? Number(input.subscriptionId) : null,
   };
 }
 
-async function executeIntent(intent, params) {
+
+function mergeSecurityParams(params = {}, userContext = {}) {
+  return {
+    ...params,
+    subscriptionId:
+      userContext.subscriptionId || userContext.tenantId || params.subscriptionId || null,
+    currentUserId: userContext.userId || params.currentUserId || null,
+    manageAll: Boolean(userContext.manageAll || userContext.managerOfAllTeams),
+    managedTeamIds: userContext.managedTeamIds || [],
+    assignedClientIds: userContext.assignedClientIds || [],
+    clientTagIds: userContext.clientTagIds || [],
+  };
+}
+
+
+async function executeIntent(intent, params, userContext = {}) {
   const templateBuilder = templates[intent];
   if (!templateBuilder) {
     throw new Error(`Intent bulunamadi: ${intent}`);
   }
-  return queryDb(templateBuilder(params || {}));
+  return queryDb(templateBuilder(mergeSecurityParams(params || {}, userContext)));
 }
 
 function formatNumber(value) {
@@ -428,7 +446,7 @@ router.post("/planner/query", async (req, res) => {
     const filters = parseFilters(req.body?.filters || {});
     const userContext = req.body?.userContext || {};
     const plan = buildQueryPlan(question, filters, userContext);
-    const result = await executeIntent(plan.intent, plan.params);
+    const result = await executeIntent(plan.intent, plan.params, userContext);
 
     return res.json({
       plan,
@@ -469,7 +487,8 @@ router.post("/chat/query", async (req, res) => {
     }
 
     const { intent, params } = resolved;
-    const result = await executeIntent(intent, params);
+    const userContext = req.body?.userContext || {};
+    const result = await executeIntent(intent, params, userContext);
 
     const rows = result.recordset;
     const llmSummary = await summarizeWithGemini({

@@ -3,31 +3,45 @@
   "version": "1.0.0",
   "intents": [
     {
-      "intent": "userTotalCount",
-      "description_tr": "Toplam kullanici sayisi sorulari",
+      "intent": "userStatusSummary",
+      "description_tr": "Aktif, pasif, bloke ve silme talebi olan kullanici ozeti sorulari",
       "keywords": [
-        "toplam",
+        "aktif",
+        "pasif",
+        "bloke",
+        "blocked",
+        "silme",
+        "delete",
+        "talep",
+        "talebi",
+        "silinme",
+        "hesap",
+        "durum",
+        "status",
+        "ozet",
         "kullanici",
-        "user",
+        "kullanicinin",
+        "kullanicilarin",
         "personel",
         "calisan",
         "kisi",
-        "hesap",
-        "sayisi",
         "kac",
-        "adet",
-        "kayitli",
-        "sistem",
-        "sistemde"
+        "sayisi"
       ],
       "aliases": [
-        "toplam kac kullanici var",
-        "sistemde kac kisi var",
-        "kac calisan kayitli",
-        "personel sayisi nedir",
-        "toplam hesap sayisi kac",
-        "sistemde kac kullanici var",
-        "kac personel var"
+        "aktif kullanici sayisi kac",
+        "aktif personel kac",
+        "kullanici durum ozeti",
+        "kullanicilarin durumunu goster",
+        "bloke kullanici sayisi",
+        "silme talebi olan kullanicilar",
+        "kac kullanicinin silme talebi var",
+        "silme talebi olan kullanici sayisi",
+        "silme talebi olan kac kullanici var",
+        "hesap silme talebi olan kullanici sayisi",
+        "kac kullanici silme talebinde bulunmus",
+        "aktif bloke ve silme talebi olan kullanici ozeti",
+        "aktif pasif bloke kullanici durumlarini goster"
       ],
       "negative_keywords": [
         "musteri",
@@ -40,13 +54,12 @@
         "rol",
         "role",
         "yetki",
-        "yetkide",
         "yetkilere",
         "pozisyon",
         "gorev"
       ],
-      "priority": 15,
-      "metric_id": "user_total_count"
+      "priority": 60,
+      "metric_id": "user_status_summary"
     },
     {
       "intent": "userStatusSummary",
