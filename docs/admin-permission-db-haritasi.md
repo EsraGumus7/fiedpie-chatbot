@@ -105,7 +105,7 @@ MVP scope önerisi: önce `company + brand + client`, sonra `country/region/city
 ### 2.5 Audit Log (read-only)
 
 - **DB read**: AuditLog liste + filtre
-- **DB write**: Kişi 2/3 yazar (Kişi 1 sadece gösterir)
+- **DB write**: Kaydet işlemlerinde `adminPermissionService` → `dbo.AiAuditLog` (tablo yoksa sessizce atlanır)
 
 **Gerekli alanlar:**
 - AuditLog:
@@ -365,7 +365,7 @@ Admin UI şu endpoint’lere bağlanacak (Kişi 2 implement):
 | 5 | `dbo.Client` kolonları (DB’den) | ✅ |
 | 6 | `dbo.Role` kolonları | ✅ |
 | 7 | `dbo.UserRole` kolonları | ✅ |
-| 8 | Country/Region/City/District + Client join | ⬜ Sprint 2 |
-| 9 | Yeni tablolar (intent permission, user scope, audit) + admin API | ⬜ Kişi 2 |
-| 10 | Admin UI geliştirme | ⬜ Kişi 1 (onay sonrası) |
+| 8 | Country/Region/City/District + admin scope UI | ✅ |
+| 9 | Yeni tablolar (intent permission, user scope, audit) + admin API | ✅ `docs/sql/admin-rbac-tables.sql` |
+| 10 | Admin UI geliştirme | ✅ LIVE API (`USE_MOCK=false`) |
 

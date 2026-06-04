@@ -33,6 +33,42 @@ body {
   margin-bottom: 20px;
 }
 
+.login-panel {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #2a3f66;
+}
+
+.login-panel input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #3a5078;
+  background: #0d1830;
+  color: #fff;
+}
+
+.login-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 8px;
+}
+
+.btn-block {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.login-user {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.hidden {
+  display: none !important;
+}
+
 .badge {
   display: inline-block;
   margin-top: 12px;
@@ -72,6 +108,26 @@ body {
 
 .page.active {
   display: block;
+}
+
+.scope-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.scope-grid label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.scope-grid select {
+  width: 100%;
+}
+
+.scope-card .muted {
+  margin-top: 10px;
 }
 
 .page-header {

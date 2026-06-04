@@ -17,10 +17,18 @@
           <button type="button" class="nav-btn" data-page="audit">Audit Log</button>
         </nav>
         <span id="modeBadge" class="badge">MOCK API</span>
+        <div id="loginPanel" class="login-panel">
+          <p class="login-title">Giriş</p>
+          <input type="email" id="loginEmail" placeholder="E-posta" autocomplete="username" />
+          <input type="password" id="loginPassword" placeholder="Şifre" autocomplete="current-password" />
+          <button type="button" id="loginBtn" class="btn btn-primary btn-block">Giriş yap</button>
+          <button type="button" id="logoutBtn" class="btn btn-secondary btn-block hidden">Çıkış</button>
+          <p id="loginUserLabel" class="muted login-user hidden"></p>
+        </div>
         <a class="link-back" href="/">← Chatbot</a>
       </aside>
 
-      <main class="content">
+      <main id="appMain" class="content">
         <!-- ROL YETKİLERİ -->
         <section id="page-roles" class="page active">
           <div class="page-header">
@@ -82,15 +90,41 @@
               <select id="userRoleSelect" multiple></select>
             </div>
 
-            <div class="card">
-              <h3>Scope (MVP)</h3>
-              <label for="scopeCompanySelect">Company</label>
-              <select id="scopeCompanySelect" multiple></select>
-              <label for="scopeBrandSelect">Brand</label>
-              <select id="scopeBrandSelect" multiple></select>
-              <label for="scopeClientSelect">Client</label>
-              <select id="scopeClientSelect" multiple size="8"></select>
-              <p class="muted">Boş bırak = bu boyutta kısıt yok. Hiç seçim yapmadan kaydet = override yok.</p>
+            <div class="card scope-card">
+              <h3>Scope</h3>
+              <div class="scope-grid">
+                <div>
+                  <label for="scopeCompanySelect">Company</label>
+                  <select id="scopeCompanySelect" multiple size="4"></select>
+                </div>
+                <div>
+                  <label for="scopeBrandSelect">Brand</label>
+                  <select id="scopeBrandSelect" multiple size="4"></select>
+                </div>
+                <div>
+                  <label for="scopeClientSelect">Client</label>
+                  <select id="scopeClientSelect" multiple size="4"></select>
+                </div>
+                <div>
+                  <label for="scopeCountrySelect">Country</label>
+                  <select id="scopeCountrySelect" multiple size="4"></select>
+                </div>
+                <div>
+                  <label for="scopeRegionSelect">Region</label>
+                  <select id="scopeRegionSelect" multiple size="4"></select>
+                </div>
+                <div>
+                  <label for="scopeCitySelect">City</label>
+                  <select id="scopeCitySelect" multiple size="4"></select>
+                </div>
+                <div>
+                  <label for="scopeDistrictSelect">District</label>
+                  <select id="scopeDistrictSelect" multiple size="4"></select>
+                </div>
+              </div>
+              <p id="scopeDistrictHint" class="muted">
+                Boş = kısıt yok. İlçe listesi seçili şehirlere göre yüklenir. Şehir adında (N ilçe) sayısı görünür.
+              </p>
             </div>
           </div>
 

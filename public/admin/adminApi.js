@@ -3,9 +3,30 @@
  * Kişi 2 endpoint'leri hazır olunca USE_MOCK = false yap; fetch URL'leri aynı kalır.
  */
 const AdminApi = (() => {
-  const USE_MOCK = true;
+  const USE_MOCK = false;
   const STORAGE_KEY = "admin_panel_state_v1";
+  const TOKEN_KEY = "admin_jwt_token";
   const API_BASE = "/api/admin";
+
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || "";
+  }
+
+  function setToken(token) {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  }
+
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+
+  function authHeaders(extra = {}) {
+    const headers = { ...extra };
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  }
 
   function readState() {
     try {
@@ -42,8 +63,11 @@ const AdminApi = (() => {
     return "other";
   }
 
-  async function fetchJson(url, options) {
-    const res = await fetch(url, options);
+  async function fetchJson(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: authHeaders(options.headers || {}),
+    });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `HTTP ${res.status}`);
@@ -189,6 +213,10 @@ const AdminApi = (() => {
       allowedSubscriptionIds: null,
       allowedBrandIds: null,
       allowedClientIds: null,
+      allowedCountryIds: null,
+      allowedRegionIds: null,
+      allowedCityIds: null,
+      allowedDistrictIds: null,
     };
     return scopes;
   }
@@ -272,6 +300,43 @@ const AdminApi = (() => {
     return fetchJson(`${API_BASE}/reference/clients${q}`);
   }
 
+  async function realGetCountries(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.search) qs.set("search", params.search);
+    if (params.limit) qs.set("limit", params.limit);
+    const q = qs.toString() ? `?${qs}` : "";
+    return fetchJson(`${API_BASE}/reference/countries${q}`);
+  }
+
+  async function realGetRegions(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.subscriptionId) qs.set("subscriptionId", params.subscriptionId);
+    if (params.search) qs.set("search", params.search);
+    if (params.limit) qs.set("limit", params.limit);
+    const q = qs.toString() ? `?${qs}` : "";
+    return fetchJson(`${API_BASE}/reference/regions${q}`);
+  }
+
+  async function realGetCities(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.subscriptionId) qs.set("subscriptionId", params.subscriptionId);
+    if (params.search) qs.set("search", params.search);
+    if (params.limit) qs.set("limit", params.limit);
+    const q = qs.toString() ? `?${qs}` : "";
+    return fetchJson(`${API_BASE}/reference/cities${q}`);
+  }
+
+  async function realGetDistricts(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.cityId) qs.set("cityId", params.cityId);
+    if (params.cityIds) qs.set("cityIds", params.cityIds);
+    if (params.all) qs.set("all", "true");
+    if (params.search) qs.set("search", params.search);
+    if (params.limit) qs.set("limit", params.limit);
+    const q = qs.toString() ? `?${qs}` : "";
+    return fetchJson(`${API_BASE}/reference/districts${q}`);
+  }
+
   async function realGetUsers(params = {}) {
     const qs = new URLSearchParams();
     if (params.search) qs.set("search", params.search);
@@ -297,6 +362,20 @@ const AdminApi = (() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ allowedIntents }),
     });
+  }
+
+  async function realLogin(email, password) {
+    const data = await fetch("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    }).then(async (res) => {
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+      return body;
+    });
+    setToken(data.token);
+    return data;
   }
 
   async function realGetUserRoles(userId) {
@@ -337,8 +416,19 @@ const AdminApi = (() => {
 
   return {
     USE_MOCK,
+    getToken,
+    setToken,
+    clearToken,
+    login: pick(
+      async () => ({ token: "mock", user: { name: "Mock Admin" } }),
+      realLogin
+    ),
     getCatalog: pick(mockGetCatalog, realGetCatalog),
     getSubscriptions: pick(mockGetSubscriptions, realGetSubscriptions),
+    getCountries: pick(async () => ({ items: [] }), realGetCountries),
+    getRegions: pick(async () => ({ items: [] }), realGetRegions),
+    getCities: pick(async () => ({ items: [] }), realGetCities),
+    getDistricts: pick(async () => ({ items: [] }), realGetDistricts),
     getBrands: pick(mockGetBrands, realGetBrands),
     getClients: pick(mockGetClients, realGetClients),
     getUsers: pick(mockGetUsers, realGetUsers),

@@ -10,9 +10,20 @@
     roleCompanyId: null,
     roleId: null,
     userId: null,
+    scopeSubscriptionId: null,
+    allDistricts: [],
   };
 
   const $ = (id) => document.getElementById(id);
+
+  function formatAuditDate(value) {
+    if (!value) return "-";
+    const text = String(value);
+    if (text.includes("T")) return text.replace("T", " ").slice(0, 19);
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return text.slice(0, 19);
+    return d.toISOString().replace("T", " ").slice(0, 19);
+  }
 
   function showToast(msg) {
     const el = $("toast");
@@ -46,6 +57,38 @@
   }
 
   /* ---------- Navigation ---------- */
+
+  function updateAuthUi() {
+    const loggedIn = AdminApi.USE_MOCK || !!AdminApi.getToken();
+    $("loginBtn").classList.toggle("hidden", loggedIn);
+    $("logoutBtn").classList.toggle("hidden", !loggedIn || AdminApi.USE_MOCK);
+    $("loginEmail").disabled = loggedIn;
+    $("loginPassword").disabled = loggedIn;
+    $("appMain").style.opacity = loggedIn ? "1" : "0.45";
+    $("appMain").style.pointerEvents = loggedIn ? "auto" : "none";
+  }
+
+  async function handleLogin() {
+    const email = $("loginEmail").value.trim();
+    const password = $("loginPassword").value;
+    if (!email || !password) {
+      showToast("E-posta ve şifre gerekli.");
+      return;
+    }
+    const data = await AdminApi.login(email, password);
+    $("loginUserLabel").textContent = data.user?.name || data.user?.email || "Giriş OK";
+    $("loginUserLabel").classList.remove("hidden");
+    updateAuthUi();
+    showToast("Giriş başarılı.");
+    await bootstrapData();
+  }
+
+  function handleLogout() {
+    AdminApi.clearToken();
+    $("loginUserLabel").classList.add("hidden");
+    updateAuthUi();
+    showToast("Çıkış yapıldı.");
+  }
 
   function initNav() {
     document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -157,6 +200,7 @@
     await AdminApi.saveRolePermissions(state.roleId, allowedIntents);
     showToast("Rol intent izinleri kaydedildi.");
     await renderIntentTable();
+    if ($("page-audit").classList.contains("active")) await loadAudit();
   }
 
   /* ---------- Users page ---------- */
@@ -180,17 +224,77 @@
     await loadUserDetail();
   }
 
-  async function loadScopeOptions() {
+  async function loadScopeOptions(subscriptionId = null) {
+    const subId = subscriptionId || state.scopeSubscriptionId || null;
+    state.scopeSubscriptionId = subId;
+
     const dataSub = await AdminApi.getSubscriptions();
     fillSelect($("scopeCompanySelect"), dataSub.items || [], { labelKey: "label" });
 
-    const dataBrand = await AdminApi.getBrands({});
+    const dataBrand = await AdminApi.getBrands(subId ? { subscriptionId: subId } : {});
     state.brands = dataBrand.items || [];
     fillSelect($("scopeBrandSelect"), state.brands, { labelKey: "label" });
 
-    const dataClient = await AdminApi.getClients({ limit: 200 });
+    const dataClient = await AdminApi.getClients({ limit: 200, ...(subId ? { subscriptionId: subId } : {}) });
     state.clients = dataClient.items || [];
     fillSelect($("scopeClientSelect"), state.clients, { labelKey: "label" });
+
+    const dataCountry = await AdminApi.getCountries({ limit: 200 });
+    fillSelect($("scopeCountrySelect"), dataCountry.items || [], { labelKey: "label" });
+
+    const dataRegion = await AdminApi.getRegions({ limit: 200, ...(subId ? { subscriptionId: subId } : {}) });
+    fillSelect($("scopeRegionSelect"), dataRegion.items || [], { labelKey: "label" });
+
+    const dataCity = await AdminApi.getCities({ limit: 200, ...(subId ? { subscriptionId: subId } : {}) });
+    const cityItems = (dataCity.items || []).map((c) => ({
+      ...c,
+      label: `${c.label} (${Number(c.districtCount) || 0} ilçe)`,
+    }));
+    fillSelect($("scopeCitySelect"), cityItems, { labelKey: "label" });
+
+    await loadAllDistrictsCache();
+    await loadDistrictOptions();
+  }
+
+  async function loadAllDistrictsCache() {
+    const data = await AdminApi.getDistricts({ all: true, limit: 400 });
+    state.allDistricts = data.items || [];
+  }
+
+  function updateDistrictHint(message) {
+    const el = $("scopeDistrictHint");
+    if (el) el.textContent = message;
+  }
+
+  async function loadDistrictOptions() {
+    const cityIds = getSelectedValues($("scopeCitySelect"));
+    let items = state.allDistricts;
+
+    if (cityIds.length) {
+      const filtered = state.allDistricts.filter((d) => cityIds.includes(Number(d.cityId)));
+      if (filtered.length) {
+        items = filtered;
+        updateDistrictHint(
+          `${items.length} ilçe (seçili ${cityIds.length} şehre göre filtrelendi). Boş bırakırsanız ilçe kısıtı yok.`
+        );
+      } else {
+        items = state.allDistricts;
+        updateDistrictHint(
+          `Seçili şehir(ler) panelde (0 ilçe); DB'de ilçeler farklı CityId ile kayıtlı. ` +
+            `Tüm ilçeler (${items.length}) listeleniyor — doğrudan ilçe seçebilirsiniz.`
+        );
+      }
+    } else if (items.length) {
+      updateDistrictHint(
+        `${items.length} ilçe yüklendi. Şehir seçerseniz liste filtrelenir; boş bırakırsanız ilçe kısıtı yok.`
+      );
+    } else {
+      fillSelect($("scopeDistrictSelect"), []);
+      updateDistrictHint("Veritabanında aktif ilçe kaydı bulunamadı.");
+      return;
+    }
+
+    fillSelect($("scopeDistrictSelect"), items, { labelKey: "label" });
   }
 
   async function loadUserDetail() {
@@ -200,6 +304,8 @@
 
     const user = state.users.find((u) => u.id === userId);
     const subId = user?.subscriptionId;
+    state.scopeSubscriptionId = subId || null;
+    await loadScopeOptions(subId);
 
     const rolesData = await AdminApi.getRoles({ subscriptionId: subId });
     fillSelect($("userRoleSelect"), rolesData.items || [], { valueKey: "id", labelKey: "name" });
@@ -211,6 +317,11 @@
     setSelectedValues($("scopeCompanySelect"), scopes.allowedSubscriptionIds || []);
     setSelectedValues($("scopeBrandSelect"), scopes.allowedBrandIds || []);
     setSelectedValues($("scopeClientSelect"), scopes.allowedClientIds || []);
+    setSelectedValues($("scopeCountrySelect"), scopes.allowedCountryIds || []);
+    setSelectedValues($("scopeRegionSelect"), scopes.allowedRegionIds || []);
+    setSelectedValues($("scopeCitySelect"), scopes.allowedCityIds || []);
+    await loadDistrictOptions();
+    setSelectedValues($("scopeDistrictSelect"), scopes.allowedDistrictIds || []);
 
     await refreshEffectivePreview();
   }
@@ -232,17 +343,26 @@
     const companyIds = getSelectedValues($("scopeCompanySelect"));
     const brandIds = getSelectedValues($("scopeBrandSelect"));
     const clientIds = getSelectedValues($("scopeClientSelect"));
+    const countryIds = getSelectedValues($("scopeCountrySelect"));
+    const regionIds = getSelectedValues($("scopeRegionSelect"));
+    const cityIds = getSelectedValues($("scopeCitySelect"));
+    const districtIds = getSelectedValues($("scopeDistrictSelect"));
 
     const scopes = {
       allowedSubscriptionIds: companyIds.length ? companyIds : null,
       allowedBrandIds: brandIds.length ? brandIds : null,
       allowedClientIds: clientIds.length ? clientIds : null,
+      allowedCountryIds: countryIds.length ? countryIds : null,
+      allowedRegionIds: regionIds.length ? regionIds : null,
+      allowedCityIds: cityIds.length ? cityIds : null,
+      allowedDistrictIds: districtIds.length ? districtIds : null,
     };
 
     await AdminApi.saveUserRoles(userId, roleIds);
     await AdminApi.saveUserScopes(userId, scopes);
     showToast("Kullanıcı ayarları kaydedildi.");
     await refreshEffectivePreview();
+    if ($("page-audit").classList.contains("active")) await loadAudit();
   }
 
   /* ---------- Audit ---------- */
@@ -252,7 +372,7 @@
     $("auditTableBody").innerHTML = (data.items || [])
       .map(
         (row) => `<tr>
-          <td>${(row.createdAt || row.created_at || "").replace("T", " ").slice(0, 19)}</td>
+          <td>${formatAuditDate(row.createdAt || row.created_at)}</td>
           <td>${row.actorUserId || row.actor_user_id || "-"}</td>
           <td>${row.action}</td>
           <td>${row.targetType || row.target_type}:${row.targetId || row.target_id}</td>
@@ -289,8 +409,25 @@
     );
     $("userSelect").addEventListener("change", () => loadUserDetail().catch((e) => showToast(e.message)));
     $("userRoleSelect").addEventListener("change", () => refreshEffectivePreview());
-    ["scopeCompanySelect", "scopeBrandSelect", "scopeClientSelect"].forEach((id) => {
+    [
+      "scopeCompanySelect",
+      "scopeBrandSelect",
+      "scopeClientSelect",
+      "scopeCountrySelect",
+      "scopeRegionSelect",
+      "scopeDistrictSelect",
+    ].forEach((id) => {
       $(id).addEventListener("change", () => refreshEffectivePreview());
+    });
+    $("scopeCitySelect").addEventListener("change", () => {
+      loadDistrictOptions()
+        .then(() => refreshEffectivePreview())
+        .catch((e) => showToast(e.message));
+    });
+    $("scopeCompanySelect").addEventListener("change", () => {
+      const ids = getSelectedValues($("scopeCompanySelect"));
+      const subId = ids[0] || state.scopeSubscriptionId;
+      loadScopeOptions(subId || null).catch((e) => showToast(e.message));
     });
     $("saveUserBtn").addEventListener("click", () => saveUserSettings().catch((e) => showToast(e.message)));
     $("refreshAuditBtn").addEventListener("click", () => loadAudit().catch((e) => showToast(e.message)));
@@ -304,14 +441,24 @@
     };
   }
 
-  async function bootstrap() {
-    initNav();
-    bindEvents();
+  async function bootstrapData() {
     await loadCatalog();
     await loadSubscriptionsForRoles();
     await loadScopeOptions();
     await loadUsers();
     await loadAudit();
+  }
+
+  async function bootstrap() {
+    initNav();
+    bindEvents();
+    $("loginBtn").addEventListener("click", () => handleLogin().catch((e) => showToast(e.message)));
+    $("logoutBtn").addEventListener("click", handleLogout);
+    updateAuthUi();
+
+    if (AdminApi.USE_MOCK || AdminApi.getToken()) {
+      await bootstrapData();
+    }
   }
 
   bootstrap().catch((err) => {
