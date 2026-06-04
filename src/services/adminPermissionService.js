@@ -1,7 +1,12 @@
 const { queryDb } = require("../db/sql");
-const { listResolvedIntentCandidates } = require("../planner/metricRegistry");
+//const { listResolvedIntentCandidates } = require("../planner/metricRegistry");
 const { buildUserContext } = require("./userContextService");
 const { appendFileLog, listFileLogs } = require("./auditLogStore");
+
+const {
+  getMetricByIntent,
+  listResolvedIntentCandidates,
+} = require("../planner/metricRegistry");
 
 let auditTableExistsCache = null;
 
@@ -621,6 +626,24 @@ async function getEffectivePermissions(userId) {
     }
   }
 
+  const allowedMetricSet = new Set();
+  const allowedTableSet = new Set();
+
+  for (const intent of allowedIntentSet) {
+    if (intent === "*") continue;
+
+    const metric = getMetricByIntent(intent);
+    if (!metric) continue;
+
+    if (metric.metric_id) {
+      allowedMetricSet.add(metric.metric_id);
+    }
+
+    for (const table of metric.source_tables || []) {
+      allowedTableSet.add(table);
+    }
+  }
+
   const customScopes = await getUserScopes(userId);
 
   return {
@@ -637,8 +660,8 @@ async function getEffectivePermissions(userId) {
     manageAll: context.manageAll,
 
     allowedIntents: isSuperAdmin ? ["*"] : [...allowedIntentSet].filter((x) => x !== "*"),
-    allowedMetrics: isSuperAdmin ? ["*"] : context.allowedMetrics || [],
-    allowedTables: isSuperAdmin ? ["*"] : context.allowedTables || [],
+    allowedMetrics: isSuperAdmin ? ["*"] : [...allowedMetricSet],
+    allowedTables: isSuperAdmin ? ["*"] : [...allowedTableSet],
 
     allowedColumns: context.allowedColumns || [],
     maskedColumns: context.maskedColumns || [],
