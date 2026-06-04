@@ -2,6 +2,8 @@ const express = require("express");
 const { queryDb } = require("../db/sql");
 const templates = require("../services/queryTemplates");
 const { executeSecureIntent } = require("../services/secureIntentExecutor");
+const { authMiddleware } = require("../middleware/authMiddleware");
+const { getEffectivePermissions } = require("../services/adminPermissionService");
 const { resolveFieldName } = require("../services/intentParser");
 const { resolveIntent } = require("../services/metricResolver");
 const { summarizeWithGemini } = require("../services/gemini");
@@ -29,6 +31,15 @@ function parseFilters(input = {}) {
     fieldId: input.fieldId || null,
     limit: input.limit ? Number(input.limit) : null,
   };
+}
+
+function getRouteErrorStatus(error) {
+  if (error.statusCode) return error.statusCode;
+
+  const message = String(error.message || "").toLowerCase();
+  if (message.includes("permission denied")) return 403;
+
+  return 500;
 }
 
 async function executeIntent(intent, params, options = {}) {
@@ -432,7 +443,7 @@ router.post("/planner/plan", (req, res) => {
   }
 });
 
-router.post("/planner/query", async (req, res) => {
+router.post("/planner/query", authMiddleware, async (req, res) => {
   try {
     const question = req.body?.question;
     if (!question) {
@@ -440,16 +451,23 @@ router.post("/planner/query", async (req, res) => {
     }
 
     const filters = parseFilters(req.body?.filters || {});
-    const userContext = req.body?.userContext || {};
+    const authUserId = req.authUser?.userId;
+
+    if (!authUserId) {
+      return res.status(401).json({ error: "Kimlik dogrulama bilgisi bulunamadi." });
+    }
+
+    const userContext = await getEffectivePermissions(authUserId);
     const plan = buildQueryPlan(question, filters, userContext);
-    const result = await executeIntent(plan.intent, plan.params);
+    const result = await executeIntent(plan.intent, plan.params, { userContext });
 
     return res.json({
       plan,
       rows: result.recordset,
+      security: result.security,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 
