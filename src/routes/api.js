@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryDb } = require("../db/sql");
 const templates = require("../services/queryTemplates");
+const { executeSecureIntent } = require("../services/secureIntentExecutor");
 const { resolveFieldName } = require("../services/intentParser");
 const { resolveIntent } = require("../services/metricResolver");
 const { summarizeWithGemini } = require("../services/gemini");
@@ -30,11 +31,24 @@ function parseFilters(input = {}) {
   };
 }
 
-async function executeIntent(intent, params) {
+async function executeIntent(intent, params, options = {}) {
+  if (options.userContext) {
+    return executeSecureIntent({
+      intent,
+      params,
+      userContext: options.userContext,
+      metric: options.metric,
+      queryExecutor: options.queryExecutor,
+      templateSource: options.templateSource,
+      metricResolver: options.metricResolver,
+    });
+  }
+
   const templateBuilder = templates[intent];
   if (!templateBuilder) {
     throw new Error(`Intent bulunamadi: ${intent}`);
   }
+
   return queryDb(templateBuilder(params || {}));
 }
 
