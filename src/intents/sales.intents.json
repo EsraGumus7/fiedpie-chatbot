@@ -1,0 +1,790 @@
+{
+  "domain": "satis_finans",
+  "version": "1.0.0",
+  "intents": [
+    {
+      "intent": "totalPurchaseOrders",
+      "description_tr": "Toplam sipariş sayısı soruları",
+      "keywords": [
+        "siparis",
+        "sipariş",
+        "sayisi",
+        "kac",
+        "adet",
+        "toplam"
+      ],
+      "aliases": [
+        "toplam sipariş sayısı nedir",
+        "sistemde kaç sipariş var",
+        "toplam kaç adet sipariş girildi",
+        "kesilen sipariş adedi kaç",
+        "ne kadar siparişimiz var"
+      ],
+      "negative_keywords": [
+        "tutar",
+        "ciro",
+        "fatura",
+        "detay",
+        "kalem",
+        "trend",
+        "durum"
+      ],
+      "priority": 10,
+      "metric_id": "purchase_order_count_total"
+    },
+    {
+      "intent": "totalPurchaseOrderAmount",
+      "description_tr": "Toplam sipariş tutarı / ciro soruları",
+      "keywords": [
+        "siparis",
+        "sipariş",
+        "tutari",
+        "tutar",
+        "ciro",
+        "para",
+        "deger",
+        "hacim"
+      ],
+      "aliases": [
+        "toplam sipariş tutarı ne kadar",
+        "siparişlerden gelen toplam ciro nedir",
+        "toplam sipariş hacmi",
+        "siparişlerin parasal değeri",
+        "ne kadarlık sipariş aldık"
+      ],
+      "negative_keywords": [
+        "sayisi",
+        "adet",
+        "fatura",
+        "ödeme",
+        "odeme",
+        "tahsilat",
+        "trend"
+      ],
+      "priority": 25,
+      "metric_id": "purchase_order_amount_total"
+    },
+    {
+      "intent": "purchaseOrdersByStatus",
+      "description_tr": "Duruma göre sipariş dağılımı soruları",
+      "keywords": [
+        "siparis",
+        "sipariş",
+        "durum",
+        "statu",
+        "onaylanan",
+        "bekleyen",
+        "iptal",
+        "dagilim"
+      ],
+      "aliases": [
+        "durumlarına göre sipariş dağılımı",
+        "kaç sipariş onaylandı kaçı bekliyor",
+        "sipariş statü özeti",
+        "iptal edilen siparişler",
+        "hangi durumda kaç sipariş var"
+      ],
+      "negative_keywords": [
+        "fatura",
+        "ödeme",
+        "odeme",
+        "tutar",
+        "ciro",
+        "trend"
+      ],
+      "priority": 20,
+      "metric_id": "purchase_order_by_status"
+    },
+    {
+      "intent": "purchaseOrderTrend",
+      "description_tr": "Günlük sipariş trendi soruları",
+      "keywords": [
+        "siparis",
+        "sipariş",
+        "trend",
+        "gunluk",
+        "aylik",
+        "zaman",
+        "grafik",
+        "gidisat"
+      ],
+      "aliases": [
+        "günlük sipariş trendi",
+        "aylara göre sipariş gidişatı",
+        "sipariş artış grafiği",
+        "zaman içinde sipariş durumu",
+        "siparişlerin zamansal dağılımı"
+      ],
+      "negative_keywords": [
+        "fatura",
+        "ödeme",
+        "odeme",
+        "tahsilat",
+        "durum",
+        "statu"
+      ],
+      "priority": 30,
+      "metric_id": "purchase_order_daily_trend"
+    },
+    {
+      "intent": "totalPurchaseOrderDetails",
+      "description_tr": "Sipariş kalem detayları soruları",
+      "keywords": [
+        "siparis",
+        "sipariş",
+        "kalem",
+        "detay",
+        "urun",
+        "icerik",
+        "satir"
+      ],
+      "aliases": [
+        "sipariş kalem detayları",
+        "siparişlerin içerdiği ürünler",
+        "toplam sipariş satırı sayısı",
+        "sipariş ürün detayları"
+      ],
+      "negative_keywords": [
+        "fatura",
+        "tutar",
+        "ciro",
+        "trend",
+        "durum"
+      ],
+      "priority": 10,
+      "metric_id": "purchase_order_detail_count"
+    },
+    {
+      "intent": "totalInvoices",
+      "description_tr": "Toplam fatura sayısı soruları",
+      "keywords": [
+        "fatura",
+        "kesilen",
+        "sayisi",
+        "kac",
+        "adet",
+        "toplam"
+      ],
+      "aliases": [
+        "toplam kaç fatura kesildi",
+        "fatura adedi nedir",
+        "sistemdeki fatura sayısı",
+        "toplam fatura adedi",
+        "kaç adet faturamız var"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "tutar",
+        "ciro",
+        "bakiye",
+        "ödeme",
+        "odeme",
+        "detay"
+      ],
+      "priority": 10,
+      "metric_id": "invoice_count_total"
+    },
+    {
+      "intent": "totalInvoiceAmount",
+      "description_tr": "Toplam fatura tutarı / gerçekleşen ciro soruları",
+      "keywords": [
+        "fatura",
+        "tutari",
+        "tutar",
+        "kesilen",
+        "ciro",
+        "hacim",
+        "toplam",
+        "deger"
+      ],
+      "aliases": [
+        "toplam fatura tutarı nedir",
+        "kesilen faturaların toplam değeri",
+        "faturalaşmış ciro ne kadar",
+        "toplam fatura hacmi",
+        "ne kadarlık fatura kestik"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "bakiye",
+        "ödenmemiş",
+        "odenmemis",
+        "tahsilat",
+        "sayisi",
+        "adet"
+      ],
+      "priority": 25,
+      "metric_id": "invoice_amount_total"
+    },
+    {
+      "intent": "totalInvoiceBalance",
+      "description_tr": "Ödenmemiş fatura / bakiye / alacak soruları",
+      "keywords": [
+        "fatura",
+        "bakiye",
+        "odenmemis",
+        "ödenmemiş",
+        "kalan",
+        "alacak",
+        "borc",
+        "borç"
+      ],
+      "aliases": [
+        "ödenmemiş fatura bakiyesi ne kadar",
+        "toplam alacak tutarımız nedir",
+        "kalan fatura borçları",
+        "müşterilerin fatura bakiyeleri",
+        "ne kadar alacağımız kaldı"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "tahsilat",
+        "ödendi",
+        "odendi",
+        "trend"
+      ],
+      "priority": 35,
+      "metric_id": "invoice_balance_total"
+    },
+    {
+      "intent": "invoicesByStatus",
+      "description_tr": "Duruma göre fatura soruları",
+      "keywords": [
+        "fatura",
+        "durum",
+        "statu",
+        "odendi",
+        "iptal",
+        "dagilim",
+        "odenecek"
+      ],
+      "aliases": [
+        "fatura durum dağılımı",
+        "ödenen ve iptal edilen faturalar",
+        "statülerine göre faturalar",
+        "hangi durumda kaç fatura var",
+        "fatura statü özeti"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "bakiye",
+        "tutar",
+        "trend"
+      ],
+      "priority": 20,
+      "metric_id": "invoice_by_status"
+    },
+    {
+      "intent": "invoiceTrend",
+      "description_tr": "Günlük fatura trendi soruları",
+      "keywords": [
+        "fatura",
+        "trend",
+        "gunluk",
+        "aylik",
+        "kesim",
+        "zaman",
+        "grafik"
+      ],
+      "aliases": [
+        "fatura kesim trendi",
+        "günlük fatura grafiği",
+        "zaman içindeki fatura gidişatı",
+        "aylara göre fatura kesimi",
+        "fatura trend analizi"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "tahsilat",
+        "durum",
+        "bakiye"
+      ],
+      "priority": 30,
+      "metric_id": "invoice_daily_trend"
+    },
+    {
+      "intent": "totalInvoiceDetails",
+      "description_tr": "Fatura kalem detayları soruları",
+      "keywords": [
+        "fatura",
+        "kalem",
+        "detay",
+        "satir",
+        "icerik"
+      ],
+      "aliases": [
+        "fatura kalem detayları",
+        "toplam fatura satırı sayısı",
+        "fatura içerik bilgileri",
+        "faturalardaki kalemler"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "bakiye",
+        "tutar",
+        "trend",
+        "durum"
+      ],
+      "priority": 10,
+      "metric_id": "invoice_detail_count"
+    },
+    {
+      "intent": "totalInvoicePayments",
+      "description_tr": "Fatura tahsilat tutarları soruları",
+      "keywords": [
+        "tahsilat",
+        "odeme",
+        "ödeme",
+        "fatura",
+        "nakit",
+        "tutar",
+        "giren",
+        "alinan"
+      ],
+      "aliases": [
+        "faturalardan yapılan toplam tahsilat",
+        "fatura ödemeleri toplamı",
+        "gelen nakit ödeme tutarı",
+        "faturalar için ne kadar tahsilat yapıldı",
+        "fatura ödeme girişi"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "bakiye",
+        "borç",
+        "ödenmemiş",
+        "trend"
+      ],
+      "priority": 25,
+      "metric_id": "invoice_payment_amount_total"
+    },
+    {
+      "intent": "invoicePaymentTrend",
+      "description_tr": "Tahsilat trendi soruları",
+      "keywords": [
+        "tahsilat",
+        "odeme",
+        "ödeme",
+        "trend",
+        "gunluk",
+        "aylik",
+        "zaman",
+        "grafik"
+      ],
+      "aliases": [
+        "günlük tahsilat trendi",
+        "aylık ödeme grafiği",
+        "tahsilatların zamana göre gidişatı",
+        "fatura ödeme trend analizi"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "fatura kesim",
+        "durum",
+        "bakiye"
+      ],
+      "priority": 30,
+      "metric_id": "invoice_payment_daily_trend"
+    },
+    {
+      "intent": "totalPayments",
+      "description_tr": "Genel ödeme ve abonelik tahsilat tutarı soruları",
+      "keywords": [
+        "odeme",
+        "ödeme",
+        "abonelik",
+        "genel",
+        "tutar",
+        "tahsilat",
+        "toplam"
+      ],
+      "aliases": [
+        "toplam genel ödeme tutarı",
+        "abonelik ödemeleri toplamı",
+        "sistemdeki genel tahsilatlar",
+        "genel ödeme hacmi"
+      ],
+      "negative_keywords": [
+        "fatura",
+        "siparis",
+        "sipariş",
+        "trend",
+        "bakiye",
+        "durum"
+      ],
+      "priority": 25,
+      "metric_id": "payment_amount_total"
+    },
+    {
+      "intent": "paymentsByState",
+      "description_tr": "Duruma göre genel ödeme soruları",
+      "keywords": [
+        "odeme",
+        "ödeme",
+        "durum",
+        "statu",
+        "basarili",
+        "basarisiz",
+        "dagilim"
+      ],
+      "aliases": [
+        "başarılı ve başarısız ödemeler",
+        "durumlarına göre genel ödemeler",
+        "ödeme statü dağılımı",
+        "hangi durumda kaç ödeme var"
+      ],
+      "negative_keywords": [
+        "fatura",
+        "siparis",
+        "sipariş",
+        "trend",
+        "tutar"
+      ],
+      "priority": 20,
+      "metric_id": "payment_by_state"
+    },
+    {
+      "intent": "activeCampaigns",
+      "description_tr": "Aktif kampanya sayısı soruları",
+      "keywords": [
+        "aktif",
+        "guncel",
+        "devam",
+        "eden",
+        "kampanya",
+        "sayisi",
+        "kac"
+      ],
+      "aliases": [
+        "kaç aktif kampanya var",
+        "devam eden kampanya sayısı",
+        "güncel kampanyalar neler",
+        "aktif durumda kaç kampanya bulunuyor"
+      ],
+      "negative_keywords": [
+        "toplam",
+        "iptal",
+        "ürün",
+        "urun",
+        "promosyon"
+      ],
+      "priority": 35,
+      "metric_id": "campaign_count_active"
+    },
+    {
+      "intent": "totalCampaigns",
+      "description_tr": "Toplam kampanya sayısı soruları",
+      "keywords": [
+        "toplam",
+        "kampanya",
+        "sayisi",
+        "kac",
+        "adet"
+      ],
+      "aliases": [
+        "toplam kampanya sayısı",
+        "sistemde kaç kampanya tanımlı",
+        "toplamda kaç kampanya oluşturuldu"
+      ],
+      "negative_keywords": [
+        "aktif",
+        "güncel",
+        "guncel",
+        "ürün",
+        "urun",
+        "promosyon"
+      ],
+      "priority": 10,
+      "metric_id": "campaign_count_total"
+    },
+    {
+      "intent": "totalCampaignProducts",
+      "description_tr": "Kampanyalı ürün sayısı soruları",
+      "keywords": [
+        "kampanyali",
+        "kampanya",
+        "urun",
+        "indirimli",
+        "sayisi",
+        "kac"
+      ],
+      "aliases": [
+        "kampanyalı ürün sayısı",
+        "indirimde olan kaç ürün var",
+        "kampanyalara bağlı ürünler",
+        "kampanya kapsamındaki ürün sayısı"
+      ],
+      "negative_keywords": [
+        "aktif",
+        "toplam kampanya",
+        "promosyon",
+        "bip"
+      ],
+      "priority": 20,
+      "metric_id": "campaign_product_count"
+    },
+    {
+      "intent": "totalClientProductPrices",
+      "description_tr": "Müşteriye özel fiyat tanım sayısı soruları",
+      "keywords": [
+        "ozel",
+        "özel",
+        "fiyat",
+        "musteri",
+        "iskonto",
+        "tanim",
+        "liste"
+      ],
+      "aliases": [
+        "müşteriye özel fiyat tanımları",
+        "özel iskontolu fiyat sayısı",
+        "müşteri bazlı fiyat listeleri",
+        "müşterilere tanımlı özel fiyatlar"
+      ],
+      "negative_keywords": [
+        "kampanya",
+        "promosyon",
+        "genel",
+        "sipariş",
+        "fatura"
+      ],
+      "priority": 15,
+      "metric_id": "client_product_price_count"
+    },
+    {
+      "intent": "totalCosts",
+      "description_tr": "Toplam maliyet tutarı soruları",
+      "keywords": [
+        "maliyet",
+        "gider",
+        "harcama",
+        "tutar",
+        "toplam",
+        "ne kadar"
+      ],
+      "aliases": [
+        "toplam maliyet tutarı",
+        "ne kadar giderimiz var",
+        "toplam harcamalar",
+        "şirket giderleri toplamı"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "fatura",
+        "ciro",
+        "komisyon",
+        "kategori"
+      ],
+      "priority": 25,
+      "metric_id": "cost_amount_total"
+    },
+    {
+      "intent": "costsByCategory",
+      "description_tr": "Kategoriye göre maliyet soruları",
+      "keywords": [
+        "maliyet",
+        "kategori",
+        "tur",
+        "dagilim",
+        "gider",
+        "kalemleri"
+      ],
+      "aliases": [
+        "kategorilere göre maliyetler",
+        "gider türü dağılımı",
+        "hangi kategoriye ne kadar harcandı",
+        "maliyetlerin türlere dağılımı"
+      ],
+      "negative_keywords": [
+        "komisyon",
+        "siparis",
+        "sipariş",
+        "toplam",
+        "ciro",
+        "trend"
+      ],
+      "priority": 20,
+      "metric_id": "cost_by_category"
+    },
+    {
+      "intent": "totalCommissions",
+      "description_tr": "Toplam komisyon tutarı soruları",
+      "keywords": [
+        "komisyon",
+        "prim",
+        "temsilci",
+        "hak",
+        "edis",
+        "hakediş",
+        "tutar"
+      ],
+      "aliases": [
+        "toplam komisyon tutarı",
+        "dağıtılan primler ne kadar",
+        "temsilci hakedişleri",
+        "komisyon olarak ne kadar ödendi"
+      ],
+      "negative_keywords": [
+        "maliyet",
+        "gider",
+        "ciro",
+        "siparis",
+        "sipariş",
+        "fatura"
+      ],
+      "priority": 25,
+      "metric_id": "commission_amount_total"
+    },
+    {
+      "intent": "totalTrackedOrders",
+      "description_tr": "Takip edilen teslimat kayıtları soruları",
+      "keywords": [
+        "teslimat",
+        "kargo",
+        "takip",
+        "durumu",
+        "siparis",
+        "sipariş",
+        "tracker",
+        "lojistik"
+      ],
+      "aliases": [
+        "takip edilen kargo sayısı",
+        "teslimat durumu izlenen siparişler",
+        "sipariş tracker kayıtları",
+        "kargo takip durumları"
+      ],
+      "negative_keywords": [
+        "fatura",
+        "tutar",
+        "ciro",
+        "iptal",
+        "trend"
+      ],
+      "priority": 15,
+      "metric_id": "purchase_order_tracker_count"
+    },
+    {
+      "intent": "totalBipPromotions",
+      "description_tr": "Bip Promosyon kodu soruları",
+      "keywords": [
+        "bip",
+        "promosyon",
+        "kod",
+        "indirim",
+        "kupon"
+      ],
+      "aliases": [
+        "toplam bip promosyon kodu sayısı",
+        "kullanılan indirim kuponları",
+        "bip kodları kullanımı",
+        "promosyon kod adedi"
+      ],
+      "negative_keywords": [
+        "kampanya",
+        "maliyet",
+        "komisyon",
+        "sipariş",
+        "fatura"
+      ],
+      "priority": 15,
+      "metric_id": "bip_promotion_count"
+    },
+    {
+      "intent": "totalDistributorCommercials",
+      "description_tr": "Distribütör risk ve ticari bilgi soruları",
+      "keywords": [
+        "distributor",
+        "distribütör",
+        "ticari",
+        "risk",
+        "limit",
+        "kredi",
+        "teminat",
+        "bayi"
+      ],
+      "aliases": [
+        "distribütör risk limitleri",
+        "bayi teminat ve kredi bilgileri",
+        "ticari risk kayıtları",
+        "bayilerin risk durumları"
+      ],
+      "negative_keywords": [
+        "kampanya",
+        "ödeme",
+        "fatura",
+        "siparis",
+        "sipariş",
+        "ciro"
+      ],
+      "priority": 20,
+      "metric_id": "distributor_commercial_record_count"
+    },
+    {
+      "intent": "totalIyzicoTransactions",
+      "description_tr": "Toplam İyzico işlem sayısı soruları",
+      "keywords": [
+        "iyzico",
+        "sanal",
+        "pos",
+        "islem",
+        "odeme",
+        "ödeme",
+        "sayisi",
+        "kac"
+      ],
+      "aliases": [
+        "iyzico üzerinden kaç işlem geçti",
+        "toplam sanal pos işlemleri",
+        "iyzico ödeme adedi",
+        "kaç tane iyzico işlemi var"
+      ],
+      "negative_keywords": [
+        "durum",
+        "statu",
+        "fatura",
+        "tahsilat",
+        "tutar",
+        "bakiye"
+      ],
+      "priority": 10,
+      "metric_id": "iyzico_transaction_count"
+    },
+    {
+      "intent": "iyzicoTransactionsByStatus",
+      "description_tr": "Duruma göre İyzico işlem soruları",
+      "keywords": [
+        "iyzico",
+        "durum",
+        "statu",
+        "basarili",
+        "hata",
+        "dagilim"
+      ],
+      "aliases": [
+        "durumlarına göre iyzico işlemleri",
+        "başarılı ve hatalı iyzico ödemeleri",
+        "sanal pos işlem statüleri",
+        "iyzico durum dağılımı"
+      ],
+      "negative_keywords": [
+        "tutar",
+        "hacim",
+        "fatura",
+        "sipariş",
+        "sayisi"
+      ],
+      "priority": 20,
+      "metric_id": "iyzico_transaction_by_status"
+    }
+  ]
+}
