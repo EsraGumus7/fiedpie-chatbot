@@ -50,7 +50,15 @@
         "müşteri sayısı",
         "aktif musteri",
         "distributor",
-        "bayi sayisi"
+        "bayi sayisi",
+        "kullanici bazli",
+        "personel bazli",
+        "bekleyen",
+        "bekleyenler",
+        "planlanan",
+        "ziyaret durumu",
+        "durum dagilim",
+        "durum dağılım"
       ],
       "priority": 14
     },
@@ -93,6 +101,54 @@
         "günlük adet"
       ],
       "priority": 18
+    },
+    {
+      "intent": "visitsByCompletionStatus",
+      "metric_id": "visit_by_completion_status",
+      "description_tr": "Tamamlanan ve bekleyen ziyaret dagilimi; ziyaret durumu ozeti",
+      "keywords": [
+        "ziyaret",
+        "visit",
+        "saha",
+        "durum",
+        "durumu",
+        "bekleyen",
+        "bekleyenler",
+        "tamamlanan",
+        "tamamlanmis",
+        "gerceklesen",
+        "gerçekleşen",
+        "planlanan",
+        "planli",
+        "planlı",
+        "pending",
+        "dagilim",
+        "dağılım",
+        "kirilim",
+        "kırılım"
+      ],
+      "aliases": [
+        "ziyaret durumu",
+        "ziyaretlerin durumu",
+        "bugun bekleyen ziyaret",
+        "bugün bekleyen ziyaret",
+        "bekleyen ve tamamlanan ziyaret",
+        "tamamlanan bekleyen ziyaret",
+        "rodolfo bugun bekleyen ziyaret",
+        "hangi durumda kac ziyaret",
+        "hangi durumda kaç ziyaret"
+      ],
+      "negative_keywords": [
+        "siparis",
+        "sipariş",
+        "fatura",
+        "invoice",
+        "trend",
+        "ortalama",
+        "sure",
+        "süre"
+      ],
+      "priority": 24
     },
     {
       "intent": "visitsByState",

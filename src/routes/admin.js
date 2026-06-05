@@ -182,6 +182,14 @@ router.put("/users/:userId/scopes", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/users/:userId/hierarchy", authMiddleware, async (req, res) => {
+  try {
+    res.json(await service.getUserHierarchy(req.params.userId));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/users/:userId/effective-permissions", authMiddleware, async (req, res) => {
   try {
     res.json(await service.getEffectivePermissions(req.params.userId));

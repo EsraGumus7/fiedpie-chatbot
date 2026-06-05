@@ -1,6 +1,7 @@
 /**
  * Template SQL'e kullanici/tenant scope filtreleri ekler.
- * MVP scope: Company, Country, Team, Brand (+ kullanici filtresi).
+ * Hiyerarsi birincil: allowedUserIds + SubscriptionId.
+ * Team checkbox (allowedTeamIds) SQL'de kullanilmaz.
  */
 
 function isNonEmptyArray(value) {
@@ -21,78 +22,118 @@ function buildInList(values = [], bindPrefix, bind = {}) {
   return { sql: parts.join(", "), bind };
 }
 
-function canBypassAllScope(userContext = {}) {
-  return userContext.isSuperAdmin === true;
+function getSubscriptionIds(userContext = {}) {
+  if (isNonEmptyArray(userContext.allowedSubscriptionIds)) {
+    return userContext.allowedSubscriptionIds;
+  }
+  if (isNonEmptyArray(userContext.allowedCompanyIds)) {
+    return userContext.allowedCompanyIds;
+  }
+  if (typeof userContext.subscriptionId === "number") {
+    return [userContext.subscriptionId];
+  }
+  return [];
 }
 
-function hasExplicitVisitScope(userContext = {}) {
+function canBypassAllScope(_userContext = {}) {
+  // Intent admin (isSuperAdmin) must not disable tenant SQL scope.
+  // Subscription + user boundaries come from hierarchy fields only.
+  return false;
+}
+
+function shouldBypassHierarchyUserFilter(userContext = {}) {
   return (
-    isNonEmptyArray(userContext.allowedSubscriptionIds) ||
-    isNonEmptyArray(userContext.allowedCompanyIds) ||
-    isNonEmptyArray(userContext.allowedCountryIds) ||
-    isNonEmptyArray(userContext.allowedBrandIds) ||
-    isNonEmptyArray(userContext.allowedTeamIds) ||
-    isNonEmptyArray(userContext.allowedUserIds) ||
-    isNonEmptyArray(userContext.effectiveClientIds) ||
-    isNonEmptyArray(userContext.assignedClientIds)
+    userContext.hierarchyBypassUserFilter === true ||
+    Number(userContext.hierarchyLevel) >= 4
   );
 }
 
 function canBypassUserScope(userContext = {}) {
-  return (
-    canBypassAllScope(userContext) ||
-    userContext.manageAll === true ||
-    userContext.isAdmin === true
-  );
+  return shouldBypassHierarchyUserFilter(userContext);
+}
+
+function getAllowedUserIds(userContext = {}) {
+  if (isNonEmptyArray(userContext.allowedUserIds)) {
+    return userContext.allowedUserIds.filter((x) => x != null);
+  }
+  if (typeof userContext.userId === "number") {
+    return [userContext.userId];
+  }
+  return [];
+}
+
+const TABLE_ALIAS_STOP_WORDS = new Set([
+  "WHERE",
+  "INNER",
+  "LEFT",
+  "RIGHT",
+  "OUTER",
+  "JOIN",
+  "GROUP",
+  "ORDER",
+  "HAVING",
+  "UNION",
+  "CROSS",
+  "ON",
+  "SET",
+]);
+
+function normalizeTableAlias(alias) {
+  if (!alias) {
+    return null;
+  }
+
+  if (TABLE_ALIAS_STOP_WORDS.has(String(alias).toUpperCase())) {
+    return null;
+  }
+
+  return alias;
 }
 
 function detectVisitAlias(query = "") {
   const match = String(query).match(/FROM\s+dbo\.Visit\s+(\w+)/i);
-  return match ? match[1] : "v";
+  return normalizeTableAlias(match?.[1]) || "v";
+}
+
+function detectTableAlias(query = "", tablePattern = /FROM\s+dbo\.Client(?:\s+(\w+))?/i) {
+  const match = String(query).match(tablePattern);
+  if (!match) {
+    return null;
+  }
+
+  return normalizeTableAlias(match[1]);
+}
+
+function tableRef(tableName, alias) {
+  return alias || tableName;
 }
 
 function buildVisitScopeClauses(userContext = {}, visitAlias = "v") {
-  if (canBypassAllScope(userContext) && !hasExplicitVisitScope(userContext)) {
+  if (canBypassAllScope(userContext)) {
     return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
   }
 
   const clauses = [];
-  const accessClauses = [];
   const bind = {};
   const alias = visitAlias;
 
-  const subscriptionIds = isNonEmptyArray(userContext.allowedSubscriptionIds)
-    ? userContext.allowedSubscriptionIds
-    : isNonEmptyArray(userContext.allowedCompanyIds)
-      ? userContext.allowedCompanyIds
-      : typeof userContext.subscriptionId === "number"
-        ? [userContext.subscriptionId]
-        : [];
-
+  const subscriptionIds = getSubscriptionIds(userContext);
   if (subscriptionIds.length) {
     const subIn = buildInList(subscriptionIds, "scopeSub", bind);
     clauses.push(`${alias}.SubscriptionId IN (${subIn.sql})`);
   }
 
-  const teamIds = isNonEmptyArray(userContext.allowedTeamIds)
-    ? userContext.allowedTeamIds
-    : [];
-
-  const hasTeamScope = teamIds.length > 0;
-
-  if (!hasTeamScope && !canBypassUserScope(userContext)) {
-    const userIds = isNonEmptyArray(userContext.allowedUserIds)
-      ? userContext.allowedUserIds
-      : [userContext.userId];
-    const userIn = buildInList(userIds.filter((x) => x != null), "scopeUser", bind);
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopeUser", bind);
     if (userIn.sql) {
-      accessClauses.push(`${alias}.UserId IN (${userIn.sql})`);
+      clauses.push(`${alias}.UserId IN (${userIn.sql})`);
     }
   }
 
-  if (!hasTeamScope && isNonEmptyArray(userContext.allowedCountryIds)) {
+  if (isNonEmptyArray(userContext.allowedCountryIds)) {
     const countryIn = buildInList(userContext.allowedCountryIds, "scopeCountry", bind);
-    accessClauses.push(`
+    clauses.push(`
       EXISTS (
         SELECT 1
         FROM dbo.Client c_scope
@@ -102,9 +143,9 @@ function buildVisitScopeClauses(userContext = {}, visitAlias = "v") {
       )`);
   }
 
-  if (!hasTeamScope && isNonEmptyArray(userContext.allowedBrandIds)) {
+  if (isNonEmptyArray(userContext.allowedBrandIds)) {
     const brandIn = buildInList(userContext.allowedBrandIds, "scopeBrand", bind);
-    accessClauses.push(`
+    clauses.push(`
       (
         ${alias}.BrandId IN (${brandIn.sql})
         OR EXISTS (
@@ -117,46 +158,465 @@ function buildVisitScopeClauses(userContext = {}, visitAlias = "v") {
       )`);
   }
 
-  if (!hasTeamScope) {
-    const clientIds = unique([
-      ...(Array.isArray(userContext.effectiveClientIds) ? userContext.effectiveClientIds : []),
-      ...(Array.isArray(userContext.assignedClientIds) ? userContext.assignedClientIds : []),
-    ]);
+  return { clauses, bind, skipped: null, notes: [] };
+}
 
-    if (clientIds.length) {
-      const clientIn = buildInList(clientIds, "scopeClient", bind);
-      accessClauses.push(`${alias}.ClientId IN (${clientIn.sql})`);
+function buildClientScopeClauses(userContext = {}, query = "") {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  if (!/FROM\s+dbo\.Client\b/i.test(String(query))) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const alias = detectTableAlias(query, /FROM\s+dbo\.Client(?:\s+(\w+))?/i);
+  const ref = tableRef("dbo.Client", alias);
+  const clauses = [];
+  const bind = {};
+
+  const subscriptionIds = getSubscriptionIds(userContext);
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopeSub", bind);
+    clauses.push(`${ref}.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopeUser", bind);
+    const teamIds = unique([
+      ...(userContext.managedTeamIds || []),
+      ...(userContext.teamIds || []),
+    ]);
+    const teamIn = teamIds.length ? buildInList(teamIds, "scopeTeam", bind) : null;
+    const accessParts = [];
+
+    if (userIn.sql) {
+      accessParts.push(`
+        EXISTS (
+          SELECT 1
+          FROM dbo.ClientUser cu_scope
+          WHERE cu_scope.ClientId = ${ref}.Id
+            AND cu_scope.Deleted = 0
+            AND cu_scope.UserId IN (${userIn.sql})
+        )`);
+      accessParts.push(`${ref}.CustomerRepresentativeUserId IN (${userIn.sql})`);
+    }
+
+    if (teamIn?.sql) {
+      accessParts.push(`${ref}.TeamId IN (${teamIn.sql})`);
+    }
+
+    if (accessParts.length) {
+      clauses.push(`(${accessParts.join("\n        OR ")})`);
     }
   }
 
-  if (teamIds.length) {
-    const teamIn = buildInList(teamIds, "scopeTeam", bind);
-    accessClauses.push(`
-      (
-        EXISTS (
-          SELECT 1
-          FROM dbo.Client c_scope
-          WHERE c_scope.Id = ${alias}.ClientId
-            AND c_scope.Deleted = 0
-            AND c_scope.TeamId IN (${teamIn.sql})
-        )
-        OR EXISTS (
-          SELECT 1
-          FROM dbo.UserTeam ut_scope
-          WHERE ut_scope.UserId = ${alias}.UserId
-            AND ut_scope.Deleted = 0
-            AND ut_scope.TeamId IN (${teamIn.sql})
-        )
-      )`);
+  return { clauses, bind, skipped: null, notes: [] };
+}
+
+function buildUserTableScopeClauses(userContext = {}, query = "") {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
   }
 
-  if (accessClauses.length) {
-    clauses.push(`(
-      ${accessClauses.join("\n      OR ")}
-    )`);
+  const alias = detectTableAlias(query, /FROM\s+dbo\.\[User\]\s+(\w+)/i);
+  if (!alias) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const clauses = [];
+  const bind = {};
+  const subscriptionIds = getSubscriptionIds(userContext);
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopeSub", bind);
+    clauses.push(`${alias}.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopeUser", bind);
+    if (userIn.sql) {
+      clauses.push(`${alias}.Id IN (${userIn.sql})`);
+    }
   }
 
   return { clauses, bind, skipped: null, notes: [] };
+}
+
+function detectFromTableAlias(query = "", tableName = "") {
+  const tablePattern = new RegExp(
+    `FROM\\s+${escapeRegex(tableName)}(?:\\s+(\\w+))?(?:\\s|$|\\n)`,
+    "i"
+  );
+  const match = String(query).match(tablePattern);
+  if (!match) {
+    return { found: false, alias: null };
+  }
+
+  return {
+    found: true,
+    alias: normalizeTableAlias(match[1]),
+  };
+}
+
+function buildVisitScopeExistsClause(visitIdExpr, userContext = {}, bind = {}, bindPrefix = "scopeVisit") {
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.Visit v_scope",
+    `  WHERE v_scope.Id = ${visitIdExpr}`,
+    "    AND v_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, `${bindPrefix}Sub`, bind);
+    lines.push(`    AND v_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, `${bindPrefix}User`, bind);
+    if (userIn.sql) {
+      lines.push(`    AND v_scope.UserId IN (${userIn.sql})`);
+    }
+  }
+
+  lines.push(")");
+  return lines.join("\n");
+}
+
+function buildVisitLinkedTableScopeClauses(
+  userContext = {},
+  query = "",
+  tableName = "",
+  visitIdColumn = "VisitId"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, tableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(tableName, alias);
+  const clause = buildVisitScopeExistsClause(
+    `${ref}.${visitIdColumn}`,
+    userContext,
+    bind,
+    "scopeVisit"
+  );
+
+  return { clauses: [clause], bind, skipped: null, notes: [] };
+}
+
+function buildPurchaseOrderChildScopeClauses(
+  userContext = {},
+  query = "",
+  childTableName = "",
+  foreignKeyColumn = "PurchaseOrderId"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, childTableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(childTableName, alias);
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.PurchaseOrder po_scope",
+    "  INNER JOIN dbo.Visit v_scope",
+    "    ON v_scope.Id = po_scope.VisitId",
+    "   AND v_scope.Deleted = 0",
+    `  WHERE po_scope.Id = ${ref}.${foreignKeyColumn}`,
+    "    AND po_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopePoSub", bind);
+    lines.push(`    AND v_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopePoUser", bind);
+    if (userIn.sql) {
+      lines.push(`    AND v_scope.UserId IN (${userIn.sql})`);
+    }
+  }
+
+  lines.push(")");
+  return { clauses: [lines.join("\n")], bind, skipped: null, notes: [] };
+}
+
+function buildInvoiceChildScopeClauses(
+  userContext = {},
+  query = "",
+  childTableName = "",
+  foreignKeyColumn = "InvoiceId"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, childTableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(childTableName, alias);
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.Invoice i_scope",
+    "  INNER JOIN dbo.Visit v_scope",
+    "    ON v_scope.Id = i_scope.VisitId",
+    "   AND v_scope.Deleted = 0",
+    `  WHERE i_scope.Id = ${ref}.${foreignKeyColumn}`,
+    "    AND i_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopeInvSub", bind);
+    lines.push(`    AND v_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopeInvUser", bind);
+    if (userIn.sql) {
+      lines.push(`    AND v_scope.UserId IN (${userIn.sql})`);
+    }
+  }
+
+  lines.push(")");
+  return { clauses: [lines.join("\n")], bind, skipped: null, notes: [] };
+}
+
+function buildSubscriptionScopedClauses(
+  userContext = {},
+  query = "",
+  tableName = "",
+  userColumn = null
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, tableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(tableName, alias);
+  const clauses = [];
+  const subscriptionIds = getSubscriptionIds(userContext);
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopeSub", bind);
+    clauses.push(`${ref}.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (userColumn && !canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopeUser", bind);
+    if (userIn.sql) {
+      clauses.push(`${ref}.${userColumn} IN (${userIn.sql})`);
+    }
+  }
+
+  return { clauses, bind, skipped: null, notes: [] };
+}
+
+function buildCampaignProductScopeClauses(userContext = {}, query = "") {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, "dbo.CampaignProduct");
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef("dbo.CampaignProduct", alias);
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.Campaign c_scope",
+    `  WHERE c_scope.Id = ${ref}.CampaignId`,
+    "    AND c_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopeCampSub", bind);
+    lines.push(`    AND c_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  lines.push(")");
+  return { clauses: [lines.join("\n")], bind, skipped: null, notes: [] };
+}
+
+function buildClientLinkedTableScopeClauses(
+  userContext = {},
+  query = "",
+  tableName = "",
+  clientIdColumn = "ClientId"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, tableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(tableName, alias);
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.Client c_scope",
+    `  WHERE c_scope.Id = ${ref}.${clientIdColumn}`,
+    "    AND c_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, "scopeCliSub", bind);
+    lines.push(`    AND c_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, "scopeCliUser", bind);
+    const teamIds = unique([
+      ...(userContext.managedTeamIds || []),
+      ...(userContext.teamIds || []),
+    ]);
+    const teamIn = teamIds.length ? buildInList(teamIds, "scopeCliTeam", bind) : null;
+    const accessParts = [];
+
+    if (userIn.sql) {
+      accessParts.push(`
+        EXISTS (
+          SELECT 1
+          FROM dbo.ClientUser cu_scope
+          WHERE cu_scope.ClientId = c_scope.Id
+            AND cu_scope.UserId IN (${userIn.sql})
+        )`);
+      accessParts.push(`c_scope.CustomerRepresentativeUserId IN (${userIn.sql})`);
+    }
+
+    if (teamIn?.sql) {
+      accessParts.push(`c_scope.TeamId IN (${teamIn.sql})`);
+    }
+
+    if (accessParts.length) {
+      lines.push(`    AND (${accessParts.join("\n      OR ")})`);
+    }
+  }
+
+  lines.push(")");
+  return { clauses: [lines.join("\n")], bind, skipped: null, notes: [] };
+}
+
+const TABLE_SCOPE_ROUTES = [
+  { table: "dbo.PurchaseOrder", builder: (ctx, q) => buildVisitLinkedTableScopeClauses(ctx, q, "dbo.PurchaseOrder") },
+  { table: "dbo.Invoice", builder: (ctx, q) => buildVisitLinkedTableScopeClauses(ctx, q, "dbo.Invoice") },
+  {
+    table: "dbo.PurchaseOrderDetail",
+    builder: (ctx, q) => buildPurchaseOrderChildScopeClauses(ctx, q, "dbo.PurchaseOrderDetail"),
+  },
+  {
+    table: "dbo.PurchaseOrderTracker",
+    builder: (ctx, q) => buildPurchaseOrderChildScopeClauses(ctx, q, "dbo.PurchaseOrderTracker"),
+  },
+  {
+    table: "dbo.IyzicoPaymentTransaction",
+    builder: (ctx, q) => buildPurchaseOrderChildScopeClauses(ctx, q, "dbo.IyzicoPaymentTransaction"),
+  },
+  {
+    table: "dbo.InvoiceDetail",
+    builder: (ctx, q) => buildInvoiceChildScopeClauses(ctx, q, "dbo.InvoiceDetail"),
+  },
+  {
+    table: "dbo.InvoicePayment",
+    builder: (ctx, q) => buildInvoiceChildScopeClauses(ctx, q, "dbo.InvoicePayment"),
+  },
+  {
+    table: "dbo.Commission",
+    builder: (ctx, q) => buildInvoiceChildScopeClauses(ctx, q, "dbo.Commission"),
+  },
+  {
+    table: "dbo.Campaign",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.Campaign", "UserId"),
+  },
+  {
+    table: "dbo.Payment",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.Payment", "UserId"),
+  },
+  {
+    table: "dbo.Cost",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.Cost"),
+  },
+  {
+    table: "dbo.BipPromotion",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.BipPromotion"),
+  },
+  {
+    table: "dbo.CampaignProduct",
+    builder: (ctx, q) => buildCampaignProductScopeClauses(ctx, q),
+  },
+  {
+    table: "dbo.ClientProductPrice",
+    builder: (ctx, q) => buildClientLinkedTableScopeClauses(ctx, q, "dbo.ClientProductPrice"),
+  },
+  {
+    table: "dbo.ClientDataChange",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.ClientDataChange"),
+  },
+  {
+    table: "dbo.ClientInfoUpdate",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.ClientInfoUpdate"),
+  },
+  {
+    table: "dbo.ClientFile",
+    builder: (ctx, q) => buildClientLinkedTableScopeClauses(ctx, q, "dbo.ClientFile"),
+  },
+  {
+    table: "dbo.Consumer",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.Consumer"),
+  },
+  {
+    table: "dbo.RniDevice",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.RniDevice"),
+  },
+  {
+    table: "dbo.Distributor",
+    builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.Distributor"),
+  },
+];
+
+function escapeRegex(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function appendClausesToQuery(query, clauses = []) {
@@ -164,9 +624,38 @@ function appendClausesToQuery(query, clauses = []) {
     return query;
   }
 
-  const fragment = clauses.map((clause) => `        AND (${clause.trim()})`).join("\n");
   const trimmed = String(query).trim().replace(/;\s*$/, "");
-  return `${trimmed}\n${fragment};`;
+  const fragment = clauses.map((clause) => `AND (${clause.trim()})`).join("\n        ");
+
+  const boundaryMatch = trimmed.match(/\b(GROUP\s+BY|ORDER\s+BY|HAVING|UNION)\b/i);
+  if (boundaryMatch && typeof boundaryMatch.index === "number") {
+    const index = boundaryMatch.index;
+    return `${trimmed.slice(0, index).trimEnd()}\n        ${fragment}\n${trimmed.slice(index)};`;
+  }
+
+  return `${trimmed}\n        ${fragment};`;
+}
+
+function pickScopeBuilder(sourceTables = [], query = "") {
+  if (sourceTables.includes("dbo.Visit")) {
+    return (userContext) => buildVisitScopeClauses(userContext, detectVisitAlias(query));
+  }
+
+  if (sourceTables.includes("dbo.Client")) {
+    return (userContext) => buildClientScopeClauses(userContext, query);
+  }
+
+  if (sourceTables.includes("dbo.[User]")) {
+    return (userContext) => buildUserTableScopeClauses(userContext, query);
+  }
+
+  for (const route of TABLE_SCOPE_ROUTES) {
+    if (sourceTables.includes(route.table)) {
+      return (userContext) => route.builder(userContext, query);
+    }
+  }
+
+  return null;
 }
 
 function mergeSqlScope(builtQuery, userContext, metric = {}) {
@@ -175,12 +664,13 @@ function mergeSqlScope(builtQuery, userContext, metric = {}) {
   }
 
   const sourceTables = metric.source_tables || [];
-  if (!sourceTables.includes("dbo.Visit")) {
+  const scopeBuilder = pickScopeBuilder(sourceTables, builtQuery.query);
+
+  if (!scopeBuilder) {
     return builtQuery;
   }
 
-  const visitAlias = detectVisitAlias(builtQuery.query);
-  const { clauses, bind, skipped, notes } = buildVisitScopeClauses(userContext, visitAlias);
+  const { clauses, bind, skipped, notes } = scopeBuilder(userContext);
 
   if (skipped === "super_admin") {
     return {
@@ -203,7 +693,13 @@ function mergeSqlScope(builtQuery, userContext, metric = {}) {
 module.exports = {
   mergeSqlScope,
   buildVisitScopeClauses,
+  buildClientScopeClauses,
+  buildUserTableScopeClauses,
+  buildVisitLinkedTableScopeClauses,
+  buildPurchaseOrderChildScopeClauses,
+  buildSubscriptionScopedClauses,
   canBypassUserScope,
   canBypassAllScope,
+  shouldBypassHierarchyUserFilter,
   detectVisitAlias,
 };

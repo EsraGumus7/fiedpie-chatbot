@@ -29,7 +29,11 @@ function listAllows(list = [], value) {
     return list.includes("*") || list.includes(value);
 }
 
-function getMetricId(metric = {}) {
+function getMetricId(metric) {
+    if (!metric || typeof metric !== "object") {
+        return null;
+    }
+
     return metric.metric_id || metric.metricId || metric.id || null;
 }
 

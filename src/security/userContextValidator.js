@@ -79,6 +79,15 @@ function normalizeUserContext(userContext = {}) {
         isClientUser: normalizeBoolean(userContext.isClientUser),
         manageAll: normalizeManageAll(userContext),
 
+        hierarchyLevel:
+          userContext.hierarchyLevel !== undefined && userContext.hierarchyLevel !== null
+            ? Number(userContext.hierarchyLevel)
+            : null,
+        hierarchyLabel: userContext.hierarchyLabel || null,
+        hierarchyBypassUserFilter: normalizeBoolean(
+            userContext.hierarchyBypassUserFilter
+        ),
+
         allowedIntents: normalizeArray(userContext.allowedIntents),
         allowedMetrics: normalizeArray(userContext.allowedMetrics),
         allowedTables: normalizeArray(userContext.allowedTables),

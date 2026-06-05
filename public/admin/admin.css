@@ -130,6 +130,15 @@ body {
   margin-top: 10px;
 }
 
+.hierarchy-preview {
+  padding: 0.65rem 0.75rem;
+  margin: 0 0 10px;
+  border-radius: 6px;
+  background: #f4f6f8;
+  border: 1px solid #dde3ea;
+  font-size: 13px;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;

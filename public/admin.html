@@ -94,26 +94,29 @@
             </div>
 
             <div class="card scope-card">
-              <h3>Scope</h3>
+              <h3>Hiyerarşi ve Scope</h3>
+              <div id="hierarchyPreview" class="hierarchy-preview muted">
+                Kullanıcı seçildiğinde hiyerarşi bilgisi yüklenecek.
+              </div>
               <p class="muted">
-                Kullanıcı seçildiğinde Company, Country, Team ve Brand veritabanından otomatik doldurulur.
-                Kaydet ile scope kaydedilir. Boş bırakılan alan = kısıt yok.
+                Veri kapsamı (allowedUserIds) otomatik hesaplanır. Company ve Team salt okunurdur.
+                Country ve Brand isteğe bağlı daraltma filtresidir.
               </p>
               <div class="scope-grid">
                 <div>
-                  <label for="scopeCompanySelect">Company</label>
-                  <select id="scopeCompanySelect" multiple size="5"></select>
+                  <label for="scopeCompanySelect">Company (salt okunur)</label>
+                  <select id="scopeCompanySelect" multiple size="5" disabled></select>
                 </div>
                 <div>
-                  <label for="scopeCountrySelect">Country</label>
+                  <label for="scopeCountrySelect">Country (opsiyonel)</label>
                   <select id="scopeCountrySelect" multiple size="5"></select>
                 </div>
                 <div>
-                  <label for="scopeTeamSelect">Team</label>
-                  <select id="scopeTeamSelect" multiple size="5"></select>
+                  <label for="scopeTeamSelect">Team (salt okunur)</label>
+                  <select id="scopeTeamSelect" multiple size="5" disabled></select>
                 </div>
                 <div>
-                  <label for="scopeBrandSelect">Brand</label>
+                  <label for="scopeBrandSelect">Brand (opsiyonel)</label>
                   <select id="scopeBrandSelect" multiple size="5"></select>
                 </div>
               </div>

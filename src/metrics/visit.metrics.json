@@ -37,6 +37,15 @@
       "security_scope": "tenant_user_scope"
     },
     {
+      "metric_id": "visit_by_completion_status",
+      "intent": "visitsByCompletionStatus",
+      "description_tr": "Tamamlanan ve bekleyen ziyaret dagilimi",
+      "source_tables": ["dbo.Visit"],
+      "aggregation": "count_group_by",
+      "default_filters": [],
+      "security_scope": "tenant_user_scope"
+    },
+    {
       "metric_id": "visit_by_type",
       "intent": "visitsByType",
       "description_tr": "Tipe gore ziyaret dagilimi",

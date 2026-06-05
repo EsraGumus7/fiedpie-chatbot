@@ -1,4 +1,8 @@
 const { queryDb } = require("../db/sql");
+const {
+  getTeamUserIds,
+  resolveUserHierarchy,
+} = require("./hierarchyService");
 
 function unique(values = []) {
   return Array.from(new Set(values.filter((x) => x !== null && x !== undefined)));
@@ -135,44 +139,6 @@ async function getClients(userId) {
   return result.recordset;
 }
 
-function buildBindList(values = [], prefix = "param") {
-  const bind = {};
-  const sqlParts = [];
-
-  values.forEach((value, index) => {
-    const key = `${prefix}${index}`;
-    bind[key] = Number(value);
-    sqlParts.push(`@${key}`);
-  });
-
-  return {
-    sql: sqlParts.join(", "),
-    bind,
-  };
-}
-
-async function getTeamUserIds(teamIds = []) {
-  if (!Array.isArray(teamIds) || teamIds.length === 0) {
-    return [];
-  }
-
-  const { sql, bind } = buildBindList(teamIds, "teamId");
-  const result = await queryDb({
-    query: `
-      SELECT DISTINCT ut.UserId
-      FROM dbo.UserTeam ut
-      INNER JOIN dbo.[User] u
-        ON u.Id = ut.UserId
-       AND u.Deleted = 0
-      WHERE ut.Deleted = 0
-        AND ut.TeamId IN (${sql});
-    `,
-    bind,
-  });
-
-  return unique(result.recordset.map((x) => Number(x.UserId)));
-}
-
 function buildEffectiveFlags(user, roles) {
   const roleAdmin = roles.some((r) => !!r.DefaultAdmin || !!r.TestingCompanyAdmin);
 
@@ -224,8 +190,13 @@ async function buildUserContext(userId) {
     ...clients.map((x) => x.TeamId),
   ]);
 
-  const managedTeamUserIds = await getTeamUserIds(managedTeamIds);
-  const allowedUserIds = unique([Number(user.Id), ...managedTeamUserIds]);
+  const hierarchy = await resolveUserHierarchy({
+    user,
+    roles,
+    managedTeamIds,
+    teams,
+    dbQuery: queryDb,
+  });
 
   return {
     userId: Number(user.Id),
@@ -262,11 +233,25 @@ async function buildUserContext(userId) {
     maskedColumns: [],
     blockedColumns: [],
 
-    allowedUserIds,
+    allowedUserIds: hierarchy.allowedUserIds,
+    hierarchyLevel: hierarchy.hierarchyLevel,
+    hierarchyLabel: hierarchy.hierarchyLabel,
+    hierarchyBypassUserFilter: hierarchy.hierarchyBypassUserFilter,
+    activeScopeMode: hierarchy.activeScopeMode,
+    operationalLevel: hierarchy.operationalLevel,
+    operationalLabel: hierarchy.operationalLabel,
+    operationalAllowedUserIds: hierarchy.operationalAllowedUserIds,
+    operationalScopeLabel: hierarchy.operationalScopeLabel,
+    companyCapable: hierarchy.companyCapable,
+    companyLevel: hierarchy.companyLevel,
+    companyAllowedUserIds: hierarchy.companyAllowedUserIds,
+    companyScopeLabel: hierarchy.companyScopeLabel,
+    isHybridScopeUser: hierarchy.isHybridScopeUser,
+    defaultScopeMode: hierarchy.defaultScopeMode,
     assignedClientIds: clientIds,
     effectiveClientIds: clientIds,
     clientTagIds: [],
-    managedTeamIds,
+    managedTeamIds: hierarchy.managedTeamIds,
 
     allowedCompanyIds: [Number(user.SubscriptionId)],
     allowedSubscriptionIds: [Number(user.SubscriptionId)],
@@ -327,4 +312,5 @@ async function buildUserContext(userId) {
 
 module.exports = {
   buildUserContext,
+  getTeamUserIds,
 };

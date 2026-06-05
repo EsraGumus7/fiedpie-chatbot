@@ -150,6 +150,42 @@
       margin-top: 4px;
     }
 
+    .kpi-card.kpi-card--team-total {
+      background: #fff0e6;
+      border-color: #e08a5a;
+      grid-column: 1 / -1;
+    }
+
+    .kpi-card.kpi-card--member {
+      background: #f8fbff;
+      border-color: #c9d8ef;
+    }
+
+    .kpi-card.kpi-card--member .kpi-value {
+      font-size: 18px;
+      color: #35507a;
+    }
+
+    .kpi-card.kpi-card--member-hidden {
+      display: none;
+    }
+
+    .member-breakdown-toggle {
+      grid-column: 1 / -1;
+      justify-self: start;
+      border: 1px solid #c9d8ef;
+      background: #eef4fc;
+      color: #35507a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .member-breakdown-toggle:hover {
+      background: #dfeaf8;
+    }
+
     .chat-log {
       height: 430px;
       overflow-y: auto;
@@ -573,7 +609,11 @@ async function login() {
       ? `${data.user.name || data.user.email} (#${data.user.id})`
       : data.user?.email || "";
     if (who && typeof addMessage === "function") {
-      addMessage(`Giris: ${who}. Admin panelde ayni UserId icin intent atayin.`, "bot");
+      let hint = `Giris: ${who}. Admin panelde ayni UserId icin intent atayin.`;
+      if (data.user?.admin) {
+        hint += " Admin+takim lideri isen ozet sorularda takim ve sirket sonucu birlikte gelir.";
+      }
+      addMessage(hint, "bot");
     }
 
     hideLogin();
@@ -887,9 +927,95 @@ async function login() {
       cards.forEach((card) => {
         const el = document.createElement("div");
         el.className = "kpi-card";
+        if (card.variant === "team-total") {
+          el.classList.add("kpi-card--team-total");
+        }
+        if (card.variant === "member") {
+          el.classList.add("kpi-card--member");
+          if (card.hidden) {
+            el.classList.add("kpi-card--member-hidden");
+          }
+        }
         el.innerHTML = `<div class="kpi-title">${card.title}</div><div class="kpi-value">${card.value}</div>`;
         kpiArea.appendChild(el);
       });
+    }
+
+    function pickScopeRowValue(scopeRows, valueCandidates) {
+      if (!scopeRows.length) {
+        return "-";
+      }
+
+      const first = scopeRows[0] || {};
+      const valueKeyLocal =
+        valueCandidates.find((key) => first[key] !== undefined) ||
+        Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+
+      return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+    }
+
+    function formatTeamScopeValue(normalizedIntent, scopeRows, valueCandidates) {
+      if (normalizedIntent === "visitsbycompletionstatus") {
+        const tam = scopeRows.find((row) => row.visitState === "Tamamlanan");
+        const bek = scopeRows.find((row) => row.visitState === "Bekleyen");
+        return `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`;
+      }
+
+      if (scopeRows.length > 1) {
+        return scopeRows
+          .slice(0, 4)
+          .map((row) => {
+            const label =
+              row.visitState || row.visitType || row.stateName || row.statusName || "Diger";
+            return `${label}: ${formatDisplayNumber(row.total ?? 0)}`;
+          })
+          .join(" | ");
+      }
+
+      return pickScopeRowValue(scopeRows, valueCandidates);
+    }
+
+    function renderTeamMemberBreakdown(data, { title, normalizedIntent, valueCandidates }) {
+      const scope = data.singleTeamScope || {};
+      const scopeRows = scope.rows || [];
+      const members = scope.members || [];
+      const displayLimit = scope.displayLimit || 15;
+      const cardTitle = scope.displayLabel || `Takim (${scope.teamName || "-"})`;
+      const teamValue = formatTeamScopeValue(normalizedIntent, scopeRows, valueCandidates);
+
+      const cards = [
+        {
+          title: `${cardTitle} — ${title} (Toplam)`,
+          value: teamValue,
+          variant: "team-total",
+        },
+      ];
+
+      members.forEach((member, index) => {
+        cards.push({
+          title: member.displayLabel || member.userName || `Kullanici ${member.userId}`,
+          value: member.displayValue || "-",
+          variant: "member",
+          hidden: index >= displayLimit,
+        });
+      });
+
+      renderKpiCards(cards);
+
+      if (scope.hasMoreMembers && members.length > displayLimit) {
+        const hiddenCount = members.length - displayLimit;
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "member-breakdown-toggle";
+        toggle.textContent = `Tumunu goster (${hiddenCount} kisi daha)`;
+        toggle.addEventListener("click", () => {
+          kpiArea.querySelectorAll(".kpi-card--member-hidden").forEach((el) => {
+            el.classList.remove("kpi-card--member-hidden");
+          });
+          toggle.remove();
+        });
+        kpiArea.appendChild(toggle);
+      }
     }
 
     function formatDisplayNumber(value) {
@@ -942,13 +1068,14 @@ async function login() {
         usersbyrole: "Rollere Göre Kullanıcı Dağılımı",
         visitsbytype: "Ziyaret Tipi Dağılımı",
         visitsbystate: "Duruma Göre Ziyaretler",
+        visitsbycompletionstatus: "Ziyaret Durumu (Tamamlanan / Bekleyen)",
         clientsbygroup: "Gruplara Göre Firma Dağılımı",
         clientsbystate: "Duruma Göre Firma Dağılımı",
         clientsbycountry: "Ülkelere Göre Firma Dağılımı",
         distributorsbystatus: "Duruma Göre Distribütör Dağılımı",
       };
 
-      if (!rows.length) {
+      if (!rows.length && !data.dualScope && !data.multiTeamScope && !data.singleTeamScope) {
         chartLoadSeq++;
         resetChartArea(true);
         applyChartAvailability(["kpiCards"]);
@@ -1004,6 +1131,188 @@ async function login() {
         valueCandidates.find((key) => firstRow[key] !== undefined) ||
         numericKeys[0];
 
+      const scopeDisplay = data.scopePlan?.display;
+
+      if (scopeDisplay === "message" && data.answer) {
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = data.intent || "Sorgu Sonucu";
+        renderKpiCards([{ title: "Bilgi", value: data.answer }]);
+        return true;
+      }
+
+      // Hibrit kullanici: takim + sirket KPI
+      if (scopeDisplay === "dual" || (data.dualScope?.operational && data.dualScope?.company)) {
+        const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
+        const opRows = data.dualScope.operational.rows || [];
+        const coRows = data.dualScope.company.rows || [];
+        const opFirst = opRows[0] || {};
+        const coFirst = coRows[0] || {};
+        const valueKeyLocal =
+          valueCandidates.find((key) => opFirst[key] !== undefined) ||
+          Object.keys(opFirst).find((key) => !Number.isNaN(Number(opFirst[key])));
+
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = title;
+
+        const opCardTitle =
+          data.dualScope.operational.displayLabel ||
+          `Takim (${data.dualScope.operational.label || "Takim"})`;
+        const coCardTitle =
+          data.dualScope.company.displayLabel ||
+          `Sirket geneli (${data.dualScope.company.label || "Sirket geneli"})`;
+
+        renderKpiCards([
+          {
+            title: `${opCardTitle} — ${title}`,
+            value: formatDisplayNumber(valueKeyLocal ? opFirst[valueKeyLocal] : "-"),
+          },
+          {
+            title: `${coCardTitle} — ${title}`,
+            value: formatDisplayNumber(valueKeyLocal ? coFirst[valueKeyLocal] : "-"),
+          },
+        ]);
+
+        return true;
+      }
+
+      const distributionIntents = new Set([
+        "visitsbystate",
+        "visitsbycompletionstatus",
+        "visitsbytype",
+        "usersbyteam",
+        "purchaseordersbystatus",
+      ]);
+
+      // Takim adiyla sorulan sorgu: toplam + uye kirilimi
+      if (
+        (scopeDisplay === "single" || scopeDisplay === "team_detail") &&
+        data.singleTeamScope?.rows
+      ) {
+        const scopeRows = data.singleTeamScope.rows || [];
+        const members = data.singleTeamScope.members || [];
+        const isDistribution =
+          distributionIntents.has(normalizedIntent) && scopeRows.length > 1;
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+
+        if (members.length) {
+          chartLoadSeq++;
+          resetChartArea(true);
+          applyChartAvailability(["kpiCards"]);
+          applySelectedChart("kpiCards");
+          chartTitle.textContent = title;
+          renderTeamMemberBreakdown(data, {
+            title,
+            normalizedIntent,
+            valueCandidates,
+          });
+          return true;
+        }
+
+        if (!isDistribution) {
+          const first = scopeRows[0] || {};
+          const valueKeyLocal =
+            valueCandidates.find((key) => first[key] !== undefined) ||
+            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+
+          chartLoadSeq++;
+          resetChartArea(true);
+          applyChartAvailability(["kpiCards"]);
+          applySelectedChart("kpiCards");
+          chartTitle.textContent = title;
+
+          const cardTitle =
+            data.singleTeamScope.displayLabel ||
+            `Takim (${data.singleTeamScope.teamName || "-"})`;
+
+          renderKpiCards([
+            {
+              title: `${cardTitle} — ${title}`,
+              value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+            },
+          ]);
+
+          return true;
+        }
+      }
+
+      // L3 cok takimli yonetici: takim bazli KPI + toplam
+      if (scopeDisplay === "breakdown" || data.multiTeamScope?.teams?.length) {
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+
+        if (
+          normalizedIntent === "visitsbycompletionstatus" &&
+          data.multiTeamScope?.teams?.length
+        ) {
+          const teamCards = data.multiTeamScope.teams.map((team) => {
+            const rows = team.rows || [];
+            const tam = rows.find((row) => row.visitState === "Tamamlanan");
+            const bek = rows.find((row) => row.visitState === "Bekleyen");
+            return {
+              title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+              value: `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`,
+            };
+          });
+          const combinedRows = data.multiTeamScope.combined?.rows || [];
+          const tamTotal = combinedRows.find((row) => row.visitState === "Tamamlanan");
+          const bekTotal = combinedRows.find((row) => row.visitState === "Bekleyen");
+          teamCards.push({
+            title: `Toplam — ${title}`,
+            value: `Tamamlanan: ${formatDisplayNumber(tamTotal?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bekTotal?.total ?? 0)}`,
+          });
+
+          chartLoadSeq++;
+          resetChartArea(true);
+          applyChartAvailability(["kpiCards"]);
+          applySelectedChart("kpiCards");
+          chartTitle.textContent = title;
+          renderKpiCards(teamCards);
+          return true;
+        }
+
+        const teamCards = data.multiTeamScope.teams.map((team) => {
+          const first = (team.rows || [])[0] || {};
+          const valueKeyLocal =
+            valueCandidates.find((key) => first[key] !== undefined) ||
+            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+          return {
+            title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+            value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+          };
+        });
+        const combinedFirst = (data.multiTeamScope.combined?.rows || [])[0] || {};
+        const combinedValueKey =
+          valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+          Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
+        teamCards.push({
+          title: `Toplam — ${title}`,
+          value: formatDisplayNumber(
+            combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+          ),
+        });
+
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = title;
+        renderKpiCards(teamCards);
+        return true;
+      }
+
       // Tek satır + sayısal sonuç: KPI kartı
       if (rows.length === 1 && valueKey) {
         const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
@@ -1027,7 +1336,10 @@ async function login() {
 
       // Çok satırlı sonuç: Bar/Pie grafik
       if (rows.length > 1 && labelKey && valueKey) {
-        const title = chartTitleMap[normalizedIntent] || data.intent || "Dağılım Grafiği";
+        const baseTitle =
+          chartTitleMap[normalizedIntent] || data.intent || "Dağılım Grafiği";
+        const teamPrefix = data.singleTeamScope?.displayLabel || "";
+        const title = teamPrefix ? `${teamPrefix} — ${baseTitle}` : baseTitle;
         const allowed = ["stateBar", "statePie"];
         const chartKey = allowed.includes(preferredChart) ? preferredChart : "stateBar";
         const chartType = chartKey === "statePie" ? "pie" : "bar";

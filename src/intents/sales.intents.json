@@ -90,7 +90,10 @@
         "odeme",
         "tutar",
         "ciro",
-        "trend"
+        "trend",
+        "ziyaret",
+        "visit",
+        "saha"
       ],
       "priority": 20,
       "metric_id": "purchase_order_by_status"

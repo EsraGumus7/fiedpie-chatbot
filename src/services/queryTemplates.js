@@ -12,15 +12,15 @@ function buildFieldTerms(fieldName = "") {
 }
 
 const TEMPLATES = {
-  visitCountRealized: ({ startDate, endDate }) => ({
+  visitCountRealized: ({ startDate, endDate, visitRealized = 1 }) => ({
     query: `
       SELECT COUNT(1) AS total
       FROM dbo.Visit v
-      WHERE v.Realized = 1
+      WHERE v.Realized = @visitRealized
         AND (@startDate IS NULL OR v.StartedAt >= @startDate)
         AND (@endDate IS NULL OR v.StartedAt < DATEADD(day, 1, @endDate));
     `,
-    bind: { startDate, endDate },
+    bind: { startDate, endDate, visitRealized },
   }),
 
   avgVisitDuration: ({ startDate, endDate }) => ({
@@ -44,10 +44,32 @@ const TEMPLATES = {
         COUNT(1) AS total
       FROM dbo.Visit v
       LEFT JOIN dbo.VisitState vs ON vs.Id = v.VisitStateId
-      WHERE (@startDate IS NULL OR v.StartedAt >= @startDate)
+      WHERE v.Deleted = 0
+        AND (@startDate IS NULL OR v.StartedAt >= @startDate)
         AND (@endDate IS NULL OR v.StartedAt < DATEADD(day, 1, @endDate))
       GROUP BY COALESCE(vs.Name, CONCAT('State-', v.VisitStateId))
       ORDER BY total DESC;
+    `,
+    bind: { startDate, endDate },
+  }),
+
+  visitsByCompletionStatus: ({ startDate, endDate }) => ({
+    query: `
+      SELECT
+        CASE WHEN v.Realized = 1 THEN N'Tamamlanan' ELSE N'Bekleyen' END AS visitState,
+        COUNT(1) AS total
+      FROM dbo.Visit v
+      WHERE v.Deleted = 0
+        AND (
+          @startDate IS NULL
+          OR COALESCE(v.StartedAt, v.PlanStartsAt, v.StartDate, v.CreateTime) >= @startDate
+        )
+        AND (
+          @endDate IS NULL
+          OR COALESCE(v.StartedAt, v.PlanStartsAt, v.StartDate, v.CreateTime) < DATEADD(day, 1, @endDate)
+        )
+      GROUP BY v.Realized
+      ORDER BY v.Realized DESC;
     `,
     bind: { startDate, endDate },
   }),

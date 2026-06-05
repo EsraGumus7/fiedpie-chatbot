@@ -326,6 +326,38 @@
     el.textContent = extra ? `${base} ${extra}` : base;
   }
 
+  function formatHierarchyPreview(hierarchy) {
+    if (!hierarchy) return "Hiyerarşi bilgisi alınamadı.";
+    const parts = [
+      `Seviye ${hierarchy.hierarchyLevel} (${hierarchy.hierarchyLabel})`,
+      `Yönetilen takım: ${(hierarchy.managedTeamIds || []).length}`,
+      `Erişilebilir kullanıcı: ${hierarchy.allowedUserIdsCount ?? (hierarchy.allowedUserIds || []).length}`,
+    ];
+    if (hierarchy.isHybridScopeUser) {
+      parts.push(
+        `Hibrit: ${hierarchy.operationalScopeLabel || "Takim"} (${hierarchy.operationalAllowedUserIdsCount ?? "-"}) + ${hierarchy.companyScopeLabel || "Sirket"} (${hierarchy.companyAllowedUserIdsCount ?? "-"})`
+      );
+    } else if (hierarchy.hierarchyBypassUserFilter) {
+      parts.push("Scope: sirket geneli (L4)");
+    } else {
+      parts.push("Scope: hiyerarsik UserId listesi");
+    }
+    return parts.join(" · ");
+  }
+
+  async function loadHierarchyPreview(userId) {
+    const el = $("hierarchyPreview");
+    if (!el) return null;
+    try {
+      const hierarchy = await AdminApi.getUserHierarchy(userId);
+      el.textContent = formatHierarchyPreview(hierarchy);
+      return hierarchy;
+    } catch (err) {
+      el.textContent = `Hiyerarşi yüklenemedi: ${err.message}`;
+      return null;
+    }
+  }
+
   function formatDerivedScopeSummary(derived) {
     const parts = [];
     const count = (key) => (derived[key] || []).length;
@@ -333,7 +365,7 @@
     if (count("allowedCountryIds")) parts.push(`Country ${count("allowedCountryIds")}`);
     if (count("allowedTeamIds")) parts.push(`Team ${count("allowedTeamIds")}`);
     if (count("allowedBrandIds")) parts.push(`Brand ${count("allowedBrandIds")}`);
-    return parts.length ? `Scope DB'den: ${parts.join(", ")}.` : "Scope DB'de eşleşen kayıt bulunamadı.";
+    return parts.length ? `Önizleme: ${parts.join(", ")}.` : "Opsiyonel country/brand filtresi yok.";
   }
 
   async function applyDerivedScopes(userId) {
@@ -373,34 +405,11 @@
     setSelectedValues($("userRoleSelect"), userRoles.roleIds || []);
 
     const derived = await applyDerivedScopes(userId);
-    await syncUserFromDatabase(userId, derived);
+    await loadHierarchyPreview(userId);
 
     renderUserDomainTabs();
     await renderUserIntentTable();
     await refreshEffectivePreview();
-  }
-
-  async function syncUserFromDatabase(userId, derived) {
-    const perms = await AdminApi.getUserPermissions(userId);
-    const intents =
-      perms.allowedIntents?.length > 0 ? perms.allowedIntents : ["visitCountRealized"];
-
-    await AdminApi.saveUserScopes(userId, {
-      allowedSubscriptionIds: derived.allowedSubscriptionIds,
-      allowedCountryIds: derived.allowedCountryIds,
-      allowedTeamIds: derived.allowedTeamIds,
-      allowedBrandIds: derived.allowedBrandIds,
-    });
-
-    if (!perms.allowedIntents?.length) {
-      await AdminApi.saveUserPermissions(userId, intents);
-    }
-  }
-
-  async function refreshEffectivePreview() {
-    if (!state.userId) return;
-    const preview = await AdminApi.getEffectivePermissions(state.userId);
-    $("effectivePreview").textContent = JSON.stringify(preview, null, 2);
   }
 
   async function saveUserSettings() {
@@ -411,15 +420,13 @@
     }
 
     const roleIds = getSelectedValues($("userRoleSelect"));
-    const companyIds = getSelectedValues($("scopeCompanySelect"));
     const countryIds = getSelectedValues($("scopeCountrySelect"));
-    const teamIds = getSelectedValues($("scopeTeamSelect"));
     const brandIds = getSelectedValues($("scopeBrandSelect"));
 
     const scopes = {
-      allowedSubscriptionIds: companyIds.length ? companyIds : null,
+      allowedSubscriptionIds: null,
       allowedCountryIds: countryIds.length ? countryIds : null,
-      allowedTeamIds: teamIds.length ? teamIds : null,
+      allowedTeamIds: null,
       allowedBrandIds: brandIds.length ? brandIds : null,
     };
 
@@ -429,8 +436,15 @@
     await AdminApi.saveUserPermissions(userId, allowedIntents);
     await AdminApi.saveUserScopes(userId, scopes);
     showToast("Kullanıcı ayarları kaydedildi.");
+    await loadHierarchyPreview(userId);
     await refreshEffectivePreview();
     if ($("page-audit").classList.contains("active")) await loadAudit();
+  }
+
+  async function refreshEffectivePreview() {
+    if (!state.userId) return;
+    const preview = await AdminApi.getEffectivePermissions(state.userId);
+    $("effectivePreview").textContent = JSON.stringify(preview, null, 2);
   }
 
   /* ---------- Audit ---------- */
@@ -477,13 +491,8 @@
     );
     $("userSelect").addEventListener("change", () => loadUserDetail().catch((e) => showToast(e.message)));
     $("userRoleSelect").addEventListener("change", () => refreshEffectivePreview());
-    ["scopeCompanySelect", "scopeCountrySelect", "scopeTeamSelect", "scopeBrandSelect"].forEach((id) => {
+    ["scopeCountrySelect", "scopeBrandSelect"].forEach((id) => {
       $(id).addEventListener("change", () => refreshEffectivePreview());
-    });
-    $("scopeCompanySelect").addEventListener("change", () => {
-      const ids = getSelectedValues($("scopeCompanySelect"));
-      const subId = ids[0] || state.scopeSubscriptionId;
-      loadScopeOptions(subId || null).catch((e) => showToast(e.message));
     });
     $("saveUserBtn").addEventListener("click", () => saveUserSettings().catch((e) => showToast(e.message)));
 

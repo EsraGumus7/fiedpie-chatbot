@@ -476,6 +476,10 @@ const AdminApi = (() => {
     });
   }
 
+  async function realGetUserHierarchy(userId) {
+    return fetchJson(`${API_BASE}/users/${userId}/hierarchy`);
+  }
+
   async function realGetEffectivePermissions(userId) {
     return fetchJson(`${API_BASE}/users/${userId}/effective-permissions`);
   }
@@ -517,6 +521,7 @@ const AdminApi = (() => {
     getUserScopes: pick(mockGetUserScopes, realGetUserScopes),
     getUserDerivedScopes: pick(mockGetUserDerivedScopes, realGetUserDerivedScopes),
     saveUserScopes: pick(mockSaveUserScopes, realSaveUserScopes),
+    getUserHierarchy: pick(async (userId) => mockGetEffectivePermissions(userId), realGetUserHierarchy),
     getEffectivePermissions: pick(mockGetEffectivePermissions, realGetEffectivePermissions),
     getAuditLogs: pick(mockGetAuditLogs, realGetAuditLogs),
   };

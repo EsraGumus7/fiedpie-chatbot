@@ -1,6 +1,8 @@
 const { queryDb } = require("../db/sql");
 //const { listResolvedIntentCandidates } = require("../planner/metricRegistry");
 const { buildUserContext } = require("./userContextService");
+const { resolveDefaultIntents } = require("./intentPackages");
+const { HIERARCHY_LEVEL } = require("./hierarchyService");
 const { appendFileLog, listFileLogs } = require("./auditLogStore");
 const {
   getUserIntents,
@@ -904,25 +906,75 @@ async function saveUserScopes(userId, scopes = {}, actorUserId = "system") {
   return { ok: true };
 }
 
+async function getUserHierarchy(userId) {
+  const context = await buildUserContext(userId);
+
+  return {
+    userId: context.userId,
+    subscriptionId: context.subscriptionId,
+    hierarchyLevel: context.hierarchyLevel,
+    hierarchyLabel: context.hierarchyLabel,
+    hierarchyBypassUserFilter: context.hierarchyBypassUserFilter,
+    activeScopeMode: context.activeScopeMode,
+    isHybridScopeUser: context.isHybridScopeUser,
+    defaultScopeMode: context.defaultScopeMode,
+    operationalLevel: context.operationalLevel,
+    operationalLabel: context.operationalLabel,
+    operationalScopeLabel: context.operationalScopeLabel,
+    operationalAllowedUserIdsCount: (context.operationalAllowedUserIds || []).length,
+    companyCapable: context.companyCapable,
+    companyScopeLabel: context.companyScopeLabel,
+    companyAllowedUserIdsCount: (context.companyAllowedUserIds || []).length,
+    managedTeamIds: context.managedTeamIds || [],
+    allowedUserIds: context.allowedUserIds || [],
+    allowedUserIdsCount: (context.allowedUserIds || []).length,
+    flags: context.flags || {},
+    roles: (context.roles || []).map((role) => ({
+      roleId: role.roleId,
+      roleName: role.roleName,
+      defaultAdmin: !!role.DefaultAdmin,
+      defaultFieldForce: !!role.DefaultFieldForce,
+    })),
+  };
+}
+
 async function getEffectivePermissions(userId) {
   const context = await buildUserContext(userId);
   const roleIds = context.roleIds || [];
 
   let isSuperAdmin = !!context.flags?.admin;
   const allowedIntentSet = new Set();
+  let hasExplicitRoleIntents = false;
+  let hasExplicitUserIntents = false;
 
   for (const roleId of roleIds) {
     const perms = await getRolePermissions(roleId).catch(() => ({ allowedIntents: [] }));
-    for (const intent of perms.allowedIntents) {
+    if ((perms.allowedIntents || []).length > 0) {
+      hasExplicitRoleIntents = true;
+    }
+    for (const intent of perms.allowedIntents || []) {
       if (intent === "*") isSuperAdmin = true;
       allowedIntentSet.add(intent);
     }
   }
 
   const userPerms = await getUserPermissions(userId);
-  for (const intent of userPerms.allowedIntents) {
+  if ((userPerms.allowedIntents || []).length > 0) {
+    hasExplicitUserIntents = true;
+  }
+  for (const intent of userPerms.allowedIntents || []) {
     if (intent === "*") isSuperAdmin = true;
     allowedIntentSet.add(intent);
+  }
+
+  if (!isSuperAdmin && !hasExplicitRoleIntents && !hasExplicitUserIntents) {
+    for (const intent of resolveDefaultIntents(context)) {
+      if (intent === "*") {
+        isSuperAdmin = true;
+      } else {
+        allowedIntentSet.add(intent);
+      }
+    }
   }
 
   const allowedMetricSet = new Set();
@@ -944,15 +996,16 @@ async function getEffectivePermissions(userId) {
   }
 
   const customScopes = await getUserScopes(userId).catch(() => ({}));
-  const hasCustomScopes =
-    (customScopes.allowedSubscriptionIds || []).length > 0 ||
-    (customScopes.allowedCountryIds || []).length > 0 ||
-    (customScopes.allowedTeamIds || []).length > 0 ||
-    (customScopes.allowedBrandIds || []).length > 0;
+  const managedTeamCount = (context.managedTeamIds || []).length;
+  const hierarchyLevel = Number(context.hierarchyLevel) || HIERARCHY_LEVEL.SELF;
 
-  const effectiveScopes = hasCustomScopes
-    ? customScopes
-    : await deriveUserScopesFromDb(userId).catch(() => customScopes);
+  // Takim lideri (L2/L3): hiyerarsi birincil; AiUserScope country/brand SQL daraltmasi uygulanmaz.
+  let allowedCountryIds = customScopes.allowedCountryIds || [];
+  let allowedBrandIds = customScopes.allowedBrandIds || [];
+  if (managedTeamCount >= 1 || hierarchyLevel >= HIERARCHY_LEVEL.TEAM) {
+    allowedCountryIds = [];
+    allowedBrandIds = [];
+  }
 
   return {
     userId: Number(userId),
@@ -962,6 +1015,20 @@ async function getEffectivePermissions(userId) {
     roleIds,
     roles: context.roles || [],
 
+    hierarchyLevel: context.hierarchyLevel,
+    hierarchyLabel: context.hierarchyLabel,
+    hierarchyBypassUserFilter: context.hierarchyBypassUserFilter,
+    activeScopeMode: context.activeScopeMode,
+    isHybridScopeUser: context.isHybridScopeUser,
+    defaultScopeMode: context.defaultScopeMode,
+    operationalLevel: context.operationalLevel,
+    operationalLabel: context.operationalLabel,
+    operationalScopeLabel: context.operationalScopeLabel,
+    operationalAllowedUserIds: context.operationalAllowedUserIds || [],
+    companyCapable: context.companyCapable,
+    companyScopeLabel: context.companyScopeLabel,
+    companyAllowedUserIds: context.companyAllowedUserIds || [],
+
     isSuperAdmin,
     isAdmin: isSuperAdmin,
     isClientUser: context.isClientUser,
@@ -969,6 +1036,14 @@ async function getEffectivePermissions(userId) {
 
     allowedIntents: isSuperAdmin ? ["*"] : [...allowedIntentSet].filter((x) => x !== "*"),
     directAllowedIntents: userPerms.allowedIntents || [],
+    defaultIntentPackage:
+      !hasExplicitRoleIntents && !hasExplicitUserIntents
+        ? resolveDefaultIntents(context).includes("*")
+          ? "PKG_ADMIN"
+          : (context.managedTeamIds || []).length > 0
+            ? "PKG_MANAGER"
+            : "PKG_FIELD"
+        : null,
     allowedMetrics: isSuperAdmin ? ["*"] : [...allowedMetricSet],
     allowedTables: isSuperAdmin ? ["*"] : [...allowedTableSet],
 
@@ -982,15 +1057,24 @@ async function getEffectivePermissions(userId) {
 
     clientTagIds: context.clientTagIds || [],
     managedTeamIds: context.managedTeamIds || [],
+    managedTeams: (context.teams || [])
+      .filter((team) =>
+        (context.managedTeamIds || []).some(
+          (id) => Number(id) === Number(team.teamId)
+        )
+      )
+      .map((team) => ({
+        teamId: Number(team.teamId),
+        teamName: team.teamName || `Takim ${team.teamId}`,
+      })),
+    teamIds: context.teamIds || [],
 
-    allowedCompanyIds:
-      effectiveScopes.allowedSubscriptionIds ?? context.allowedCompanyIds ?? [],
-    allowedSubscriptionIds:
-      effectiveScopes.allowedSubscriptionIds ?? context.allowedSubscriptionIds ?? [],
+    allowedCompanyIds: context.allowedCompanyIds ?? [context.subscriptionId],
+    allowedSubscriptionIds: context.allowedSubscriptionIds ?? [context.subscriptionId],
 
-    allowedBrandIds: effectiveScopes.allowedBrandIds ?? context.allowedBrandIds ?? [],
-    allowedTeamIds: effectiveScopes.allowedTeamIds ?? [],
-    allowedCountryIds: effectiveScopes.allowedCountryIds ?? context.allowedCountryIds ?? [],
+    allowedBrandIds,
+    allowedTeamIds: [],
+    allowedCountryIds,
 
     allowedDistributorIds: context.allowedDistributorIds || [],
     allowedClientGroupIds: context.allowedClientGroupIds || [],
@@ -1079,6 +1163,7 @@ module.exports = {
   getUserDerivedScopes,
   deriveUserScopesFromDb,
   saveUserScopes,
+  getUserHierarchy,
   getEffectivePermissions,
   getAuditLogs,
 };
