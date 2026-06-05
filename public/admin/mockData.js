@@ -33,6 +33,9 @@ window.ADMIN_MOCK_SEED = {
     1003: [3],
     1004: [4],
   },
+  userPermissions: {
+    1004: ["visitCountRealized"],
+  },
   rolePermissions: {
     1: ["*"],
     2: [

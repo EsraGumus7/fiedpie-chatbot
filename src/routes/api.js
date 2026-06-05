@@ -8,7 +8,10 @@ const { resolveFieldName } = require("../services/intentParser");
 const { resolveIntent } = require("../services/metricResolver");
 const { summarizeWithGemini } = require("../services/gemini");
 const { buildQueryPlan } = require("../planner/queryPlanner");
-const { listMetrics } = require("../planner/metricRegistry");
+const { listMetrics, getMetricByIntent } = require("../planner/metricRegistry");
+const { evaluateScopeRequirements } = require("../security/scopeFilter");
+const { mergeSqlScope } = require("../security/sqlScopeBuilder");
+const { optionalAuthMiddleware } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -40,6 +43,71 @@ function getRouteErrorStatus(error) {
   if (message.includes("permission denied")) return 403;
 
   return 500;
+}
+
+function buildScopePreview(userContext, metric, scopeDecision) {
+  if (!userContext) {
+    return {
+      loggedIn: false,
+      message: "Giris yapilmadi — scope bilgisi yok (sorgu scope'suz calisir).",
+    };
+  }
+
+  return {
+    loggedIn: true,
+    userId: userContext.userId,
+    subscriptionId: userContext.subscriptionId ?? null,
+    isAdmin: !!(userContext.isAdmin || userContext.isSuperAdmin),
+    manageAll: !!userContext.manageAll,
+    roleIds: userContext.roleIds || [],
+    allowedIntents: userContext.allowedIntents || [],
+    metricSecurityScope: metric?.security_scope || null,
+    scopeCheck: scopeDecision
+      ? {
+          allowed: scopeDecision.allowed,
+          reason: scopeDecision.reason || null,
+          warnings: scopeDecision.warnings || [],
+        }
+      : null,
+    allowedUserIds: userContext.allowedUserIds || [userContext.userId],
+    filters: {
+      company: userContext.allowedSubscriptionIds || userContext.allowedCompanyIds || null,
+      country: userContext.allowedCountryIds || null,
+      team: userContext.allowedTeamIds || null,
+      brand: userContext.allowedBrandIds || null,
+    },
+  };
+}
+
+function buildSqlPreview(intent, params, options = {}) {
+  const templateBuilder = templates[intent];
+  if (!templateBuilder) return null;
+
+  const built = templateBuilder(params || {});
+  if (!built?.query) return null;
+
+  const scoped =
+    options.userContext && options.metric
+      ? mergeSqlScope(built, options.userContext, options.metric)
+      : built;
+
+  return {
+    query: String(scoped.query).trim(),
+    bind: scoped.bind || {},
+    scopeApplied: scoped.scopeApplied || [],
+    scopeSkipped: scoped.scopeSkipped || null,
+  };
+}
+
+async function buildAuthIntentOptions(req, intent) {
+  const authUserId = req.authUser?.userId;
+  if (!authUserId) return {};
+
+  const userContext = await getEffectivePermissions(authUserId);
+  return {
+    userContext,
+    metric: getMetricByIntent(intent),
+  };
 }
 
 async function executeIntent(intent, params, options = {}) {
@@ -471,7 +539,7 @@ router.post("/planner/query", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/chat/query", async (req, res) => {
+router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
   try {
     const question = req.body?.question;
     if (!question) {
@@ -480,6 +548,12 @@ router.post("/chat/query", async (req, res) => {
 
     const filters = parseFilters(req.body?.filters || {});
     const resolved = resolveIntent(question, filters);
+    const authUserId = req.authUser?.userId;
+    let userContext = null;
+
+    if (authUserId) {
+      userContext = await getEffectivePermissions(authUserId);
+    }
 
     if (resolved.needsClarification) {
       const optionText = (resolved.options || [])
@@ -497,11 +571,19 @@ router.post("/chat/query", async (req, res) => {
         options: resolved.options,
         candidates: resolved.candidates,
         answer: clarificationAnswer,
+        scope: buildScopePreview(userContext, null, null),
       });
     }
 
     const { intent, params } = resolved;
-    const result = await executeIntent(intent, params);
+    const metric = getMetricByIntent(intent);
+    const scopeDecision = userContext
+      ? evaluateScopeRequirements({ metric, userContext })
+      : null;
+    const sql = buildSqlPreview(intent, params, userContext ? { userContext, metric } : {});
+    const result = userContext
+      ? await executeIntent(intent, params, { userContext, metric })
+      : await executeIntent(intent, params);
 
     const rows = result.recordset;
     const llmSummary = await summarizeWithGemini({
@@ -518,12 +600,15 @@ router.post("/chat/query", async (req, res) => {
       score: resolved.score,
       source: resolved.source,
       filters: params,
+      sql,
+      scope: buildScopePreview(userContext, metric, scopeDecision),
+      security: result.security || null,
       rows,
       answer: llmSummary || fallbackSummary,
       candidates: resolved.candidates,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 
@@ -663,53 +748,58 @@ router.get("/users/visit-summary", async (req, res) => {
 // ==========================================
 // VISIT ROUTES (Orijinal)
 // ==========================================
-router.get("/visit/count", async (req, res) => {
+router.get("/visit/count", optionalAuthMiddleware, async (req, res) => {
   try {
     const filters = parseFilters(req.query);
-    const result = await executeIntent("visitCountRealized", filters);
-    res.json({ intent: "visitCountRealized", rows: result.recordset });
+    const options = await buildAuthIntentOptions(req, "visitCountRealized");
+    const result = await executeIntent("visitCountRealized", filters, options);
+    res.json({ intent: "visitCountRealized", rows: result.recordset, security: result.security || null });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 
-router.get("/visit/duration/avg", async (req, res) => {
+router.get("/visit/duration/avg", optionalAuthMiddleware, async (req, res) => {
   try {
     const filters = parseFilters(req.query);
-    const result = await executeIntent("avgVisitDuration", filters);
-    res.json({ intent: "avgVisitDuration", rows: result.recordset });
+    const options = await buildAuthIntentOptions(req, "avgVisitDuration");
+    const result = await executeIntent("avgVisitDuration", filters, options);
+    res.json({ intent: "avgVisitDuration", rows: result.recordset, security: result.security || null });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 
-router.get("/visit/by-state", async (req, res) => {
+router.get("/visit/by-state", optionalAuthMiddleware, async (req, res) => {
   try {
     const filters = parseFilters(req.query);
-    const result = await executeIntent("visitsByState", filters);
-    res.json({ intent: "visitsByState", rows: result.recordset });
+    const options = await buildAuthIntentOptions(req, "visitsByState");
+    const result = await executeIntent("visitsByState", filters, options);
+    res.json({ intent: "visitsByState", rows: result.recordset, security: result.security || null });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 
-router.get("/visit/trend", async (req, res) => {
+router.get("/visit/trend", optionalAuthMiddleware, async (req, res) => {
   try {
     const filters = parseFilters(req.query);
-    const result = await executeIntent("visitTrend", filters);
-    res.json({ intent: "visitTrend", rows: result.recordset });
+    const options = await buildAuthIntentOptions(req, "visitTrend");
+    const result = await executeIntent("visitTrend", filters, options);
+    res.json({ intent: "visitTrend", rows: result.recordset, security: result.security || null });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 
-router.get("/visit/by-type", async (req, res) => {
+router.get("/visit/by-type", optionalAuthMiddleware, async (req, res) => {
   try {
     const filters = parseFilters(req.query);
-    const result = await executeIntent("visitsByType", filters);
-    res.json({ intent: "visitsByType", rows: result.recordset });
+    const options = await buildAuthIntentOptions(req, "visitsByType");
+    const result = await executeIntent("visitsByType", filters, options);
+    res.json({ intent: "visitsByType", rows: result.recordset, security: result.security || null });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
 });
 

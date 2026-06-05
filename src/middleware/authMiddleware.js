@@ -41,4 +41,30 @@ function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { authMiddleware };
+function optionalAuthMiddleware(req, _res, next) {
+  const authHeader = req.headers.authorization || "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.authUser = {
+      userId: decoded.userId,
+      email: decoded.email,
+      subscriptionId: decoded.subscriptionId,
+      admin: !!decoded.admin,
+      apiUser: !!decoded.apiUser,
+      clientUser: !!decoded.clientUser,
+    };
+  } catch (_error) {
+    req.authUser = null;
+  }
+
+  return next();
+}
+
+module.exports = { authMiddleware, optionalAuthMiddleware };

@@ -62,9 +62,32 @@ Bu dosya, admin panelin DB’den **hangi bilgileri** okuyacağını/yazacağın�
 - User (operasyonel): `Id`, `UserName/Login`, `DisplayName` (netleşecek)
 - UserRole: `UserId`, `RoleId`
 
-### 2.3 Scope Yetkileri (User → company/brand/client/…)
+### 2.2b Kullanıcıya özel Intent (User → Intent, rol dışı)
 
-MVP scope önerisi: önce `company + brand + client`, sonra `country/region/city/district`.
+Sohbet hatası `Intent permission denied: visitCountRealized is not allowed` bu ekrandan çözülür.
+
+- **UI input**: kullanıcı seç, intent checkbox listesi (+ opsiyonel `*` süper admin)
+- **DB read/write**: `dbo.AiUserPermission (UserId, Intent)`
+- **API**: `GET/PUT /api/admin/users/:userId/permissions`
+- **Effective merge**: rol intentleri + kullanıcı intentleri birleştirilir (`getEffectivePermissions`)
+- **Audit**: `user.permissions.update`
+
+**Intent isimlendirme (chat ile birebir aynı olmalı):**
+
+| UI / Sohbet | `AiUserPermission.Intent` | Metric JSON `metric_id` | Tablo |
+|-------------|---------------------------|-------------------------|-------|
+| `visitCountRealized` | `visitCountRealized` | `visit_count_realized` | `dbo.Visit` |
+| `avgVisitDuration` | `avgVisitDuration` | `visit_avg_duration` | `dbo.Visit` |
+
+> `metric_id` (snake_case) **kaydedilmez**; izin kontrolü ve admin checkbox **`intent`** (camelCase) ile yapılır.
+
+**Kritik:** Admin panelde seçilen `dbo.User.Id`, chat’te `/auth/login` ile giriş yapan kullanıcının `userId` değeri ile **aynı** olmalıdır. Farklı kullanıcıya intent verilirse sohbet yine reddeder.
+
+**Yedek depo:** `AiUserPermission` tablosu yoksa `data/admin-user-permissions.json` kullanılır; tablo gelince DB + dosya birleştirilir.
+
+### 2.3 Scope Yetkileri (User → company/country/team/brand)
+
+SQL scope (MVP): **Company, Country, Team, Brand** — Client / Region / City / District kaldırıldı.
 
 - **DB read**:
   - Referans listeler: Company/Brand/Client (operasyonel DB)
@@ -74,13 +97,11 @@ MVP scope önerisi: önce `company + brand + client`, sonra `country/region/city
 - **Audit**:
   - `user.scopes.update`
 
-**Gerekli alanlar:**
-- UserScope:
-  - `UserId`
-  - `AllowedCompanyIds`
-  - `AllowedBrandIds`
-  - `AllowedClientIds`
-  - (Sprint 2) `AllowedCountryIds`, `AllowedRegionIds`, `AllowedCityIds`, `AllowedDistrictIds`
+**Gerekli alanlar (`AiUserScope.ScopeType`):**
+- `subscription` / `company` → `Visit.SubscriptionId`
+- `country` → `Client.CountryId` (visit üzerinden join)
+- `team` → `Client.TeamId`
+- `brand` → `Visit.BrandId` veya `ClientBrand`
 
 > Burada “ID listesi saklama modeli” netleşecek: JSON mı, yoksa `UserScopeCompany(UserId, CompanyId)` gibi child tablo mu?
 

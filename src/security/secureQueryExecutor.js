@@ -5,6 +5,7 @@ const { assertIntentAllowed } = require("./intentPermission");
 const { assertMetricAllowed } = require("./metricPermission");
 const { assertTablesAllowed } = require("./tablePermission");
 const { assertScopeRequirements } = require("./scopeFilter");
+const { mergeSqlScope } = require("./sqlScopeBuilder");
 const { assertSafeSql } = require("./sqlValidator");
 const { applyColumnSecurity } = require("./columnMasking");
 const { logSecurityEvent } = require("./auditLogger");
@@ -94,9 +95,11 @@ async function executeSecureQuery({
             );
         }
 
-        assertSafeSql(builtQuery.query, { metric });
+        const scopedQuery = mergeSqlScope(builtQuery, normalizedUserContext, metric);
 
-        const queryResult = await queryExecutor(builtQuery);
+        assertSafeSql(scopedQuery.query, { metric });
+
+        const queryResult = await queryExecutor(scopedQuery);
         const rows = extractRows(queryResult);
 
         const securedRows = applyColumnSecurity(rows, normalizedUserContext);
@@ -113,6 +116,8 @@ async function executeSecureQuery({
                 securityScope:
                     metric.security_scope || metric.securityScope || null,
                 scopeWarnings: scopeDecision.warnings || [],
+                scopeApplied: scopedQuery.scopeApplied || [],
+                scopeSkipped: scopedQuery.scopeSkipped || null,
                 rowCount: securedRows.length,
                 rawColumns: getReturnedColumns(rows),
                 returnedColumns: getReturnedColumns(securedRows),

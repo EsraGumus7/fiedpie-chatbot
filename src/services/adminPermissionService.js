@@ -2,6 +2,11 @@ const { queryDb } = require("../db/sql");
 //const { listResolvedIntentCandidates } = require("../planner/metricRegistry");
 const { buildUserContext } = require("./userContextService");
 const { appendFileLog, listFileLogs } = require("./auditLogStore");
+const {
+  getUserIntents,
+  saveUserIntents,
+  isMissingTableError,
+} = require("./userPermissionStore");
 
 const {
   getMetricByIntent,
@@ -34,12 +39,13 @@ function buildAuditSummary(action, afterJson) {
     if (action === "user.roles.update") {
       return `Rol: ${(after.roleIds || []).length} adet`;
     }
+    if (action === "user.permissions.update") {
+      return `Kullanici intent: ${(after.allowedIntents || []).length} adet`;
+    }
     if (action === "user.scopes.update") {
       const parts = [];
       if (after.allowedCountryIds?.length) parts.push(`ülke ${after.allowedCountryIds.length}`);
-      if (after.allowedRegionIds?.length) parts.push(`bölge ${after.allowedRegionIds.length}`);
-      if (after.allowedCityIds?.length) parts.push(`şehir ${after.allowedCityIds.length}`);
-      if (after.allowedDistrictIds?.length) parts.push(`ilçe ${after.allowedDistrictIds.length}`);
+      if (after.allowedTeamIds?.length) parts.push(`ekip ${after.allowedTeamIds.length}`);
       if (after.allowedBrandIds?.length) parts.push(`marka ${after.allowedBrandIds.length}`);
       if (after.allowedClientIds?.length) parts.push(`müşteri ${after.allowedClientIds.length}`);
       if (after.allowedSubscriptionIds?.length) parts.push(`company ${after.allowedSubscriptionIds.length}`);
@@ -134,6 +140,25 @@ async function getSubscriptions(search) {
       ORDER BY CompanyName
     `,
     bind: { search: search || null },
+  });
+
+  return { items: result.recordset };
+}
+
+async function getTeams({ subscriptionId, search }) {
+  const result = await queryDb({
+    query: `
+      SELECT TOP 200 Id AS id, Name AS label, SubscriptionId AS subscriptionId
+      FROM dbo.Team
+      WHERE Deleted = 0
+        AND (@subscriptionId IS NULL OR SubscriptionId = @subscriptionId)
+        AND (@search IS NULL OR Name LIKE '%' + @search + '%')
+      ORDER BY Name
+    `,
+    bind: {
+      subscriptionId: subscriptionId ? Number(subscriptionId) : null,
+      search: search || null,
+    },
   });
 
   return { items: result.recordset };
@@ -429,6 +454,92 @@ async function saveRolePermissions(roleId, allowedIntents = [], actorUserId = "s
   return { ok: true };
 }
 
+async function getUserPermissions(userId) {
+  const uid = Number(userId);
+  const fileIntents = getUserIntents(uid);
+
+  try {
+    const result = await queryDb({
+      query: `
+        SELECT Intent
+        FROM dbo.AiUserPermission
+        WHERE Deleted = 0
+          AND UserId = @userId
+        ORDER BY Intent
+      `,
+      bind: { userId: uid },
+    });
+
+    const dbIntents = result.recordset.map((x) => x.Intent);
+    const merged = [...new Set([...dbIntents, ...fileIntents])];
+
+    return {
+      allowedIntents: merged,
+      source:
+        dbIntents.length && fileIntents.length
+          ? "db+file"
+          : dbIntents.length
+            ? "db"
+            : fileIntents.length
+              ? "file"
+              : "none",
+    };
+  } catch (err) {
+    if (isMissingTableError(err)) {
+      return { allowedIntents: fileIntents, source: fileIntents.length ? "file" : "none" };
+    }
+    return { allowedIntents: fileIntents, source: fileIntents.length ? "file" : "none" };
+  }
+}
+
+async function saveUserPermissions(userId, allowedIntents = [], actorUserId = "system") {
+  const beforePerms = await getUserPermissions(userId);
+
+  try {
+    await queryDb({
+      query: `
+        UPDATE dbo.AiUserPermission
+        SET Deleted = 1, UpdateTime = GETDATE(), UpdatedBy = @actorUserId
+        WHERE UserId = @userId AND Deleted = 0
+      `,
+      bind: {
+        userId: Number(userId),
+        actorUserId: String(actorUserId),
+      },
+    });
+
+    for (const intent of allowedIntents) {
+      await queryDb({
+        query: `
+          INSERT INTO dbo.AiUserPermission (UserId, Intent, UpdatedBy)
+          VALUES (@userId, @intent, @actorUserId)
+        `,
+        bind: {
+          userId: Number(userId),
+          intent,
+          actorUserId: String(actorUserId),
+        },
+      });
+    }
+  } catch (err) {
+    if (!isMissingTableError(err)) throw err;
+  }
+
+  // DB tablosu olsa da olmasa da dosya yedegi (gelistirme / tablo gecisi icin).
+  saveUserIntents(userId, allowedIntents);
+
+  await writeAuditLog({
+    actorUserId,
+    action: "user.permissions.update",
+    targetType: "user",
+    targetId: userId,
+    before: { allowedIntents: beforePerms.allowedIntents },
+    after: { allowedIntents },
+  });
+
+  return { ok: true };
+}
+
 async function getUserRoles(userId) {
   const result = await queryDb({
     query: `
@@ -503,11 +614,8 @@ async function getUserScopes(userId) {
     allowedSubscriptionIds: null,
     allowedCompanyIds: null,
     allowedBrandIds: null,
-    allowedClientIds: null,
     allowedCountryIds: null,
-    allowedRegionIds: null,
-    allowedCityIds: null,
-    allowedDistrictIds: null,
+    allowedTeamIds: null,
   };
 
   for (const row of result.recordset) {
@@ -526,29 +634,14 @@ async function getUserScopes(userId) {
       scopes.allowedBrandIds.push(value);
     }
 
-    if (key === "client") {
-      scopes.allowedClientIds ||= [];
-      scopes.allowedClientIds.push(value);
-    }
-
     if (key === "country") {
       scopes.allowedCountryIds ||= [];
       scopes.allowedCountryIds.push(value);
     }
 
-    if (key === "region") {
-      scopes.allowedRegionIds ||= [];
-      scopes.allowedRegionIds.push(value);
-    }
-
-    if (key === "city") {
-      scopes.allowedCityIds ||= [];
-      scopes.allowedCityIds.push(value);
-    }
-
-    if (key === "district") {
-      scopes.allowedDistrictIds ||= [];
-      scopes.allowedDistrictIds.push(value);
+    if (key === "team") {
+      scopes.allowedTeamIds ||= [];
+      scopes.allowedTeamIds.push(value);
     }
   }
 
@@ -573,11 +666,8 @@ async function saveUserScopes(userId, scopes = {}, actorUserId = "system") {
   const items = [
     ["subscription", scopes.allowedSubscriptionIds || scopes.allowedCompanyIds],
     ["brand", scopes.allowedBrandIds],
-    ["client", scopes.allowedClientIds],
     ["country", scopes.allowedCountryIds],
-    ["region", scopes.allowedRegionIds],
-    ["city", scopes.allowedCityIds],
-    ["district", scopes.allowedDistrictIds],
+    ["team", scopes.allowedTeamIds],
   ];
 
   for (const [scopeType, values] of items) {
@@ -619,11 +709,17 @@ async function getEffectivePermissions(userId) {
   const allowedIntentSet = new Set();
 
   for (const roleId of roleIds) {
-    const perms = await getRolePermissions(roleId);
+    const perms = await getRolePermissions(roleId).catch(() => ({ allowedIntents: [] }));
     for (const intent of perms.allowedIntents) {
       if (intent === "*") isSuperAdmin = true;
       allowedIntentSet.add(intent);
     }
+  }
+
+  const userPerms = await getUserPermissions(userId);
+  for (const intent of userPerms.allowedIntents) {
+    if (intent === "*") isSuperAdmin = true;
+    allowedIntentSet.add(intent);
   }
 
   const allowedMetricSet = new Set();
@@ -660,6 +756,7 @@ async function getEffectivePermissions(userId) {
     manageAll: context.manageAll,
 
     allowedIntents: isSuperAdmin ? ["*"] : [...allowedIntentSet].filter((x) => x !== "*"),
+    directAllowedIntents: userPerms.allowedIntents || [],
     allowedMetrics: isSuperAdmin ? ["*"] : [...allowedMetricSet],
     allowedTables: isSuperAdmin ? ["*"] : [...allowedTableSet],
 
@@ -669,7 +766,7 @@ async function getEffectivePermissions(userId) {
 
     allowedUserIds: context.allowedUserIds || [Number(userId)],
     assignedClientIds: context.assignedClientIds || [],
-    effectiveClientIds: customScopes.allowedClientIds ?? context.effectiveClientIds ?? [],
+    effectiveClientIds: context.effectiveClientIds ?? [],
 
     clientTagIds: context.clientTagIds || [],
     managedTeamIds: context.managedTeamIds || [],
@@ -678,10 +775,8 @@ async function getEffectivePermissions(userId) {
     allowedSubscriptionIds: customScopes.allowedSubscriptionIds ?? context.allowedSubscriptionIds ?? [],
 
     allowedBrandIds: customScopes.allowedBrandIds ?? context.allowedBrandIds ?? [],
-    allowedRegionIds: customScopes.allowedRegionIds ?? context.allowedRegionIds ?? [],
+    allowedTeamIds: customScopes.allowedTeamIds ?? [],
     allowedCountryIds: customScopes.allowedCountryIds ?? context.allowedCountryIds ?? [],
-    allowedCityIds: customScopes.allowedCityIds ?? context.allowedCityIds ?? [],
-    allowedDistrictIds: customScopes.allowedDistrictIds ?? context.allowedDistrictIds ?? [],
 
     allowedDistributorIds: context.allowedDistributorIds || [],
     allowedClientGroupIds: context.allowedClientGroupIds || [],
@@ -756,6 +851,7 @@ module.exports = {
   getCities,
   getDistricts,
   getBrands,
+  getTeams,
   getClients,
   getUsers,
   getRoles,
@@ -763,6 +859,8 @@ module.exports = {
   saveRolePermissions,
   getUserRoles,
   saveUserRoles,
+  getUserPermissions,
+  saveUserPermissions,
   getUserScopes,
   saveUserScopes,
   getEffectivePermissions,

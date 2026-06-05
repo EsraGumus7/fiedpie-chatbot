@@ -16,6 +16,20 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.AiUserPermission', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.AiUserPermission (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    CreateTime DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdateTime DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedBy VARCHAR(250) NOT NULL DEFAULT 'system',
+    Deleted BIT NOT NULL DEFAULT 0,
+    UserId BIGINT NOT NULL,
+    Intent VARCHAR(200) NOT NULL
+  );
+END
+GO
+
 IF OBJECT_ID('dbo.AiUserScope', 'U') IS NULL
 BEGIN
   CREATE TABLE dbo.AiUserScope (

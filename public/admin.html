@@ -86,45 +86,65 @@
               <input type="text" id="userSearch" placeholder="Ad veya e-posta..." />
               <label for="userSelect">Kullanıcı</label>
               <select id="userSelect" size="6"></select>
+              <p id="selectedUserHint" class="muted">
+                Sohbette giriş yapan kullanıcı ile aynı UserId seçilmelidir.
+              </p>
               <label for="userRoleSelect">Roller (çoklu)</label>
               <select id="userRoleSelect" multiple></select>
             </div>
 
             <div class="card scope-card">
               <h3>Scope</h3>
+              <p class="muted">SQL scope: Company, Country, Team, Brand. Boş = kısıt yok.</p>
               <div class="scope-grid">
                 <div>
                   <label for="scopeCompanySelect">Company</label>
-                  <select id="scopeCompanySelect" multiple size="4"></select>
-                </div>
-                <div>
-                  <label for="scopeBrandSelect">Brand</label>
-                  <select id="scopeBrandSelect" multiple size="4"></select>
-                </div>
-                <div>
-                  <label for="scopeClientSelect">Client</label>
-                  <select id="scopeClientSelect" multiple size="4"></select>
+                  <select id="scopeCompanySelect" multiple size="5"></select>
                 </div>
                 <div>
                   <label for="scopeCountrySelect">Country</label>
-                  <select id="scopeCountrySelect" multiple size="4"></select>
+                  <select id="scopeCountrySelect" multiple size="5"></select>
                 </div>
                 <div>
-                  <label for="scopeRegionSelect">Region</label>
-                  <select id="scopeRegionSelect" multiple size="4"></select>
+                  <label for="scopeTeamSelect">Team</label>
+                  <select id="scopeTeamSelect" multiple size="5"></select>
                 </div>
                 <div>
-                  <label for="scopeCitySelect">City</label>
-                  <select id="scopeCitySelect" multiple size="4"></select>
-                </div>
-                <div>
-                  <label for="scopeDistrictSelect">District</label>
-                  <select id="scopeDistrictSelect" multiple size="4"></select>
+                  <label for="scopeBrandSelect">Brand</label>
+                  <select id="scopeBrandSelect" multiple size="5"></select>
                 </div>
               </div>
-              <p id="scopeDistrictHint" class="muted">
-                Boş = kısıt yok. İlçe listesi seçili şehirlere göre yüklenir. Şehir adında (N ilçe) sayısı görünür.
-              </p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Kullanıcıya özel Intent izinleri</h3>
+            <p class="muted">
+              Rol izinlerine ek olarak doğrudan bu kullanıcıya verilen intentler. Sohbet hatası
+              (ör. visitCountRealized is not allowed) bu listeden çözülür.
+            </p>
+            <div id="userDomainTabs" class="toolbar"></div>
+            <div class="toolbar">
+              <button type="button" id="selectAllUserIntentsBtn" class="btn btn-secondary">Tümünü seç</button>
+              <button type="button" id="clearUserIntentsBtn" class="btn btn-secondary">Temizle</button>
+              <label class="inline-check">
+                <input type="checkbox" id="userSuperAdminChk" />
+                Süper admin (*)
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 48px">İzin</th>
+                    <th>Intent</th>
+                    <th>Metric ID</th>
+                    <th>Domain</th>
+                    <th>Açıklama</th>
+                  </tr>
+                </thead>
+                <tbody id="userIntentTableBody"></tbody>
+              </table>
             </div>
           </div>
 

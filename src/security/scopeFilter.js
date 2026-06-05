@@ -215,9 +215,7 @@ function evaluateScopeRequirements({ metric, userContext }) {
 
         case "tenant_user_scope":
             if (manageAll || hasBaseUserScope(normalizedUserContext)) {
-                return createAllowedDecision(metric, normalizedUserContext, [
-                    "tenant_user_scope guard passed. SQL/template-level user scope filtering is still required later.",
-                ]);
+                return createAllowedDecision(metric, normalizedUserContext);
             }
 
             return createDeniedDecision(
@@ -306,9 +304,7 @@ function evaluateScopeRequirements({ metric, userContext }) {
 
         case "tenant_visit_scope":
             if (manageAll || hasVisitScope(normalizedUserContext)) {
-                return createAllowedDecision(metric, normalizedUserContext, [
-                    "tenant_visit_scope guard passed. Visit SQL/template-level user/team/client filtering is still required later.",
-                ]);
+                return createAllowedDecision(metric, normalizedUserContext);
             }
 
             return createDeniedDecision(

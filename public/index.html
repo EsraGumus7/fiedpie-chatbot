@@ -217,6 +217,80 @@
       padding: 10px;
     }
 
+    .sql-panel {
+      margin-top: 10px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: none;
+    }
+
+    .sql-panel.visible {
+      display: block;
+    }
+
+    .sql-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .sql-panel-header strong {
+      font-size: 13px;
+      color: #f8fafc;
+    }
+
+    .sql-intent-badge {
+      font-size: 11px;
+      color: #94a3b8;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    .sql-code {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #cbd5e1;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .sql-bind {
+      margin: 8px 0 0;
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .sql-scope-title {
+      margin: 10px 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .sql-scope {
+      margin: 0;
+      font-size: 11px;
+      color: #a5b4fc;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+      line-height: 1.5;
+    }
+
     .chat-input label {
       font-size: 12px;
       color: #5d6b8a;
@@ -304,6 +378,50 @@
 </head>
 
 <body>
+  <div id="loginOverlay" style="
+  position:fixed;
+  inset:0;
+  background:#f3f4f7;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+">
+  <div style="
+    width:360px;
+    background:white;
+    padding:24px;
+    border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);
+  ">
+    <h2 style="margin-top:0;">Giriş Yap</h2>
+
+    <input
+      id="loginEmail"
+      type="email"
+      placeholder="Email"
+      value="mehmetkordon09@gmail.com"
+      style="margin-bottom:12px;"
+    />
+
+    <input
+      id="loginPassword"
+      type="password"
+      placeholder="Şifre"
+      value="1463"
+      style="margin-bottom:12px;"
+    />
+
+    <button id="loginBtn">Giriş Yap</button>
+
+    <div id="loginError" style="
+      color:red;
+      margin-top:10px;
+      font-size:13px;
+    "></div>
+  </div>
+</div>
+
   <div class="app">
     <section class="panel left-panel">
       <h3>Gorunum</h3>
@@ -379,6 +497,16 @@
         <canvas id="mainChart"></canvas>
         <div id="kpiArea" style="display:none;" class="kpi-grid"></div>
       </div>
+      <div id="sqlPanel" class="sql-panel">
+        <div class="sql-panel-header">
+          <strong>SQL &amp; Scope</strong>
+          <span id="sqlIntentBadge" class="sql-intent-badge"></span>
+        </div>
+        <pre id="sqlPreview" class="sql-code">-- Sorgu burada gorunecek</pre>
+        <pre id="sqlBind" class="sql-bind"></pre>
+        <div class="sql-scope-title">Kullanici Scope</div>
+        <pre id="sqlScope" class="sql-scope"></pre>
+      </div>
     </section>
 
     <section class="panel">
@@ -401,6 +529,59 @@
   </div>
 
   <script>
+    const loginOverlay = document.getElementById("loginOverlay");
+const loginBtn = document.getElementById("loginBtn");
+const loginError = document.getElementById("loginError");
+
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+function hideLogin() {
+  loginOverlay.style.display = "none";
+}
+
+async function login() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  loginError.innerText = "";
+
+  try {
+    const response = await fetch("/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      loginError.innerText = data.error || "Login başarısız";
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    const who = data.user
+      ? `${data.user.name || data.user.email} (#${data.user.id})`
+      : data.user?.email || "";
+    if (who && typeof addMessage === "function") {
+      addMessage(`Giris: ${who}. Admin panelde ayni UserId icin intent atayin.`, "bot");
+    }
+
+    hideLogin();
+
+  } catch (err) {
+    loginError.innerText = err.message;
+  }
+}
     const chartTitle = document.getElementById("chartTitle");
     const refreshBtn = document.getElementById("refreshBtn");
     const chartArea = document.getElementById("chartArea");
@@ -413,6 +594,11 @@
     const fieldNameEl = document.getElementById("fieldName");
     const fieldIdEl = document.getElementById("fieldId");
     const questionEl = document.getElementById("question");
+    const sqlPanel = document.getElementById("sqlPanel");
+    const sqlPreview = document.getElementById("sqlPreview");
+    const sqlBind = document.getElementById("sqlBind");
+    const sqlScope = document.getElementById("sqlScope");
+    const sqlIntentBadge = document.getElementById("sqlIntentBadge");
 
     let selectedChart = "stateBar";
     let chartInstance = null;
@@ -458,6 +644,82 @@
         html += `<ul>${listItems.map((item) => `<li>${item}</li>`).join("")}</ul>`;
       }
       return html || escaped.replace(/\n/g, "<br>");
+    }
+
+    function formatScopeIdList(list) {
+      if (!Array.isArray(list) || !list.length) return "— (kisit yok)";
+      if (list.includes("*")) return "* (tumu)";
+      if (list.length <= 10) return list.join(", ");
+      return `${list.slice(0, 10).join(", ")} … (+${list.length - 10})`;
+    }
+
+    function renderScopeLines(scope) {
+      if (!scope) return "Scope bilgisi yok.";
+      if (!scope.loggedIn) return scope.message || "Giris yapilmadi.";
+
+      const lines = [
+        `User #${scope.userId} | Subscription: ${scope.subscriptionId ?? "—"}`,
+        `Admin: ${scope.isAdmin ? "evet" : "hayir"} | manageAll: ${scope.manageAll ? "evet" : "hayir"}`,
+        `Roller: ${formatScopeIdList(scope.roleIds)}`,
+        `Intent izinleri: ${formatScopeIdList(scope.allowedIntents)}`,
+        `Metric security_scope: ${scope.metricSecurityScope || "—"}`,
+      ];
+
+      if (scope.scopeCheck) {
+        const status = scope.scopeCheck.allowed ? "OK" : `RED (${scope.scopeCheck.reason || "?"})`;
+        lines.push(`Scope guard: ${status}`);
+        if (scope.scopeCheck.warnings?.length) {
+          lines.push(`Uyarilar: ${scope.scopeCheck.warnings.join("; ")}`);
+        }
+      }
+
+      const labels = {
+        company: "Company",
+        country: "Country",
+        team: "Team",
+        brand: "Brand",
+      };
+
+      const filters = scope.filters || {};
+      Object.entries(labels).forEach(([key, label]) => {
+        lines.push(`${label}: ${formatScopeIdList(filters[key])}`);
+      });
+
+      return lines.join("\n");
+    }
+
+    function renderSqlPanel(data) {
+      const hasSql = !!data?.sql?.query;
+      const hasScope = !!data?.scope;
+
+      if (!hasSql && !hasScope) {
+        sqlPanel.classList.remove("visible");
+        return;
+      }
+
+      sqlPanel.classList.add("visible");
+      sqlIntentBadge.textContent = data.intent ? `Intent: ${data.intent}` : "";
+
+      if (hasSql) {
+        sqlPreview.textContent = data.sql.query;
+        const bind = data.sql.bind || {};
+        const bindKeys = Object.keys(bind);
+        if (!bindKeys.length) {
+          sqlBind.textContent = "";
+        } else {
+          const bindLines = bindKeys.map((key) => {
+            const value = bind[key];
+            const shown = value === null || value === undefined ? "NULL" : JSON.stringify(value);
+            return `@${key} = ${shown}`;
+          });
+          sqlBind.textContent = `Parametreler:\n${bindLines.join("\n")}`;
+        }
+      } else {
+        sqlPreview.textContent = "-- SQL onizlemesi yok";
+        sqlBind.textContent = "";
+      }
+
+      sqlScope.textContent = renderScopeLines(data.scope);
     }
 
     function cleanAssistantAnswer(text) {
@@ -527,7 +789,14 @@
     }
 
     async function fetchJson(url, options = null) {
-      const response = await fetch(url, options || undefined);
+      const token = getToken();
+      const opts = options ? { ...options } : {};
+      const headers = { ...(opts.headers || {}) };
+      if (token && !headers.Authorization) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      opts.headers = headers;
+      const response = await fetch(url, opts);
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || "Bilinmeyen hata");
@@ -637,6 +906,8 @@
     }
 
     function renderChatResultVisualization(data, preferredChart = "stateBar") {
+      renderSqlPanel(data);
+
       if (!data || data.needsClarification) {
         chartLoadSeq++;
         resetChartArea(true);
@@ -917,8 +1188,11 @@
       try {
         const data = await fetchJson("/api/chat/query", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${getToken()}`
+          },          
+            body: JSON.stringify({
             question,
             filters,
           }),
@@ -945,6 +1219,11 @@
     });
 
     loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
+    loginBtn.addEventListener("click", login);
+
+    if (getToken()) {
+      hideLogin();
+    }
   </script>
 </body>
 

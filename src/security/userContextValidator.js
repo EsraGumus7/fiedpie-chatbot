@@ -75,6 +75,7 @@ function normalizeUserContext(userContext = {}) {
         roles: normalizeRoles(userContext),
 
         isAdmin: normalizeBoolean(userContext.isAdmin),
+        isSuperAdmin: normalizeBoolean(userContext.isSuperAdmin),
         isClientUser: normalizeBoolean(userContext.isClientUser),
         manageAll: normalizeManageAll(userContext),
 
@@ -94,8 +95,9 @@ function normalizeUserContext(userContext = {}) {
 
         allowedCompanyIds: normalizeArray(userContext.allowedCompanyIds),
         allowedBrandIds: normalizeArray(userContext.allowedBrandIds),
-        allowedRegionIds: normalizeArray(userContext.allowedRegionIds),
+        allowedTeamIds: normalizeArray(userContext.allowedTeamIds),
         allowedCountryIds: normalizeArray(userContext.allowedCountryIds),
+        allowedRegionIds: normalizeArray(userContext.allowedRegionIds),
         allowedCityIds: normalizeArray(userContext.allowedCityIds),
         allowedDistrictIds: normalizeArray(userContext.allowedDistrictIds),
 
@@ -144,8 +146,9 @@ function validateUserContext(userContext = {}) {
 
     assertArray(userContext.allowedCompanyIds, "allowedCompanyIds");
     assertArray(userContext.allowedBrandIds, "allowedBrandIds");
-    assertArray(userContext.allowedRegionIds, "allowedRegionIds");
+    assertArray(userContext.allowedTeamIds, "allowedTeamIds");
     assertArray(userContext.allowedCountryIds, "allowedCountryIds");
+    assertArray(userContext.allowedRegionIds, "allowedRegionIds");
     assertArray(userContext.allowedCityIds, "allowedCityIds");
     assertArray(userContext.allowedDistrictIds, "allowedDistrictIds");
 

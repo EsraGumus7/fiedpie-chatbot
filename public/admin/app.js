@@ -7,11 +7,11 @@
     brands: [],
     clients: [],
     selectedDomain: "all",
+    userSelectedDomain: "all",
     roleCompanyId: null,
     roleId: null,
     userId: null,
     scopeSubscriptionId: null,
-    allDistricts: [],
   };
 
   const $ = (id) => document.getElementById(id);
@@ -203,6 +203,64 @@
     if ($("page-audit").classList.contains("active")) await loadAudit();
   }
 
+  function renderUserDomainTabs() {
+    const domains = ["all", ...new Set(state.catalog.intents.map((i) => i.domain).filter(Boolean))];
+    const container = $("userDomainTabs");
+    if (!container) return;
+    container.innerHTML = domains
+      .map(
+        (d) =>
+          `<button type="button" class="domain-tab ${d === state.userSelectedDomain ? "active" : ""}" data-domain="${d}">${
+            d === "all" ? "Tümü" : d
+          }</button>`
+      )
+      .join("");
+
+    container.querySelectorAll(".domain-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        state.userSelectedDomain = tab.dataset.domain;
+        renderUserDomainTabs();
+        renderUserIntentTable();
+      });
+    });
+  }
+
+  async function renderUserIntentTable() {
+    if (!state.userId) {
+      $("userIntentTableBody").innerHTML = "";
+      return;
+    }
+
+    const perms = await AdminApi.getUserPermissions(state.userId);
+    const allowed = new Set(perms.allowedIntents || []);
+    const isSuper = allowed.has("*");
+    $("userSuperAdminChk").checked = isSuper;
+
+    const items = state.catalog.intents.filter(
+      (i) => state.userSelectedDomain === "all" || i.domain === state.userSelectedDomain
+    );
+
+    $("userIntentTableBody").innerHTML = items
+      .map((item) => {
+        const checked = isSuper || allowed.has(item.intent) ? "checked" : "";
+        return `<tr>
+          <td><input type="checkbox" data-intent="${item.intent}" ${checked} ${isSuper ? "disabled" : ""} /></td>
+          <td>${item.intent}</td>
+          <td>${item.metric_id || "-"}</td>
+          <td>${item.domain || "-"}</td>
+          <td>${item.description_tr || "-"}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  function collectUserAllowedIntents() {
+    if ($("userSuperAdminChk").checked) return ["*"];
+    return Array.from(document.querySelectorAll("#userIntentTableBody input[type='checkbox']:not(:disabled)"))
+      .filter((cb) => cb.checked)
+      .map((cb) => cb.dataset.intent);
+  }
+
   /* ---------- Users page ---------- */
 
   async function loadUsers() {
@@ -231,76 +289,34 @@
     const dataSub = await AdminApi.getSubscriptions();
     fillSelect($("scopeCompanySelect"), dataSub.items || [], { labelKey: "label" });
 
-    const dataBrand = await AdminApi.getBrands(subId ? { subscriptionId: subId } : {});
-    state.brands = dataBrand.items || [];
-    fillSelect($("scopeBrandSelect"), state.brands, { labelKey: "label" });
-
-    const dataClient = await AdminApi.getClients({ limit: 200, ...(subId ? { subscriptionId: subId } : {}) });
-    state.clients = dataClient.items || [];
-    fillSelect($("scopeClientSelect"), state.clients, { labelKey: "label" });
-
     const dataCountry = await AdminApi.getCountries({ limit: 200 });
     fillSelect($("scopeCountrySelect"), dataCountry.items || [], { labelKey: "label" });
 
-    const dataRegion = await AdminApi.getRegions({ limit: 200, ...(subId ? { subscriptionId: subId } : {}) });
-    fillSelect($("scopeRegionSelect"), dataRegion.items || [], { labelKey: "label" });
+    const dataTeam = await AdminApi.getTeams(subId ? { subscriptionId: subId } : {});
+    fillSelect($("scopeTeamSelect"), dataTeam.items || [], { labelKey: "label" });
 
-    const dataCity = await AdminApi.getCities({ limit: 200, ...(subId ? { subscriptionId: subId } : {}) });
-    const cityItems = (dataCity.items || []).map((c) => ({
-      ...c,
-      label: `${c.label} (${Number(c.districtCount) || 0} ilçe)`,
-    }));
-    fillSelect($("scopeCitySelect"), cityItems, { labelKey: "label" });
-
-    await loadAllDistrictsCache();
-    await loadDistrictOptions();
+    const dataBrand = await AdminApi.getBrands(subId ? { subscriptionId: subId } : {});
+    state.brands = dataBrand.items || [];
+    fillSelect($("scopeBrandSelect"), state.brands, { labelKey: "label" });
   }
 
-  async function loadAllDistrictsCache() {
-    const data = await AdminApi.getDistricts({ all: true, limit: 400 });
-    state.allDistricts = data.items || [];
-  }
-
-  function updateDistrictHint(message) {
-    const el = $("scopeDistrictHint");
-    if (el) el.textContent = message;
-  }
-
-  async function loadDistrictOptions() {
-    const cityIds = getSelectedValues($("scopeCitySelect"));
-    let items = state.allDistricts;
-
-    if (cityIds.length) {
-      const filtered = state.allDistricts.filter((d) => cityIds.includes(Number(d.cityId)));
-      if (filtered.length) {
-        items = filtered;
-        updateDistrictHint(
-          `${items.length} ilçe (seçili ${cityIds.length} şehre göre filtrelendi). Boş bırakırsanız ilçe kısıtı yok.`
-        );
-      } else {
-        items = state.allDistricts;
-        updateDistrictHint(
-          `Seçili şehir(ler) panelde (0 ilçe); DB'de ilçeler farklı CityId ile kayıtlı. ` +
-            `Tüm ilçeler (${items.length}) listeleniyor — doğrudan ilçe seçebilirsiniz.`
-        );
-      }
-    } else if (items.length) {
-      updateDistrictHint(
-        `${items.length} ilçe yüklendi. Şehir seçerseniz liste filtrelenir; boş bırakırsanız ilçe kısıtı yok.`
-      );
-    } else {
-      fillSelect($("scopeDistrictSelect"), []);
-      updateDistrictHint("Veritabanında aktif ilçe kaydı bulunamadı.");
+  function updateSelectedUserHint() {
+    const userId = Number($("userSelect").value);
+    const user = state.users.find((u) => u.id === userId);
+    const el = $("selectedUserHint");
+    if (!el) return;
+    if (!user) {
+      el.textContent = "Kullanıcı seçin.";
       return;
     }
-
-    fillSelect($("scopeDistrictSelect"), items, { labelKey: "label" });
+    el.textContent = `Seçili: ${user.name} (${user.email}) — UserId #${user.id}. Chat'te bu kullanıcı ile giriş yapın.`;
   }
 
   async function loadUserDetail() {
     const userId = Number($("userSelect").value);
     if (!userId) return;
     state.userId = userId;
+    updateSelectedUserHint();
 
     const user = state.users.find((u) => u.id === userId);
     const subId = user?.subscriptionId;
@@ -315,14 +331,12 @@
 
     const scopes = await AdminApi.getUserScopes(userId);
     setSelectedValues($("scopeCompanySelect"), scopes.allowedSubscriptionIds || []);
-    setSelectedValues($("scopeBrandSelect"), scopes.allowedBrandIds || []);
-    setSelectedValues($("scopeClientSelect"), scopes.allowedClientIds || []);
     setSelectedValues($("scopeCountrySelect"), scopes.allowedCountryIds || []);
-    setSelectedValues($("scopeRegionSelect"), scopes.allowedRegionIds || []);
-    setSelectedValues($("scopeCitySelect"), scopes.allowedCityIds || []);
-    await loadDistrictOptions();
-    setSelectedValues($("scopeDistrictSelect"), scopes.allowedDistrictIds || []);
+    setSelectedValues($("scopeTeamSelect"), scopes.allowedTeamIds || []);
+    setSelectedValues($("scopeBrandSelect"), scopes.allowedBrandIds || []);
 
+    renderUserDomainTabs();
+    await renderUserIntentTable();
     await refreshEffectivePreview();
   }
 
@@ -341,24 +355,21 @@
 
     const roleIds = getSelectedValues($("userRoleSelect"));
     const companyIds = getSelectedValues($("scopeCompanySelect"));
-    const brandIds = getSelectedValues($("scopeBrandSelect"));
-    const clientIds = getSelectedValues($("scopeClientSelect"));
     const countryIds = getSelectedValues($("scopeCountrySelect"));
-    const regionIds = getSelectedValues($("scopeRegionSelect"));
-    const cityIds = getSelectedValues($("scopeCitySelect"));
-    const districtIds = getSelectedValues($("scopeDistrictSelect"));
+    const teamIds = getSelectedValues($("scopeTeamSelect"));
+    const brandIds = getSelectedValues($("scopeBrandSelect"));
 
     const scopes = {
       allowedSubscriptionIds: companyIds.length ? companyIds : null,
-      allowedBrandIds: brandIds.length ? brandIds : null,
-      allowedClientIds: clientIds.length ? clientIds : null,
       allowedCountryIds: countryIds.length ? countryIds : null,
-      allowedRegionIds: regionIds.length ? regionIds : null,
-      allowedCityIds: cityIds.length ? cityIds : null,
-      allowedDistrictIds: districtIds.length ? districtIds : null,
+      allowedTeamIds: teamIds.length ? teamIds : null,
+      allowedBrandIds: brandIds.length ? brandIds : null,
     };
 
+    const allowedIntents = collectUserAllowedIntents();
+
     await AdminApi.saveUserRoles(userId, roleIds);
+    await AdminApi.saveUserPermissions(userId, allowedIntents);
     await AdminApi.saveUserScopes(userId, scopes);
     showToast("Kullanıcı ayarları kaydedildi.");
     await refreshEffectivePreview();
@@ -409,20 +420,8 @@
     );
     $("userSelect").addEventListener("change", () => loadUserDetail().catch((e) => showToast(e.message)));
     $("userRoleSelect").addEventListener("change", () => refreshEffectivePreview());
-    [
-      "scopeCompanySelect",
-      "scopeBrandSelect",
-      "scopeClientSelect",
-      "scopeCountrySelect",
-      "scopeRegionSelect",
-      "scopeDistrictSelect",
-    ].forEach((id) => {
+    ["scopeCompanySelect", "scopeCountrySelect", "scopeTeamSelect", "scopeBrandSelect"].forEach((id) => {
       $(id).addEventListener("change", () => refreshEffectivePreview());
-    });
-    $("scopeCitySelect").addEventListener("change", () => {
-      loadDistrictOptions()
-        .then(() => refreshEffectivePreview())
-        .catch((e) => showToast(e.message));
     });
     $("scopeCompanySelect").addEventListener("change", () => {
       const ids = getSelectedValues($("scopeCompanySelect"));
@@ -430,6 +429,29 @@
       loadScopeOptions(subId || null).catch((e) => showToast(e.message));
     });
     $("saveUserBtn").addEventListener("click", () => saveUserSettings().catch((e) => showToast(e.message)));
+
+    $("selectAllUserIntentsBtn").addEventListener("click", () => {
+      $("userSuperAdminChk").checked = false;
+      document.querySelectorAll("#userIntentTableBody input[type='checkbox']").forEach((cb) => {
+        cb.disabled = false;
+        cb.checked = true;
+      });
+    });
+    $("clearUserIntentsBtn").addEventListener("click", () => {
+      $("userSuperAdminChk").checked = false;
+      document.querySelectorAll("#userIntentTableBody input[type='checkbox']").forEach((cb) => {
+        cb.disabled = false;
+        cb.checked = false;
+      });
+    });
+    $("userSuperAdminChk").addEventListener("change", (e) => {
+      const isSuper = e.target.checked;
+      document.querySelectorAll("#userIntentTableBody input[type='checkbox']").forEach((cb) => {
+        cb.disabled = isSuper;
+        if (isSuper) cb.checked = true;
+      });
+    });
+
     $("refreshAuditBtn").addEventListener("click", () => loadAudit().catch((e) => showToast(e.message)));
   }
 
@@ -443,6 +465,7 @@
 
   async function bootstrapData() {
     await loadCatalog();
+    renderUserDomainTabs();
     await loadSubscriptionsForRoles();
     await loadScopeOptions();
     await loadUsers();

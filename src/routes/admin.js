@@ -32,6 +32,14 @@ router.get("/reference/brands", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/reference/teams", authMiddleware, async (req, res) => {
+  try {
+    res.json(await service.getTeams(req.query));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/reference/clients", authMiddleware, async (req, res) => {
   try {
     res.json(await service.getClients(req.query));
@@ -122,6 +130,28 @@ router.put("/users/:userId/roles", authMiddleware, async (req, res) => {
   try {
     res.json(
       await service.saveUserRoles(req.params.userId, req.body.roleIds || [], actor(req))
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/users/:userId/permissions", authMiddleware, async (req, res) => {
+  try {
+    res.json(await service.getUserPermissions(req.params.userId));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/users/:userId/permissions", authMiddleware, async (req, res) => {
+  try {
+    res.json(
+      await service.saveUserPermissions(
+        req.params.userId,
+        req.body.allowedIntents || [],
+        actor(req)
+      )
     );
   } catch (err) {
     res.status(500).json({ error: err.message });

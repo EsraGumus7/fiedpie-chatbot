@@ -37,6 +37,7 @@ const AdminApi = (() => {
     }
     return {
       rolePermissions: { ...(window.ADMIN_MOCK_SEED?.rolePermissions || {}) },
+      userPermissions: { ...(window.ADMIN_MOCK_SEED?.userPermissions || {}) },
       userRoles: { ...(window.ADMIN_MOCK_SEED?.userRoles || {}) },
       userScopes: { ...(window.ADMIN_MOCK_SEED?.userScopes || {}) },
       auditLogs: [...(window.ADMIN_MOCK_SEED?.auditLogs || [])],
@@ -207,6 +208,30 @@ const AdminApi = (() => {
     return { ok: true };
   }
 
+  async function mockGetUserPermissions(userId) {
+    const state = readState();
+    return {
+      allowedIntents: state.userPermissions[String(userId)] || [],
+    };
+  }
+
+  async function mockSaveUserPermissions(userId, allowedIntents, actorUserId = 1001) {
+    const state = readState();
+    const before = state.userPermissions[String(userId)] || [];
+    state.userPermissions[String(userId)] = allowedIntents;
+    pushAudit(state, {
+      actorUserId,
+      action: "user.permissions.update",
+      targetType: "user",
+      targetId: String(userId),
+      summary: `Kullanici intent: ${allowedIntents.length} adet`,
+      before: { allowedIntents: before },
+      after: { allowedIntents },
+    });
+    writeState(state);
+    return { ok: true };
+  }
+
   async function mockGetUserScopes(userId) {
     const state = readState();
     const scopes = state.userScopes[String(userId)] || {
@@ -250,6 +275,10 @@ const AdminApi = (() => {
       perms.forEach((i) => intentSet.add(i));
     });
 
+    const directIntents = state.userPermissions[String(userId)] || [];
+    if (directIntents.includes("*")) isSuperAdmin = true;
+    directIntents.forEach((i) => intentSet.add(i));
+
     const scopes = state.userScopes[String(userId)] || {
       allowedSubscriptionIds: null,
       allowedBrandIds: null,
@@ -261,6 +290,7 @@ const AdminApi = (() => {
       roleIds,
       isSuperAdmin,
       allowedIntents: isSuperAdmin ? ["*"] : [...intentSet].filter((i) => i !== "*"),
+      directAllowedIntents: directIntents,
       allowedSubscriptionIds: scopes.allowedSubscriptionIds ?? null,
       allowedBrandIds: scopes.allowedBrandIds ?? null,
       allowedClientIds: scopes.allowedClientIds ?? null,
@@ -281,6 +311,14 @@ const AdminApi = (() => {
   async function realGetSubscriptions(search) {
     const q = search ? `?search=${encodeURIComponent(search)}` : "";
     return fetchJson(`${API_BASE}/reference/subscriptions${q}`);
+  }
+
+  async function realGetTeams(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.subscriptionId) qs.set("subscriptionId", params.subscriptionId);
+    if (params.search) qs.set("search", params.search);
+    const q = qs.toString() ? `?${qs}` : "";
+    return fetchJson(`${API_BASE}/reference/teams${q}`);
   }
 
   async function realGetBrands(params = {}) {
@@ -390,6 +428,18 @@ const AdminApi = (() => {
     });
   }
 
+  async function realGetUserPermissions(userId) {
+    return fetchJson(`${API_BASE}/users/${userId}/permissions`);
+  }
+
+  async function realSaveUserPermissions(userId, allowedIntents) {
+    return fetchJson(`${API_BASE}/users/${userId}/permissions`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ allowedIntents }),
+    });
+  }
+
   async function realGetUserScopes(userId) {
     return fetchJson(`${API_BASE}/users/${userId}/scopes`);
   }
@@ -430,6 +480,7 @@ const AdminApi = (() => {
     getCities: pick(async () => ({ items: [] }), realGetCities),
     getDistricts: pick(async () => ({ items: [] }), realGetDistricts),
     getBrands: pick(mockGetBrands, realGetBrands),
+    getTeams: pick(async () => ({ items: [] }), realGetTeams),
     getClients: pick(mockGetClients, realGetClients),
     getUsers: pick(mockGetUsers, realGetUsers),
     getRoles: pick(mockGetRoles, realGetRoles),
@@ -437,6 +488,8 @@ const AdminApi = (() => {
     saveRolePermissions: pick(mockSaveRolePermissions, realSaveRolePermissions),
     getUserRoles: pick(mockGetUserRoles, realGetUserRoles),
     saveUserRoles: pick(mockSaveUserRoles, realSaveUserRoles),
+    getUserPermissions: pick(mockGetUserPermissions, realGetUserPermissions),
+    saveUserPermissions: pick(mockSaveUserPermissions, realSaveUserPermissions),
     getUserScopes: pick(mockGetUserScopes, realGetUserScopes),
     saveUserScopes: pick(mockSaveUserScopes, realSaveUserScopes),
     getEffectivePermissions: pick(mockGetEffectivePermissions, realGetEffectivePermissions),
