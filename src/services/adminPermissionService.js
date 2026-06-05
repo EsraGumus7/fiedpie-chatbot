@@ -599,6 +599,209 @@ async function saveUserRoles(userId, roleIds = [], actorUserId = "system") {
   return { ok: true };
 }
 
+function uniquePositiveIds(values = []) {
+  return [...new Set(values.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0))];
+}
+
+async function deriveUserScopesFromDb(userId) {
+  const uid = Number(userId);
+
+  const userRes = await queryDb({
+    query: `
+      SELECT TOP 1
+        u.Id,
+        u.SubscriptionId,
+        u.InformationForTeamId
+      FROM dbo.[User] u
+      WHERE u.Id = @userId
+        AND u.Deleted = 0
+    `,
+    bind: { userId: uid },
+  });
+
+  const user = userRes.recordset[0];
+  if (!user) {
+    throw new Error("Kullanici bulunamadi.");
+  }
+
+  const subscriptionId = user.SubscriptionId ? Number(user.SubscriptionId) : null;
+  const allowedSubscriptionIds = subscriptionId ? [subscriptionId] : [];
+
+  const teamsRes = await queryDb({
+    query: `
+      SELECT DISTINCT TeamId AS id
+      FROM (
+        SELECT ut.TeamId
+        FROM dbo.UserTeam ut
+        INNER JOIN dbo.Team t ON t.Id = ut.TeamId AND t.Deleted = 0
+        WHERE ut.UserId = @userId AND ut.Deleted = 0
+        UNION
+        SELECT c.TeamId
+        FROM dbo.ClientUser cu
+        INNER JOIN dbo.Client c ON c.Id = cu.ClientId AND c.Deleted = 0
+        WHERE cu.UserId = @userId AND cu.Deleted = 0 AND c.TeamId IS NOT NULL
+        UNION
+        SELECT @informationForTeamId AS TeamId
+        WHERE @informationForTeamId IS NOT NULL
+      ) x
+      WHERE TeamId IS NOT NULL
+    `,
+    bind: {
+      userId: uid,
+      informationForTeamId: user.InformationForTeamId || null,
+    },
+  });
+  const allowedTeamIds = uniquePositiveIds(teamsRes.recordset.map((r) => r.id));
+
+  const brandsRes = await queryDb({
+    query: `
+      SELECT DISTINCT BrandId AS id
+      FROM (
+        SELECT ub.BrandId
+        FROM dbo.UserBrand ub
+        WHERE ub.UserId = @userId AND ub.Deleted = 0
+        UNION
+        SELECT v.BrandId
+        FROM dbo.Visit v
+        WHERE v.UserId = @userId AND v.Deleted = 0 AND v.BrandId IS NOT NULL
+      ) x
+      WHERE BrandId IS NOT NULL
+    `,
+    bind: { userId: uid },
+  });
+  const allowedBrandIds = uniquePositiveIds(brandsRes.recordset.map((r) => r.id));
+
+  const countriesRes = await queryDb({
+    query: `
+      SELECT DISTINCT CountryId AS id
+      FROM (
+        SELECT c.CountryId
+        FROM dbo.ClientUser cu
+        INNER JOIN dbo.Client c ON c.Id = cu.ClientId AND c.Deleted = 0
+        WHERE cu.UserId = @userId AND cu.Deleted = 0 AND c.CountryId IS NOT NULL
+        UNION
+        SELECT c.CountryId
+        FROM dbo.Visit v
+        INNER JOIN dbo.Client c ON c.Id = v.ClientId AND c.Deleted = 0
+        WHERE v.UserId = @userId AND v.Deleted = 0 AND c.CountryId IS NOT NULL
+        UNION
+        SELECT c.CountryId
+        FROM dbo.UserTeam ut
+        INNER JOIN dbo.Client c ON c.TeamId = ut.TeamId AND c.Deleted = 0
+        WHERE ut.UserId = @userId AND ut.Deleted = 0 AND c.CountryId IS NOT NULL
+      ) x
+      WHERE CountryId IS NOT NULL
+    `,
+    bind: {
+      userId: uid,
+    },
+  });
+  let allowedCountryIds = uniquePositiveIds(countriesRes.recordset.map((r) => r.id));
+
+  if (!allowedCountryIds.length && subscriptionId) {
+    const subCountriesRes = await queryDb({
+      query: `
+        SELECT DISTINCT c.CountryId AS id
+        FROM dbo.Client c
+        WHERE c.SubscriptionId = @subscriptionId
+          AND c.Deleted = 0
+          AND c.CountryId IS NOT NULL
+      `,
+      bind: { subscriptionId },
+    });
+    allowedCountryIds = uniquePositiveIds(subCountriesRes.recordset.map((r) => r.id));
+  }
+
+  return {
+    allowedSubscriptionIds: allowedSubscriptionIds.length ? allowedSubscriptionIds : null,
+    allowedCountryIds: allowedCountryIds.length ? allowedCountryIds : null,
+    allowedTeamIds: allowedTeamIds.length ? allowedTeamIds : null,
+    allowedBrandIds: allowedBrandIds.length ? allowedBrandIds : null,
+  };
+}
+
+async function resolveDerivedScopeLabels(scopes) {
+  const labels = {
+    companies: [],
+    countries: [],
+    teams: [],
+    brands: [],
+  };
+
+  const subIds = scopes.allowedSubscriptionIds || [];
+  if (subIds.length) {
+    const inList = subIds.join(",");
+    const result = await queryDb({
+      query: `
+        SELECT Id AS id, CompanyName AS label
+        FROM dbo.Subscription
+        WHERE Deleted = 0 AND Id IN (${inList})
+        ORDER BY CompanyName
+      `,
+      bind: {},
+    });
+    labels.companies = result.recordset;
+  }
+
+  const countryIds = scopes.allowedCountryIds || [];
+  if (countryIds.length) {
+    const inList = countryIds.join(",");
+    const result = await queryDb({
+      query: `
+        SELECT Id AS id, Name AS label
+        FROM dbo.Country
+        WHERE Deleted = 0 AND Id IN (${inList})
+        ORDER BY Name
+      `,
+      bind: {},
+    });
+    labels.countries = result.recordset;
+  }
+
+  const teamIds = scopes.allowedTeamIds || [];
+  if (teamIds.length) {
+    const inList = teamIds.join(",");
+    const result = await queryDb({
+      query: `
+        SELECT Id AS id, Name AS label
+        FROM dbo.Team
+        WHERE Deleted = 0 AND Id IN (${inList})
+        ORDER BY Name
+      `,
+      bind: {},
+    });
+    labels.teams = result.recordset;
+  }
+
+  const brandIds = scopes.allowedBrandIds || [];
+  if (brandIds.length) {
+    const inList = brandIds.join(",");
+    const result = await queryDb({
+      query: `
+        SELECT Id AS id, Name AS label
+        FROM dbo.Brand
+        WHERE Deleted = 0 AND Id IN (${inList})
+        ORDER BY Name
+      `,
+      bind: {},
+    });
+    labels.brands = result.recordset;
+  }
+
+  return labels;
+}
+
+async function getUserDerivedScopes(userId) {
+  const scopes = await deriveUserScopesFromDb(userId);
+  const labels = await resolveDerivedScopeLabels(scopes);
+
+  return {
+    ...scopes,
+    labels,
+    source: "database",
+  };
+}
+
 async function getUserScopes(userId) {
   const result = await queryDb({
     query: `
@@ -740,7 +943,16 @@ async function getEffectivePermissions(userId) {
     }
   }
 
-  const customScopes = await getUserScopes(userId);
+  const customScopes = await getUserScopes(userId).catch(() => ({}));
+  const hasCustomScopes =
+    (customScopes.allowedSubscriptionIds || []).length > 0 ||
+    (customScopes.allowedCountryIds || []).length > 0 ||
+    (customScopes.allowedTeamIds || []).length > 0 ||
+    (customScopes.allowedBrandIds || []).length > 0;
+
+  const effectiveScopes = hasCustomScopes
+    ? customScopes
+    : await deriveUserScopesFromDb(userId).catch(() => customScopes);
 
   return {
     userId: Number(userId),
@@ -771,12 +983,14 @@ async function getEffectivePermissions(userId) {
     clientTagIds: context.clientTagIds || [],
     managedTeamIds: context.managedTeamIds || [],
 
-    allowedCompanyIds: customScopes.allowedSubscriptionIds ?? context.allowedCompanyIds ?? [],
-    allowedSubscriptionIds: customScopes.allowedSubscriptionIds ?? context.allowedSubscriptionIds ?? [],
+    allowedCompanyIds:
+      effectiveScopes.allowedSubscriptionIds ?? context.allowedCompanyIds ?? [],
+    allowedSubscriptionIds:
+      effectiveScopes.allowedSubscriptionIds ?? context.allowedSubscriptionIds ?? [],
 
-    allowedBrandIds: customScopes.allowedBrandIds ?? context.allowedBrandIds ?? [],
-    allowedTeamIds: customScopes.allowedTeamIds ?? [],
-    allowedCountryIds: customScopes.allowedCountryIds ?? context.allowedCountryIds ?? [],
+    allowedBrandIds: effectiveScopes.allowedBrandIds ?? context.allowedBrandIds ?? [],
+    allowedTeamIds: effectiveScopes.allowedTeamIds ?? [],
+    allowedCountryIds: effectiveScopes.allowedCountryIds ?? context.allowedCountryIds ?? [],
 
     allowedDistributorIds: context.allowedDistributorIds || [],
     allowedClientGroupIds: context.allowedClientGroupIds || [],
@@ -862,6 +1076,8 @@ module.exports = {
   getUserPermissions,
   saveUserPermissions,
   getUserScopes,
+  getUserDerivedScopes,
+  deriveUserScopesFromDb,
   saveUserScopes,
   getEffectivePermissions,
   getAuditLogs,

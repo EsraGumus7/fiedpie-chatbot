@@ -246,6 +246,26 @@ const AdminApi = (() => {
     return scopes;
   }
 
+  async function mockGetUserDerivedScopes(userId) {
+    const user = (window.ADMIN_MOCK_SEED?.users || []).find((u) => u.id === Number(userId));
+    const subId = user?.subscriptionId || null;
+    const subs = window.ADMIN_MOCK_SEED?.subscriptions || [];
+    const company = subs.find((s) => s.id === subId);
+    return {
+      allowedSubscriptionIds: subId ? [subId] : null,
+      allowedCountryIds: null,
+      allowedTeamIds: null,
+      allowedBrandIds: null,
+      labels: {
+        companies: company ? [{ id: company.id, label: company.label }] : [],
+        countries: [],
+        teams: [],
+        brands: [],
+      },
+      source: "database",
+    };
+  }
+
   async function mockSaveUserScopes(userId, scopes, actorUserId = 1001) {
     const state = readState();
     const before = state.userScopes[String(userId)] || null;
@@ -444,6 +464,10 @@ const AdminApi = (() => {
     return fetchJson(`${API_BASE}/users/${userId}/scopes`);
   }
 
+  async function realGetUserDerivedScopes(userId) {
+    return fetchJson(`${API_BASE}/users/${userId}/scopes/derived`);
+  }
+
   async function realSaveUserScopes(userId, scopes) {
     return fetchJson(`${API_BASE}/users/${userId}/scopes`, {
       method: "PUT",
@@ -491,6 +515,7 @@ const AdminApi = (() => {
     getUserPermissions: pick(mockGetUserPermissions, realGetUserPermissions),
     saveUserPermissions: pick(mockSaveUserPermissions, realSaveUserPermissions),
     getUserScopes: pick(mockGetUserScopes, realGetUserScopes),
+    getUserDerivedScopes: pick(mockGetUserDerivedScopes, realGetUserDerivedScopes),
     saveUserScopes: pick(mockSaveUserScopes, realSaveUserScopes),
     getEffectivePermissions: pick(mockGetEffectivePermissions, realGetEffectivePermissions),
     getAuditLogs: pick(mockGetAuditLogs, realGetAuditLogs),

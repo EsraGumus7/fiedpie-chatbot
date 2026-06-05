@@ -43,6 +43,19 @@
     });
   }
 
+  function ensureSelectOptions(selectEl, items) {
+    const existing = new Set(Array.from(selectEl.options).map((o) => Number(o.value)));
+    (items || []).forEach((item) => {
+      const id = Number(item.id);
+      if (!Number.isFinite(id) || existing.has(id)) return;
+      const opt = document.createElement("option");
+      opt.value = String(id);
+      opt.textContent = item.label || item.name || `#${id}`;
+      selectEl.appendChild(opt);
+      existing.add(id);
+    });
+  }
+
   function fillSelect(selectEl, items, { valueKey = "id", labelKey = "label", emptyOption } = {}) {
     const parts = [];
     if (emptyOption) {
@@ -300,7 +313,7 @@
     fillSelect($("scopeBrandSelect"), state.brands, { labelKey: "label" });
   }
 
-  function updateSelectedUserHint() {
+  function updateSelectedUserHint(extra = "") {
     const userId = Number($("userSelect").value);
     const user = state.users.find((u) => u.id === userId);
     const el = $("selectedUserHint");
@@ -309,19 +322,49 @@
       el.textContent = "Kullanıcı seçin.";
       return;
     }
-    el.textContent = `Seçili: ${user.name} (${user.email}) — UserId #${user.id}. Chat'te bu kullanıcı ile giriş yapın.`;
+    const base = `Seçili: ${user.name} (${user.email}) — UserId #${user.id}. Chat'te bu kullanıcı ile giriş yapın.`;
+    el.textContent = extra ? `${base} ${extra}` : base;
+  }
+
+  function formatDerivedScopeSummary(derived) {
+    const parts = [];
+    const count = (key) => (derived[key] || []).length;
+    if (count("allowedSubscriptionIds")) parts.push(`Company ${count("allowedSubscriptionIds")}`);
+    if (count("allowedCountryIds")) parts.push(`Country ${count("allowedCountryIds")}`);
+    if (count("allowedTeamIds")) parts.push(`Team ${count("allowedTeamIds")}`);
+    if (count("allowedBrandIds")) parts.push(`Brand ${count("allowedBrandIds")}`);
+    return parts.length ? `Scope DB'den: ${parts.join(", ")}.` : "Scope DB'de eşleşen kayıt bulunamadı.";
+  }
+
+  async function applyDerivedScopes(userId) {
+    const derived = await AdminApi.getUserDerivedScopes(userId);
+    const subId = (derived.allowedSubscriptionIds || [])[0] || state.scopeSubscriptionId || null;
+    state.scopeSubscriptionId = subId;
+    await loadScopeOptions(subId);
+
+    const labelMap = derived.labels || {};
+    ensureSelectOptions($("scopeCompanySelect"), labelMap.companies);
+    ensureSelectOptions($("scopeCountrySelect"), labelMap.countries);
+    ensureSelectOptions($("scopeTeamSelect"), labelMap.teams);
+    ensureSelectOptions($("scopeBrandSelect"), labelMap.brands);
+
+    setSelectedValues($("scopeCompanySelect"), derived.allowedSubscriptionIds || []);
+    setSelectedValues($("scopeCountrySelect"), derived.allowedCountryIds || []);
+    setSelectedValues($("scopeTeamSelect"), derived.allowedTeamIds || []);
+    setSelectedValues($("scopeBrandSelect"), derived.allowedBrandIds || []);
+
+    updateSelectedUserHint(formatDerivedScopeSummary(derived));
+    return derived;
   }
 
   async function loadUserDetail() {
     const userId = Number($("userSelect").value);
     if (!userId) return;
     state.userId = userId;
-    updateSelectedUserHint();
 
     const user = state.users.find((u) => u.id === userId);
     const subId = user?.subscriptionId;
     state.scopeSubscriptionId = subId || null;
-    await loadScopeOptions(subId);
 
     const rolesData = await AdminApi.getRoles({ subscriptionId: subId });
     fillSelect($("userRoleSelect"), rolesData.items || [], { valueKey: "id", labelKey: "name" });
@@ -329,15 +372,29 @@
     const userRoles = await AdminApi.getUserRoles(userId);
     setSelectedValues($("userRoleSelect"), userRoles.roleIds || []);
 
-    const scopes = await AdminApi.getUserScopes(userId);
-    setSelectedValues($("scopeCompanySelect"), scopes.allowedSubscriptionIds || []);
-    setSelectedValues($("scopeCountrySelect"), scopes.allowedCountryIds || []);
-    setSelectedValues($("scopeTeamSelect"), scopes.allowedTeamIds || []);
-    setSelectedValues($("scopeBrandSelect"), scopes.allowedBrandIds || []);
+    const derived = await applyDerivedScopes(userId);
+    await syncUserFromDatabase(userId, derived);
 
     renderUserDomainTabs();
     await renderUserIntentTable();
     await refreshEffectivePreview();
+  }
+
+  async function syncUserFromDatabase(userId, derived) {
+    const perms = await AdminApi.getUserPermissions(userId);
+    const intents =
+      perms.allowedIntents?.length > 0 ? perms.allowedIntents : ["visitCountRealized"];
+
+    await AdminApi.saveUserScopes(userId, {
+      allowedSubscriptionIds: derived.allowedSubscriptionIds,
+      allowedCountryIds: derived.allowedCountryIds,
+      allowedTeamIds: derived.allowedTeamIds,
+      allowedBrandIds: derived.allowedBrandIds,
+    });
+
+    if (!perms.allowedIntents?.length) {
+      await AdminApi.saveUserPermissions(userId, intents);
+    }
   }
 
   async function refreshEffectivePreview() {

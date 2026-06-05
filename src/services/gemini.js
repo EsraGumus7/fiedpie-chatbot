@@ -18,23 +18,28 @@ ${JSON.stringify(payload.data, null, 2)}
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.gemini.model}:generateContent?key=${env.gemini.apiKey}`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-    }),
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      }),
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return (
+      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+      null
+    );
+  } catch (err) {
+    console.warn("[gemini] Ozet olusturulamadi, fallback kullanilacak:", err.message);
     return null;
   }
-
-  const data = await response.json();
-  return (
-    data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-    "Sonuc alindi ancak metin olusturulamadi."
-  );
 }
 
 module.exports = { summarizeWithGemini };

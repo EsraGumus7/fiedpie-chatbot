@@ -166,6 +166,14 @@ router.get("/users/:userId/scopes", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/users/:userId/scopes/derived", authMiddleware, async (req, res) => {
+  try {
+    res.json(await service.getUserDerivedScopes(req.params.userId));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.put("/users/:userId/scopes", authMiddleware, async (req, res) => {
   try {
     res.json(await service.saveUserScopes(req.params.userId, req.body || {}, actor(req)));

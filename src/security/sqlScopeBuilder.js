@@ -103,12 +103,21 @@ function buildVisitScopeClauses(userContext = {}, visitAlias = "v") {
   if (teamIds.length) {
     const teamIn = buildInList(teamIds, "scopeTeam", bind);
     clauses.push(`
-      EXISTS (
-        SELECT 1
-        FROM dbo.Client c_scope
-        WHERE c_scope.Id = ${alias}.ClientId
-          AND c_scope.Deleted = 0
-          AND c_scope.TeamId IN (${teamIn.sql})
+      (
+        EXISTS (
+          SELECT 1
+          FROM dbo.Client c_scope
+          WHERE c_scope.Id = ${alias}.ClientId
+            AND c_scope.Deleted = 0
+            AND c_scope.TeamId IN (${teamIn.sql})
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM dbo.UserTeam ut_scope
+          WHERE ut_scope.UserId = ${alias}.UserId
+            AND ut_scope.Deleted = 0
+            AND ut_scope.TeamId IN (${teamIn.sql})
+        )
       )`);
   }
 

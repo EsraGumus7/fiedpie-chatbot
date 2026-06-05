@@ -586,11 +586,16 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       : await executeIntent(intent, params);
 
     const rows = result.recordset;
-    const llmSummary = await summarizeWithGemini({
-      question,
-      intent,
-      data: rows,
-    });
+    let llmSummary = null;
+    try {
+      llmSummary = await summarizeWithGemini({
+        question,
+        intent,
+        data: rows,
+      });
+    } catch (_err) {
+      llmSummary = null;
+    }
     const fallbackSummary = summarizeRows(intent, rows, params);
 
     return res.json({
