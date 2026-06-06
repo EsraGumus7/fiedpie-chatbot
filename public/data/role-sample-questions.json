@@ -72,8 +72,6 @@
           "label": "Ziyaret",
           "questions": [
             { "text": "ziyaret sayisi" },
-            { "text": "Stark ziyaret sayisi" },
-            { "text": "Stark bugun bekleyen ziyaret" },
             { "text": "tamamlanan ve bekleyen ziyaret" },
             { "text": "ortalama ziyaret suresi kac" },
             { "text": "ziyaretler duruma gore nasil dagiliyor" },
@@ -127,9 +125,6 @@
           "label": "Ziyaret",
           "questions": [
             { "text": "ziyaret sayisi" },
-            { "text": "Rodolfo takimi ziyaret sayisi" },
-            { "text": "rodolfo ziyaret sayisi" },
-            { "text": "Rodolfo bugun bekleyen ziyaret" },
             { "text": "tamamlanan ve bekleyen ziyaret" },
             { "text": "ortalama ziyaret suresi kac" },
             { "text": "ziyaret trendi nasil" }
@@ -140,7 +135,6 @@
           "label": "Musteri",
           "questions": [
             { "text": "aktif musteri sayisi kac" },
-            { "text": "Rodolfo aktif musteri sayisi" },
             { "text": "musterilerin gruplara gore dagilimi" },
             { "text": "toplam kac distributor var" },
             { "text": "musteri kazanim trendi nasil" }
@@ -151,7 +145,6 @@
           "label": "Satis / Finans",
           "questions": [
             { "text": "toplam siparis sayisi" },
-            { "text": "Rodolfo toplam siparis sayisi" },
             { "text": "toplam fatura sayisi" },
             { "text": "toplam fatura tutari nedir" },
             { "text": "durumlarina gore siparis dagilimi" },
@@ -180,8 +173,6 @@
           "questions": [
             { "text": "sirket ziyaret sayisi" },
             { "text": "ziyaret sayisi" },
-            { "text": "takim bazinda ziyaret sayisi" },
-            { "text": "CP REMOTE-Ahmed ziyaret sayisi" },
             { "text": "tamamlanan ve bekleyen ziyaret" },
             { "text": "ziyaret trendi nasil" },
             { "text": "hangi durumda kac ziyaret var" }

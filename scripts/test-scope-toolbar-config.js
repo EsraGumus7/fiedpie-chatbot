@@ -52,7 +52,11 @@ async function main() {
   assert(amerConfig.teamsButton.locked === false, "Amer teams unlocked");
   assert(amerConfig.allowDualScopeSelect === false, "Amer no dual select");
   assert(amerConfig.defaultSelection.mode === "teams", "Amer default teams");
-  assert(amerConfig.defaultSelection.teamScope === "all", "Amer default all teams");
+  assert(amerConfig.defaultSelection.teamScope === "single", "Amer default first team");
+  assert(
+    amerConfig.defaultSelection.teamIds[0] === amerConfig.operationalTeams[0].teamId,
+    "Amer default first team id"
+  );
 
   const mireilleConfig = buildScopeToolbarConfig(mireille);
   assert(mireilleConfig.defaultSelection.mode === "both", "L4 default company+all teams");

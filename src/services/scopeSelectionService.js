@@ -79,12 +79,11 @@ function resolveBreakdownTeamList(userContext = {}, toolbarConfig = {}, teamIds 
 }
 
 function buildDefaultScopeSelection(userContext = {}, toolbarConfig = {}) {
-  const level = Number(userContext.operationalLevel ?? userContext.hierarchyLevel ?? 1);
   const operationalTeams = toolbarConfig.operationalTeams || [];
   const teamsUsable = !toolbarConfig.teamsButton?.locked;
   const companyUsable = !toolbarConfig.companyButton?.locked;
 
-  if (level <= 1 || (!teamsUsable && !companyUsable)) {
+  if (!teamsUsable && !companyUsable) {
     return { mode: "self", teamScope: "single", teamIds: [] };
   }
 
@@ -96,7 +95,8 @@ function buildDefaultScopeSelection(userContext = {}, toolbarConfig = {}) {
     return { mode: "company", teamScope: "all", teamIds: [] };
   }
 
-  if (operationalTeams.length === 1) {
+  // Saf L2/L3: sirket kilitli — varsayilan ilk yonetilen takim
+  if (operationalTeams.length >= 1) {
     return {
       mode: "teams",
       teamScope: "single",

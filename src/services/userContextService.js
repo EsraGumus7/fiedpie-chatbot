@@ -253,6 +253,12 @@ async function buildUserContext(userId) {
     effectiveClientIds: clientIds,
     clientTagIds: [],
     managedTeamIds: hierarchy.managedTeamIds,
+    managedTeams: teams
+      .filter((team) => managedTeamIds.includes(Number(team.teamId)))
+      .map((team) => ({
+        teamId: Number(team.teamId),
+        teamName: team.teamName || `Takim ${team.teamId}`,
+      })),
     subscriptionTeams: hierarchy.subscriptionTeams || [],
     isPureCompanyScopeUser: !!hierarchy.isPureCompanyScopeUser,
 

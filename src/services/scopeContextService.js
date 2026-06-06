@@ -210,20 +210,34 @@ function resolveManagedTeams(userContext = {}) {
     return [];
   }
 
-  const fromContext = (userContext.managedTeams || [])
-    .filter((team) => managedIds.has(Number(team.teamId)))
-    .map((team) => ({
-      teamId: Number(team.teamId),
-      teamName: team.teamName || `Takim ${team.teamId}`,
-    }));
+  const mapManagedTeam = (team) => ({
+    teamId: Number(team.teamId),
+    teamName: team.teamName || `Takim ${team.teamId}`,
+  });
 
-  if (fromContext.length) {
-    return fromContext;
+  const pickManagedFromPool = (pool = []) =>
+    pool
+      .filter((team) => managedIds.has(Number(team.teamId)))
+      .map(mapManagedTeam);
+
+  const fromManagedTeams = pickManagedFromPool(userContext.managedTeams);
+  if (fromManagedTeams.length) {
+    return fromManagedTeams;
+  }
+
+  const fromUserTeams = pickManagedFromPool(userContext.teams);
+  if (fromUserTeams.length) {
+    return fromUserTeams;
   }
 
   const nameById = new Map();
   (userContext.subscriptionTeams || []).forEach((team) => {
     if (team?.teamId) {
+      nameById.set(Number(team.teamId), team.teamName || `Takim ${team.teamId}`);
+    }
+  });
+  (userContext.teams || []).forEach((team) => {
+    if (team?.teamId && !nameById.has(Number(team.teamId))) {
       nameById.set(Number(team.teamId), team.teamName || `Takim ${team.teamId}`);
     }
   });

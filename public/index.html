@@ -332,12 +332,30 @@
     }
 
     .scope-teams-menu label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: start;
+      column-gap: 8px;
       padding: 6px 4px;
       font-size: 13px;
+      line-height: 1.35;
       cursor: pointer;
+      text-align: left;
+      justify-items: start;
+    }
+
+    .scope-teams-menu label input[type="checkbox"] {
+      width: 16px;
+      min-width: 16px;
+      height: 16px;
+      margin: 1px 0 0;
+      padding: 0;
+      box-sizing: border-box;
+      justify-self: start;
+    }
+
+    .scope-teams-menu label span {
+      min-width: 0;
     }
 
     .scope-teams-menu .scope-menu-all {
@@ -345,6 +363,7 @@
       margin-bottom: 6px;
       padding-bottom: 6px;
       font-weight: 600;
+      align-items: center;
     }
 
     .scope-teams-menu .scope-menu-empty {
@@ -1215,7 +1234,7 @@ async function login() {
         parts.push(`
           <label class="scope-menu-all">
             <input type="checkbox" name="scopeManagedTeam" value="all" ${allChecked ? "checked" : ""} />
-            Tum takimlarim
+            <span>Tum takimlarim</span>
           </label>
         `);
       }
@@ -1228,7 +1247,7 @@ async function login() {
         parts.push(`
           <label>
             <input type="checkbox" name="scopeManagedTeam" value="${team.teamId}" ${checked ? "checked" : ""} />
-            ${escapeHtml(team.teamName || `Takim ${team.teamId}`)}
+            <span>${escapeHtml(team.teamName || `Takim ${team.teamId}`)}</span>
           </label>
         `);
       });
@@ -1344,6 +1363,16 @@ async function login() {
       };
     }
 
+    function applyFirstTeamDefault(config = scopeToolbarConfig) {
+      const teams = getManagedTeamsList(config);
+      if (!teams.length) {
+        selectAllTeamsInScope();
+        return;
+      }
+      scopeSelection.teamScope = "single";
+      scopeSelection.teamIds = [Number(teams[0].teamId)];
+    }
+
     function selectAllTeamsInScope() {
       scopeSelection.teamScope = "all";
       scopeSelection.teamIds = [];
@@ -1352,6 +1381,14 @@ async function login() {
     function activateTeamsSelection() {
       scopeSelection.teamsActive = true;
       selectAllTeamsInScope();
+    }
+
+    function ensureTeamsOnlySelection() {
+      scopeSelection.teamsActive = true;
+      scopeSelection.companyActive = false;
+      if (!scopeSelection.teamScope || scopeSelection.teamScope === "none") {
+        applyFirstTeamDefault();
+      }
     }
 
     function ensureScopeTeamDefaults() {
@@ -1374,6 +1411,10 @@ async function login() {
         return;
       }
       if (!scopeSelection.companyActive) {
+        if (!scopeToolbarConfig?.allowDualScopeSelect) {
+          applyFirstTeamDefault();
+          return;
+        }
         scopeSelection.teamScope = "all";
         scopeSelection.teamIds = [];
       }
@@ -1451,11 +1492,7 @@ async function login() {
       const companyUsable = !scopeToolbarConfig?.companyButton?.locked;
 
       if (teamsUsable && !companyUsable) {
-        scopeSelection.teamsActive = true;
-        scopeSelection.companyActive = false;
-        if (scopeSelection.teamScope !== "single") {
-          selectAllTeamsInScope();
-        }
+        ensureTeamsOnlySelection();
       } else if (!teamsUsable && companyUsable) {
         scopeSelection.teamsActive = false;
         scopeSelection.companyActive = true;
@@ -1533,6 +1570,7 @@ async function login() {
         }
 
         if (scopeToolbarConfig?.allowDualScopeSelect) {
+          closeTeamsMenu();
           if (scopeSelection.teamsActive) {
             scopeSelection.teamsActive = false;
             if (!scopeSelection.companyActive) {
@@ -1541,12 +1579,17 @@ async function login() {
           } else {
             activateTeamsSelection();
           }
+        } else if (scopeSelection.teamsActive) {
+          openTeamsMenu();
         } else {
-          activateTeamsSelection();
+          closeTeamsMenu();
+          scopeSelection.teamsActive = true;
+          if (!scopeSelection.teamScope || scopeSelection.teamScope === "none") {
+            applyFirstTeamDefault();
+          }
           scopeSelection.companyActive = false;
         }
 
-        closeTeamsMenu();
         syncScopeToggleUi();
       });
     }
@@ -1558,7 +1601,10 @@ async function login() {
           return;
         }
         if (!scopeSelection.teamsActive && !scopeToolbarConfig?.teamsButton?.locked) {
-          activateTeamsSelection();
+          scopeSelection.teamsActive = true;
+          if (!scopeSelection.teamScope || scopeSelection.teamScope === "none") {
+            applyFirstTeamDefault();
+          }
         }
         toggleTeamsMenu();
         syncScopeToggleUi();
