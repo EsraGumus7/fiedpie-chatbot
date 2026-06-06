@@ -29,7 +29,8 @@ function detectTeamFromQuestion(question = "", managedTeams = []) {
   }
 
   const normalizedQuestion = normalizeScopeQuestion(question);
-  const matches = [];
+  const fullNameMatches = [];
+  const tokenMatches = [];
 
   for (const team of managedTeams) {
     const normalizedTeamName = normalizeScopeQuestion(team.teamName || "");
@@ -38,29 +39,45 @@ function detectTeamFromQuestion(question = "", managedTeams = []) {
     }
 
     if (normalizedQuestion.includes(normalizedTeamName)) {
-      matches.push(team);
+      fullNameMatches.push(team);
       continue;
     }
 
     const tokens = tokenizeTeamName(team.teamName);
     const tokenHits = tokens.filter((token) => normalizedQuestion.includes(token));
     if (tokenHits.length >= 1) {
-      matches.push({ ...team, _tokenHits: tokenHits.length });
+      tokenMatches.push({ ...team, _tokenHits: tokenHits.length });
     }
   }
 
-  if (!matches.length) {
-    return null;
-  }
-
-  if (matches.length === 1) {
+  if (fullNameMatches.length === 1) {
     return {
-      teamId: matches[0].teamId,
-      teamName: matches[0].teamName,
+      teamId: fullNameMatches[0].teamId,
+      teamName: fullNameMatches[0].teamName,
     };
   }
 
-  const sorted = [...matches].sort(
+  if (fullNameMatches.length > 1) {
+    return {
+      ambiguous: fullNameMatches.map((team) => ({
+        teamId: team.teamId,
+        teamName: team.teamName,
+      })),
+    };
+  }
+
+  if (!tokenMatches.length) {
+    return null;
+  }
+
+  if (tokenMatches.length === 1) {
+    return {
+      teamId: tokenMatches[0].teamId,
+      teamName: tokenMatches[0].teamName,
+    };
+  }
+
+  const sorted = [...tokenMatches].sort(
     (a, b) => (b._tokenHits ?? 1) - (a._tokenHits ?? 1)
   );
   const bestScore = sorted[0]._tokenHits ?? 1;
@@ -135,6 +152,11 @@ function buildTeamClarificationAnswer(teamMatch = {}) {
   return `Birden fazla takim eslesti. Hangi takimi kastettiniz?\n${options}`;
 }
 
+function buildOutOfScopeTeamAnswer(teamMatch = {}) {
+  const teamName = teamMatch.teamName || "Bu takim";
+  return `"${teamName}" yonetim kapsaminizda degil. Yonetilen takimlariniz icin takim adiyla sorabilirsiniz; sirket geneli icin "sirket ..." kullanin.`;
+}
+
 function buildRangeLabel(params = {}) {
   if (params.startDate && params.endDate && params.startDate === params.endDate) {
     return params.startDate;
@@ -203,6 +225,7 @@ module.exports = {
   enrichQueryParams,
   parseQuestionFilters,
   buildTeamClarificationAnswer,
+  buildOutOfScopeTeamAnswer,
   buildRangeLabel,
   buildVisitStatusLabel,
 };

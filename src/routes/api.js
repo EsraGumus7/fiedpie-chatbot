@@ -16,14 +16,26 @@ const {
   buildScopedUserContext,
   resolveScopePlan,
   resolveManagedTeams,
+  resolveScopeTeams,
+  resolveSubscriptionTeams,
   buildSingleTeamScopedContext,
+  buildSelectedTeamsCombinedContext,
   formatOperationalDisplayLabel,
   formatCompanyDisplayLabel,
+  buildScopeAnswerPrefix,
+  prefixScopeAnswer,
+  TEAM_DISPLAY_LIMIT,
 } = require("../services/scopeContextService");
+const {
+  resolveScopePlanFromSelection,
+  resolveBreakdownTeamList,
+  buildScopeToolbarConfig,
+} = require("../services/scopeSelectionService");
 const {
   parseQuestionFilters,
   resolveVisitIntentOverride,
   buildTeamClarificationAnswer,
+  buildOutOfScopeTeamAnswer,
   buildRangeLabel,
   buildVisitStatusLabel,
 } = require("../services/questionFilterService");
@@ -34,6 +46,31 @@ const {
 } = require("../services/teamMemberBreakdownService");
 
 const router = express.Router();
+
+const MULTI_TEAM_QUERY_CONCURRENCY = 8;
+
+const COMPANY_TEAM_TOTAL_OVERLAP_NOTICE =
+  "Not: Takim kartlari ortak uyeler nedeniyle ayni ziyareti birden fazla takimda gosterebilir. Toplam satirinda tekrarlanan ziyaretler 1 kez sayilmistir.";
+
+const MULTI_TEAM_TOTAL_OVERLAP_NOTICE =
+  "Not: Takim kartlari ortak uyeler nedeniyle ayni ziyareti birden fazla takimda gosterebilir. Toplam satirinda tekrarlanan ziyaretler 1 kez sayilmistir.";
+
+function appendTeamTotalOverlapNote(lines, notice) {
+  if (!notice) {
+    return;
+  }
+  lines.push("");
+  lines.push(notice);
+}
+
+async function mapTeamsWithConcurrency(teams, mapper, concurrency = MULTI_TEAM_QUERY_CONCURRENCY) {
+  const results = [];
+  for (let i = 0; i < teams.length; i += concurrency) {
+    const slice = teams.slice(i, i + concurrency);
+    results.push(...(await Promise.all(slice.map(mapper))));
+  }
+  return results;
+}
 
 function toIsoDate(date) {
   return date.toISOString().slice(0, 10);
@@ -92,6 +129,12 @@ function buildScopePreview(userContext, metric, scopeDecision) {
     hierarchyLevel: userContext.hierarchyLevel ?? null,
     hierarchyLabel: userContext.hierarchyLabel ?? null,
     isHybridScopeUser: !!userContext.isHybridScopeUser,
+    isPureCompanyScopeUser: !!userContext.isPureCompanyScopeUser,
+    managedTeamCount: (userContext.managedTeamIds || []).length,
+    subscriptionTeamCount: (userContext.subscriptionTeams || []).length,
+    subscriptionTeamNames: (userContext.subscriptionTeams || [])
+      .slice(0, 8)
+      .map((team) => team.teamName),
     activeScopeMode: userContext.activeScopeMode || userContext.defaultScopeMode || null,
     allowedUserIds: userContext.allowedUserIds || [userContext.userId],
     filters: {
@@ -208,6 +251,27 @@ function extractPrimaryMetricValue(intent, rows = []) {
   return first.total ?? first.totalUsers ?? first.responseCount ?? null;
 }
 
+function summarizeDistributionBullets(intent, rows = []) {
+  if (!rows.length) {
+    return "- Veri yok";
+  }
+
+  if (intent === "visitsByState" || intent === "visitsByCompletionStatus") {
+    return rows
+      .map((row) => `- ${row.visitState}: ${formatNumber(row.total)} ziyaret`)
+      .join("\n");
+  }
+
+  if (intent === "visitsByType") {
+    return rows
+      .slice(0, 5)
+      .map((row) => `- ${row.visitType}: ${formatNumber(row.total)} ziyaret`)
+      .join("\n");
+  }
+
+  return summarizeRows(intent, rows, {});
+}
+
 function summarizeDualScope(intent, dualScope = {}, filters = {}) {
   const rangeInfo =
     filters.startDate || filters.endDate
@@ -216,6 +280,21 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
 
   const operational = dualScope.operational || {};
   const company = dualScope.company || {};
+  const opTitle =
+    operational.displayLabel || formatOperationalDisplayLabel(operational.label);
+  const coTitle =
+    company.displayLabel || formatCompanyDisplayLabel(company.label);
+
+  if (isDistributionIntent(intent)) {
+    return [
+      `${opTitle} (${rangeInfo}):`,
+      summarizeDistributionBullets(intent, operational.rows || []),
+      "",
+      `${coTitle} (${rangeInfo}):`,
+      summarizeDistributionBullets(intent, company.rows || []),
+    ].join("\n");
+  }
+
   const opValue = extractPrimaryMetricValue(intent, operational.rows || []);
   const companyValue = extractPrimaryMetricValue(intent, company.rows || []);
 
@@ -226,11 +305,6 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
     totalInvoices: "fatura",
   };
   const metricLabel = metricLabels[intent] || "kayit";
-
-  const opTitle =
-    operational.displayLabel || formatOperationalDisplayLabel(operational.label);
-  const coTitle =
-    company.displayLabel || formatCompanyDisplayLabel(company.label);
 
   if (intent === "avgVisitDuration") {
     return [
@@ -243,6 +317,52 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
     `${opTitle} (${rangeInfo}): ${formatNumber(opValue ?? 0)} ${metricLabel}`,
     `${coTitle} (${rangeInfo}): ${formatNumber(companyValue ?? 0)} ${metricLabel}`,
   ].join("\n");
+}
+
+function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) {
+  const rangeInfo = buildRangeLabel(filters);
+  const companyTitle =
+    companyTeamScope.company?.displayLabel ||
+    formatCompanyDisplayLabel(companyTeamScope.company?.label);
+  const selectedLabel = companyTeamScope.selectedCombined?.label || "Secili takimlar toplami";
+
+  const companyBody = isDistributionIntent(intent)
+    ? summarizeDistributionBullets(intent, companyTeamScope.company?.rows || [])
+    : `${formatNumber(extractPrimaryMetricValue(intent, companyTeamScope.company?.rows || []) ?? 0)}`;
+
+  const lines = [`${companyTitle} (${rangeInfo}):`, companyBody, ""];
+
+  (companyTeamScope.teams || []).forEach((team) => {
+    const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
+    if (isDistributionIntent(intent)) {
+      lines.push(`${title} (${rangeInfo}):`);
+      lines.push(summarizeDistributionBullets(intent, team.rows || []));
+    } else {
+      const value = extractPrimaryMetricValue(intent, team.rows || []);
+      lines.push(`${title} (${rangeInfo}): ${formatNumber(value ?? 0)}`);
+    }
+    lines.push("");
+  });
+
+  if (companyTeamScope.includeMemberBreakdown) {
+    appendMemberSummaryLines(lines, companyTeamScope, intent);
+    lines.push("");
+  }
+
+  const selectedRows = companyTeamScope.selectedCombined?.rows || [];
+  if (isDistributionIntent(intent)) {
+    lines.push(`${selectedLabel} (${rangeInfo}):`);
+    lines.push(summarizeDistributionBullets(intent, selectedRows));
+  } else {
+    const selectedValue = extractPrimaryMetricValue(intent, selectedRows);
+    lines.push(`${selectedLabel} (${rangeInfo}): ${formatNumber(selectedValue ?? 0)}`);
+  }
+
+  if ((companyTeamScope.teams || []).length > 1) {
+    appendTeamTotalOverlapNote(lines, COMPANY_TEAM_TOTAL_OVERLAP_NOTICE);
+  }
+
+  return lines.join("\n").trim();
 }
 
 function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
@@ -303,6 +423,12 @@ function appendMemberSummaryLines(lines, singleTeamScope = {}, intent = "") {
 
 function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
   const rangeInfo = buildRangeLabel(filters);
+  const combinedLabel =
+    multiTeamScope.scopeSource === "subscription"
+      ? formatCompanyDisplayLabel("Sirket geneli")
+      : multiTeamScope.scopeSource === "selected"
+        ? multiTeamScope.combined?.label || "Secili takimlar toplami"
+        : "Toplam";
 
   if (isDistributionIntent(intent)) {
     const lines = (multiTeamScope.teams || []).map((team) => {
@@ -330,7 +456,7 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
       const tam = combinedRows.find((row) => row.visitState === "Tamamlanan")?.total ?? 0;
       const bek = combinedRows.find((row) => row.visitState === "Bekleyen")?.total ?? 0;
       lines.push(
-        `Toplam (${rangeInfo}): Tamamlanan ${formatNumber(tam)}, Bekleyen ${formatNumber(bek)}`
+        `${combinedLabel} (${rangeInfo}): Tamamlanan ${formatNumber(tam)}, Bekleyen ${formatNumber(bek)}`
       );
     } else if (combinedRows.length) {
       const parts = combinedRows
@@ -340,7 +466,11 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
           return `${label} ${formatNumber(row.total ?? 0)}`;
         })
         .join(", ");
-      lines.push(`Toplam (${rangeInfo}): ${parts}`);
+      lines.push(`${combinedLabel} (${rangeInfo}): ${parts}`);
+    }
+
+    if ((multiTeamScope.teams || []).length > 1) {
+      appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
     }
 
     return lines.join("\n");
@@ -366,10 +496,14 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
   const combinedValue = extractPrimaryMetricValue(intent, multiTeamScope.combined?.rows || []);
   if (combinedValue != null) {
     if (intent === "avgVisitDuration") {
-      lines.push(`Toplam (${rangeInfo}): ${formatNumber(combinedValue ?? "-")}`);
+      lines.push(`${combinedLabel} (${rangeInfo}): ${formatNumber(combinedValue ?? "-")}`);
     } else {
-      lines.push(`Toplam (${rangeInfo}): ${formatNumber(combinedValue ?? 0)} ${metricLabel}`);
+      lines.push(`${combinedLabel} (${rangeInfo}): ${formatNumber(combinedValue ?? 0)} ${metricLabel}`);
     }
+  }
+
+  if ((multiTeamScope.teams || []).length > 1) {
+    appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
   }
 
   return lines.join("\n");
@@ -400,8 +534,12 @@ function isDistributionIntent(intent = "") {
 }
 
 function renderScopeAnswer(intent, params, scopePayload = {}) {
-  const { dualScope, singleTeamScope, multiTeamScope, rows = [] } = scopePayload;
+  const { dualScope, singleTeamScope, multiTeamScope, companyTeamScope, rows = [] } =
+    scopePayload;
 
+  if (companyTeamScope) {
+    return summarizeCompanyTeamScope(intent, companyTeamScope, params);
+  }
   if (dualScope) {
     return summarizeDualScope(intent, dualScope, params);
   }
@@ -858,10 +996,17 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
     }
 
     const scopePlan = userContext
-      ? resolveScopePlan(userContext, question, intent)
+      ? req.body?.scopeSelection
+        ? resolveScopePlanFromSelection(userContext, req.body.scopeSelection, intent)
+        : resolveScopePlan(userContext, question, intent)
       : { mode: "self", display: "single", scopePreference: "dual", teamMatch: null, teamIds: [] };
 
     if (scopePlan.mode === "denied") {
+      const answer =
+        scopePlan.denyReason === "team_out_of_operational_scope"
+          ? buildOutOfScopeTeamAnswer(scopePlan.teamMatch)
+          : "Sirket geneli veri yalnizca admin veya tum takimlari yoneten kullanicilara aciktir. Yonetilen takimlariniz icin \"ziyaret sayisi\" sorabilirsiniz.";
+
       return res.json({
         question,
         intent,
@@ -872,8 +1017,23 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         scopePreference: scopePlan.scopePreference,
         scopePlan,
         scope: buildScopePreview(userContext, metric, null),
-        answer:
-          "Sirket geneli veri yalnizca admin veya tum takimlari yoneten kullanicilara aciktir. Yonetilen takimlariniz icin \"ziyaret sayisi\" sorabilirsiniz.",
+        answer,
+        candidates: resolved.candidates,
+      });
+    }
+
+    if (scopePlan.mode === "scope_pick_required") {
+      return res.json({
+        question,
+        intent,
+        confidence: resolved.confidence,
+        score: resolved.score,
+        source: resolved.source,
+        filters: params,
+        scopePreference: scopePlan.scopePreference,
+        scopePlan,
+        scope: buildScopePreview(userContext, metric, null),
+        answer: scopePlan.answer,
         candidates: resolved.candidates,
       });
     }
@@ -902,6 +1062,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
     const runDualScope = scopePlan.mode === "dual";
     const runSingleTeamScope = scopePlan.mode === "single_team";
     const runMultiTeamScope = scopePlan.mode === "multi_team";
+    const runCompanyTeamScope = scopePlan.mode === "company_team_breakdown";
     const scopePreference = scopePlan.scopePreference;
 
     let userContextForQuery = userContext;
@@ -910,7 +1071,9 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       !runDualScope &&
       !runMultiTeamScope &&
       !runSingleTeamScope &&
-      userContext.isHybridScopeUser
+      !runCompanyTeamScope &&
+      userContext.isHybridScopeUser &&
+      scopePlan.source !== "toolbar"
     ) {
       userContextForQuery = buildScopedUserContext(userContext, scopePreference);
     } else if (scopePlan.mode === "company" && userContext?.companyCapable) {
@@ -930,8 +1093,102 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
     let dualScope = null;
     let multiTeamScope = null;
     let singleTeamScope = null;
+    let companyTeamScope = null;
 
-    if (runDualScope) {
+    if (runCompanyTeamScope) {
+      const toolbarConfig = buildScopeToolbarConfig(userContext);
+      const companyContext = buildScopedUserContext(userContext, "company");
+      const breakdownTeams = resolveBreakdownTeamList(
+        userContext,
+        toolbarConfig,
+        scopePlan.teamIds
+      );
+      const companyResult = await executeIntent(intent, params, {
+        userContext: companyContext,
+        metric,
+      });
+      const teamResults = await mapTeamsWithConcurrency(breakdownTeams, async (team) => {
+        const teamContext = await buildSingleTeamScopedContext(userContext, team.teamId);
+        const teamResult = await executeIntent(intent, params, {
+          userContext: teamContext,
+          metric,
+        });
+        return {
+          teamId: team.teamId,
+          teamName: team.teamName,
+          displayLabel: formatOperationalDisplayLabel(team.teamName),
+          rows: applyIntentRowNormalization(intent, teamResult.recordset),
+          allowedUserIdsCount: teamContext.allowedUserIds?.length || 0,
+        };
+      });
+
+      let selectedCombinedRows;
+      let selectedAllowedUserIdsCount;
+      const useCompanyScopeForCombinedTotal = !!scopePlan.useCompanyScopeForCombinedTotal;
+
+      if (useCompanyScopeForCombinedTotal) {
+        selectedCombinedRows = applyIntentRowNormalization(intent, companyResult.recordset);
+        selectedAllowedUserIdsCount = companyContext.allowedUserIds?.length || 0;
+      } else {
+        const selectedContext = await buildSelectedTeamsCombinedContext(
+          userContext,
+          breakdownTeams.map((team) => team.teamId)
+        );
+        const selectedCombinedResult = await executeIntent(intent, params, {
+          userContext: selectedContext,
+          metric,
+        });
+        selectedCombinedRows = applyIntentRowNormalization(
+          intent,
+          selectedCombinedResult.recordset
+        );
+        selectedAllowedUserIdsCount = selectedContext.allowedUserIds?.length || 0;
+      }
+
+      let memberBreakdown = null;
+      if (scopePlan.includeMemberBreakdown && breakdownTeams.length === 1) {
+        const singleTeam = breakdownTeams[0];
+        const teamContext = await buildSingleTeamScopedContext(userContext, singleTeam.teamId);
+        memberBreakdown = await executeTeamMemberBreakdown({
+          intent,
+          params,
+          userContext,
+          teamId: singleTeam.teamId,
+          teamContext,
+          metric,
+          executeIntent,
+          normalizeRows: (rows) => applyIntentRowNormalization(intent, rows),
+        });
+      }
+
+      companyTeamScope = {
+        mode: "company_team_breakdown",
+        company: {
+          label: userContext.companyScopeLabel || "Sirket geneli",
+          displayLabel: formatCompanyDisplayLabel(userContext.companyScopeLabel),
+          rows: applyIntentRowNormalization(intent, companyResult.recordset),
+          allowedUserIdsCount: companyContext.allowedUserIds?.length || 0,
+        },
+        teams: teamResults,
+        selectedCombined: {
+          label: scopePlan.combinedLabel || "Secili takimlar toplami",
+          rows: selectedCombinedRows,
+          allowedUserIdsCount: selectedAllowedUserIdsCount,
+        },
+        displayLimit: TEAM_DISPLAY_LIMIT,
+        teamTotalCount: breakdownTeams.length,
+        hasMoreTeams: breakdownTeams.length > TEAM_DISPLAY_LIMIT,
+        includeMemberBreakdown: !!memberBreakdown?.members?.length,
+        members: memberBreakdown?.members || [],
+        memberTotalCount: memberBreakdown?.memberTotalCount || 0,
+        memberDisplayLimit: memberBreakdown?.displayLimit || MEMBER_DISPLAY_LIMIT,
+        hasMoreMembers: memberBreakdown?.hasMore || false,
+        overlapNotice:
+          teamResults.length > 1 ? COMPANY_TEAM_TOTAL_OVERLAP_NOTICE : null,
+      };
+      result = companyResult;
+      userContextForQuery = companyContext;
+    } else if (runDualScope) {
       const operationalContext = buildScopedUserContext(userContext, "operational");
       const companyContext = buildScopedUserContext(userContext, "company");
       const [operationalResult, companyResult] = await Promise.all([
@@ -996,38 +1253,82 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       };
       userContextForQuery = teamContext;
     } else if (runMultiTeamScope) {
-      const managedTeams = resolveManagedTeams(userContext);
-      const teamResults = await Promise.all(
-        managedTeams.map(async (team) => {
-          const teamContext = await buildSingleTeamScopedContext(
-            userContext,
-            team.teamId
-          );
-          const teamResult = await executeIntent(intent, params, {
-            userContext: teamContext,
-            metric,
-          });
-          return {
-            teamId: team.teamId,
-            teamName: team.teamName,
-            displayLabel: formatOperationalDisplayLabel(team.teamName),
-            rows: applyIntentRowNormalization(intent, teamResult.recordset),
-            allowedUserIdsCount: teamContext.allowedUserIds?.length || 0,
-          };
-        })
-      );
-      const combinedResult = await executeIntent(intent, params, {
-        userContext,
-        metric,
+      const toolbarConfig =
+        scopePlan.source === "toolbar" ? buildScopeToolbarConfig(userContext) : null;
+      const breakdownTeams =
+        scopePlan.scopeSource === "selected"
+          ? resolveBreakdownTeamList(userContext, toolbarConfig, scopePlan.teamIds)
+          : scopePlan.scopeSource === "subscription"
+            ? resolveSubscriptionTeams(userContext).length
+              ? resolveSubscriptionTeams(userContext)
+              : resolveScopeTeams(userContext)
+            : resolveManagedTeams(userContext);
+      const teamResults = await mapTeamsWithConcurrency(breakdownTeams, async (team) => {
+        const teamContext = await buildSingleTeamScopedContext(
+          userContext,
+          team.teamId
+        );
+        const teamResult = await executeIntent(intent, params, {
+          userContext: teamContext,
+          metric,
+        });
+        return {
+          teamId: team.teamId,
+          teamName: team.teamName,
+          displayLabel: formatOperationalDisplayLabel(team.teamName),
+          rows: applyIntentRowNormalization(intent, teamResult.recordset),
+          allowedUserIdsCount: teamContext.allowedUserIds?.length || 0,
+        };
       });
+      let combinedContext = null;
+      let combinedRows = [];
+      let combinedResult;
+
+      if (
+        scopePlan.scopeSource === "selected" ||
+        scopePlan.scopeSource === "managed"
+      ) {
+        combinedContext = await buildSelectedTeamsCombinedContext(
+          userContext,
+          breakdownTeams.map((team) => team.teamId)
+        );
+        combinedResult = await executeIntent(intent, params, {
+          userContext: combinedContext,
+          metric,
+        });
+        combinedRows = applyIntentRowNormalization(intent, combinedResult.recordset);
+      } else if (scopePlan.scopeSource === "subscription") {
+        combinedContext = buildScopedUserContext(userContext, "company");
+        combinedResult = await executeIntent(intent, params, {
+          userContext: combinedContext,
+          metric,
+        });
+        combinedRows = applyIntentRowNormalization(intent, combinedResult.recordset);
+      } else {
+        combinedContext = userContext;
+        combinedResult = await executeIntent(intent, params, {
+          userContext: combinedContext,
+          metric,
+        });
+        combinedRows = applyIntentRowNormalization(intent, combinedResult.recordset);
+      }
+
       multiTeamScope = {
         mode: "multi_team",
-        label: `${managedTeams.length} takim`,
+        scopeSource: scopePlan.scopeSource || "managed",
+        label: `${breakdownTeams.length} takim`,
+        combinedLabel: scopePlan.combinedLabel || null,
         teams: teamResults,
         combined: {
-          rows: applyIntentRowNormalization(intent, combinedResult.recordset),
-          allowedUserIdsCount: userContext.allowedUserIds?.length || 0,
+          label: scopePlan.combinedLabel || null,
+          rows: combinedRows,
+          allowedUserIdsCount: combinedContext?.allowedUserIds?.length || 0,
         },
+        displayLimit: TEAM_DISPLAY_LIMIT,
+        teamTotalCount: breakdownTeams.length,
+        hasMoreTeams: breakdownTeams.length > TEAM_DISPLAY_LIMIT,
+        overlapNotice:
+          teamResults.length > 1 ? MULTI_TEAM_TOTAL_OVERLAP_NOTICE : null,
       };
       result = combinedResult;
     } else if (userContextForQuery) {
@@ -1070,12 +1371,21 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
     } catch (_err) {
       llmSummary = null;
     }
-    const fallbackSummary = renderScopeAnswer(intent, params, {
+    const scopePayload = {
       dualScope,
       singleTeamScope,
       multiTeamScope,
+      companyTeamScope,
       rows,
-    });
+    };
+    const fallbackSummary = renderScopeAnswer(intent, params, scopePayload);
+    const structuredScopeAnswer =
+      dualScope || singleTeamScope || multiTeamScope || companyTeamScope;
+    const rawAnswer = structuredScopeAnswer ? fallbackSummary : llmSummary || fallbackSummary;
+    const answer = prefixScopeAnswer(
+      buildScopeAnswerPrefix(userContext, scopePlan, scopePayload),
+      rawAnswer
+    );
 
     return res.json({
       question,
@@ -1090,13 +1400,11 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       dualScope,
       singleTeamScope,
       multiTeamScope,
+      companyTeamScope,
       scope: buildScopePreview(userContextForQuery || userContext, metric, scopeDecision),
       security: result.security || null,
       rows,
-      answer:
-        dualScope || singleTeamScope || multiTeamScope
-          ? fallbackSummary
-          : llmSummary || fallbackSummary,
+      answer,
       candidates: resolved.candidates,
     });
   } catch (error) {

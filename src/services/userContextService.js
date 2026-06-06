@@ -3,6 +3,7 @@ const {
   getTeamUserIds,
   resolveUserHierarchy,
 } = require("./hierarchyService");
+const { buildScopeToolbarConfig } = require("./scopeSelectionService");
 
 function unique(values = []) {
   return Array.from(new Set(values.filter((x) => x !== null && x !== undefined)));
@@ -198,7 +199,7 @@ async function buildUserContext(userId) {
     dbQuery: queryDb,
   });
 
-  return {
+  const context = {
     userId: Number(user.Id),
     subscriptionId: Number(user.SubscriptionId),
     tenantId: Number(user.SubscriptionId),
@@ -252,6 +253,8 @@ async function buildUserContext(userId) {
     effectiveClientIds: clientIds,
     clientTagIds: [],
     managedTeamIds: hierarchy.managedTeamIds,
+    subscriptionTeams: hierarchy.subscriptionTeams || [],
+    isPureCompanyScopeUser: !!hierarchy.isPureCompanyScopeUser,
 
     allowedCompanyIds: [Number(user.SubscriptionId)],
     allowedSubscriptionIds: [Number(user.SubscriptionId)],
@@ -308,6 +311,9 @@ async function buildUserContext(userId) {
       isTeamScoped: effectiveTeamIds.length > 0 && !flags.admin,
     },
   };
+
+  context.scopeToolbar = buildScopeToolbarConfig(context);
+  return context;
 }
 
 module.exports = {

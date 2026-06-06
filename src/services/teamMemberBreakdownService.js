@@ -48,6 +48,90 @@ async function getTeamMembers({
     .filter((member) => !allowedSet.size || allowedSet.has(member.userId));
 }
 
+async function fetchUsersByIds(userIds = [], dbQuery = queryDb) {
+  const ids = Array.from(
+    new Set(
+      (userIds || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    )
+  );
+
+  if (!ids.length) {
+    return [];
+  }
+
+  const bind = {};
+  const placeholders = ids.map((id, index) => {
+    const key = `memberUser${index}`;
+    bind[key] = id;
+    return `@${key}`;
+  });
+
+  const result = await dbQuery({
+    query: `
+      SELECT
+        u.Id AS userId,
+        COALESCE(NULLIF(LTRIM(RTRIM(u.Name)), ''), CONCAT('Kullanici ', u.Id)) AS userName
+      FROM dbo.[User] u
+      WHERE u.Deleted = 0
+        AND u.Id IN (${placeholders.join(", ")})
+      ORDER BY userName ASC, u.Id ASC;
+    `,
+    bind,
+  });
+
+  return (result.recordset || []).map((row) => ({
+    userId: Number(row.userId),
+    userName: String(row.userName || `Kullanici ${row.userId}`).trim(),
+  }));
+}
+
+async function resolveTeamMemberCandidates({
+  teamId,
+  allowedUserIds = [],
+  viewerUserId,
+  dbQuery = queryDb,
+} = {}) {
+  const allowedIds = Array.from(
+    new Set(
+      (allowedUserIds || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    )
+  );
+
+  const teamMembers = await getTeamMembers({
+    teamId,
+    allowedUserIds: allowedIds,
+    dbQuery,
+  });
+  const memberIdSet = new Set(teamMembers.map((member) => member.userId));
+  const extraIds = allowedIds.filter((id) => !memberIdSet.has(id));
+
+  if (!extraIds.length) {
+    return teamMembers;
+  }
+
+  const extraMembers = await fetchUsersByIds(extraIds, dbQuery);
+  const viewerId = Number(viewerUserId);
+  const merged = [...teamMembers];
+
+  extraMembers.forEach((member) => {
+    merged.push({
+      userId: member.userId,
+      userName:
+        Number(member.userId) === viewerId
+          ? `Kendim (${member.userName})`
+          : member.userName,
+    });
+  });
+
+  return merged.sort((left, right) =>
+    String(left.userName || "").localeCompare(String(right.userName || ""), "tr")
+  );
+}
+
 function buildMemberScopedContext(teamContext = {}, member = {}) {
   const userId = Number(member.userId);
   return {
@@ -143,9 +227,11 @@ async function executeTeamMemberBreakdown({
   normalizeRows = (value) => value,
   dbQuery = queryDb,
 } = {}) {
-  const members = await getTeamMembers({
+  const allowedUserIds = teamContext?.allowedUserIds || userContext?.allowedUserIds || [];
+  const members = await resolveTeamMemberCandidates({
     teamId,
-    allowedUserIds: teamContext?.allowedUserIds || userContext?.allowedUserIds || [],
+    allowedUserIds,
+    viewerUserId: userContext?.userId,
     dbQuery,
   });
 
@@ -190,6 +276,8 @@ async function executeTeamMemberBreakdown({
 module.exports = {
   MEMBER_DISPLAY_LIMIT,
   getTeamMembers,
+  fetchUsersByIds,
+  resolveTeamMemberCandidates,
   buildMemberScopedContext,
   formatMemberDisplayValue,
   executeTeamMemberBreakdown,

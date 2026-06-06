@@ -1,4 +1,4 @@
-const { HIERARCHY_LEVEL, buildAllowedUserIds } = require("./hierarchyService");
+const { HIERARCHY_LEVEL, buildAllowedUserIds, getHierarchyLabel } = require("./hierarchyService");
 const { queryDb } = require("../db/sql");
 const {
   detectTeamFromQuestion,
@@ -82,6 +82,25 @@ const COMPANY_SCOPE_KEYWORDS = [
   "şirket geneli",
 ];
 
+const TEAM_BREAKDOWN_PATTERN =
+  /\b(takim\s+bazinda|takimlara\s+gore|takimlara\s+dagil|her\s+takim|tum\s+takimlar|ekip\s+ekip)\b/i;
+
+const TEAM_BREAKDOWN_KEYWORDS = [
+  "takim bazinda",
+  "takım bazında",
+  "takimlara gore",
+  "takımlara göre",
+  "takimlara dagil",
+  "takımlara dağılım",
+  "her takim",
+  "her takım",
+  "tum takimlar",
+  "tüm takımlar",
+  "ekip ekip",
+];
+
+const TEAM_DISPLAY_LIMIT = 15;
+
 function normalizeScopeQuestion(question = "") {
   return String(question || "")
     .toLowerCase()
@@ -112,15 +131,33 @@ function isDualScopeSummaryIntent(intent) {
   return DUAL_SCOPE_SUMMARY_INTENTS.has(String(intent || "").trim());
 }
 
+function isHybridDualScopeIntent(intent) {
+  const key = String(intent || "").trim();
+  return isDualScopeSummaryIntent(key) || SCOPED_DISTRIBUTION_INTENTS.has(key);
+}
+
+function detectTeamBreakdownFromQuestion(question = "") {
+  const text = String(question || "").toLowerCase();
+  if (TEAM_BREAKDOWN_PATTERN.test(text)) {
+    return true;
+  }
+  return includesScopeKeyword(text, TEAM_BREAKDOWN_KEYWORDS);
+}
+
 function detectScopePreferenceFromQuestion(question = "") {
   const text = String(question || "").toLowerCase();
-  const wantsTeam =
-    TEAM_SCOPE_PATTERN.test(text) ||
-    includesScopeKeyword(text, TEAM_SCOPE_KEYWORDS);
+  const wantsBreakdown = detectTeamBreakdownFromQuestion(question);
   const wantsCompany =
     COMPANY_SCOPE_PATTERN.test(text) ||
     includesScopeKeyword(text, COMPANY_SCOPE_KEYWORDS);
+  const wantsTeam =
+    !wantsBreakdown &&
+    (TEAM_SCOPE_PATTERN.test(text) ||
+      includesScopeKeyword(text, TEAM_SCOPE_KEYWORDS));
 
+  if (wantsBreakdown && wantsCompany) {
+    return "company";
+  }
   if (wantsTeam && !wantsCompany) {
     return "operational";
   }
@@ -184,10 +221,57 @@ function resolveManagedTeams(userContext = {}) {
     return fromContext;
   }
 
+  const nameById = new Map();
+  (userContext.subscriptionTeams || []).forEach((team) => {
+    if (team?.teamId) {
+      nameById.set(Number(team.teamId), team.teamName || `Takim ${team.teamId}`);
+    }
+  });
+
   return [...managedIds].map((teamId) => ({
     teamId,
-    teamName: `Takim ${teamId}`,
+    teamName: nameById.get(Number(teamId)) || `Takim ${teamId}`,
   }));
+}
+
+/** L4 saf sirket admini icin subscription takimlari; L2/L3 icin yonetilen takimlar. */
+function resolveScopeTeams(userContext = {}) {
+  if (userContext.isPureCompanyScopeUser) {
+    return (userContext.subscriptionTeams || []).map((team) => ({
+      teamId: Number(team.teamId),
+      teamName: team.teamName || `Takim ${team.teamId}`,
+    }));
+  }
+
+  return resolveManagedTeams(userContext);
+}
+
+function resolveSubscriptionTeams(userContext = {}) {
+  return (userContext.subscriptionTeams || []).map((team) => ({
+    teamId: Number(team.teamId),
+    teamName: team.teamName || `Takim ${team.teamId}`,
+  }));
+}
+
+function canUseCompanySubscriptionBreakdown(userContext = {}) {
+  return !!(
+    userContext.companyCapable &&
+    (userContext.isPureCompanyScopeUser || userContext.isHybridScopeUser)
+  );
+}
+
+function buildSubscriptionMultiTeamPlan(plan, teams = []) {
+  if (!teams.length) {
+    return null;
+  }
+
+  return {
+    ...plan,
+    mode: "multi_team",
+    display: "breakdown",
+    scopeSource: "subscription",
+    teamIds: teams.map((team) => team.teamId),
+  };
 }
 
 function shouldRunMultiTeamScopeQuery(userContext = {}, intent, question = "") {
@@ -205,9 +289,19 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
     ? detectScopePreferenceFromQuestion(question)
     : "dual";
   const managedTeams = userContext ? resolveManagedTeams(userContext) : [];
+  const scopeTeams = userContext ? resolveScopeTeams(userContext) : [];
+  const subscriptionTeams = userContext?.isHybridScopeUser
+    ? resolveSubscriptionTeams(userContext)
+    : userContext?.isPureCompanyScopeUser
+      ? scopeTeams
+      : [];
   const teamMatch = userContext
-    ? detectTeamFromQuestion(question, managedTeams)
+    ? detectTeamFromQuestion(question, scopeTeams)
     : null;
+  const subscriptionTeamMatch =
+    userContext?.isHybridScopeUser && subscriptionTeams.length
+      ? detectTeamFromQuestion(question, subscriptionTeams)
+      : null;
 
   const plan = {
     mode: "self",
@@ -244,8 +338,8 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
   }
 
   if (teamMatch?.teamId && scopePreference !== "company") {
-    const managedTeamIds = new Set(managedTeams.map((team) => Number(team.teamId)));
-    if (managedTeamIds.has(Number(teamMatch.teamId))) {
+    const scopeTeamIds = new Set(scopeTeams.map((team) => Number(team.teamId)));
+    if (scopeTeamIds.has(Number(teamMatch.teamId))) {
       return {
         ...plan,
         mode: "single_team",
@@ -257,10 +351,58 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
   }
 
   if (
-    isDualScopeSummaryIntent(intent) &&
+    userContext.isHybridScopeUser &&
+    subscriptionTeamMatch?.teamId &&
+    !subscriptionTeamMatch?.ambiguous &&
+    scopePreference !== "company"
+  ) {
+    const managedIds = new Set(managedTeams.map((team) => Number(team.teamId)));
+    if (!managedIds.has(Number(subscriptionTeamMatch.teamId))) {
+      return {
+        ...plan,
+        mode: "denied",
+        display: "message",
+        denyReason: "team_out_of_operational_scope",
+        teamMatch: subscriptionTeamMatch,
+      };
+    }
+  }
+
+  if (
+    isMultiTeamBreakdownIntent(intent) &&
+    canUseCompanySubscriptionBreakdown(userContext) &&
+    detectTeamBreakdownFromQuestion(question) &&
+    scopePreference === "company" &&
+    !teamMatch?.teamId &&
+    !subscriptionTeamMatch?.teamId
+  ) {
+    const breakdownPlan = buildSubscriptionMultiTeamPlan(plan, subscriptionTeams);
+    if (breakdownPlan) {
+      return breakdownPlan;
+    }
+  }
+
+  if (
+    isMultiTeamBreakdownIntent(intent) &&
+    canUseCompanySubscriptionBreakdown(userContext) &&
+    detectTeamBreakdownFromQuestion(question) &&
+    scopePreference !== "company" &&
+    !teamMatch?.teamId &&
+    !subscriptionTeamMatch?.teamId
+  ) {
+    const breakdownPlan = buildSubscriptionMultiTeamPlan(plan, subscriptionTeams);
+    if (breakdownPlan) {
+      return breakdownPlan;
+    }
+  }
+
+  if (
+    isHybridDualScopeIntent(intent) &&
     userContext.isHybridScopeUser &&
     scopePreference === "dual" &&
-    !teamMatch?.teamId
+    !teamMatch?.teamId &&
+    !subscriptionTeamMatch?.teamId &&
+    !detectTeamBreakdownFromQuestion(question)
   ) {
     return {
       ...plan,
@@ -273,6 +415,7 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
   if (
     isMultiTeamBreakdownIntent(intent) &&
     !userContext.isHybridScopeUser &&
+    !userContext.isPureCompanyScopeUser &&
     managedTeams.length > 1 &&
     scopePreference !== "company" &&
     !teamMatch?.teamId
@@ -306,7 +449,7 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
 
 async function buildSingleTeamScopedContext(userContext = {}, teamId, dbQuery = queryDb) {
   const numericTeamId = Number(teamId);
-  const teamMeta = resolveManagedTeams(userContext).find(
+  const teamMeta = resolveScopeTeams(userContext).find(
     (team) => team.teamId === numericTeamId
   );
   const allowedUserIds = await buildAllowedUserIds({
@@ -332,6 +475,161 @@ async function buildSingleTeamScopedContext(userContext = {}, teamId, dbQuery = 
   };
 }
 
+async function buildSelectedTeamsCombinedContext(
+  userContext = {},
+  teamIds = [],
+  dbQuery = queryDb
+) {
+  const numericTeamIds = Array.from(
+    new Set(
+      (teamIds || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    )
+  );
+
+  if (!numericTeamIds.length) {
+    return userContext;
+  }
+
+  const hierarchyLevel =
+    numericTeamIds.length > 1 ? HIERARCHY_LEVEL.MULTI_TEAM : HIERARCHY_LEVEL.TEAM;
+
+  const allowedUserIds = await buildAllowedUserIds({
+    userId: userContext.userId,
+    hierarchyLevel,
+    managedTeamIds: numericTeamIds,
+    subscriptionId: userContext.subscriptionId,
+    dbQuery,
+  });
+
+  return {
+    ...userContext,
+    activeScopeMode: "operational",
+    scopeMode: "operational",
+    hierarchyLevel,
+    hierarchyLabel: getHierarchyLabel(hierarchyLevel),
+    hierarchyBypassUserFilter: false,
+    managedTeamIds: numericTeamIds,
+    allowedUserIds,
+    operationalScopeLabel:
+      numericTeamIds.length > 1
+        ? `${numericTeamIds.length} takim`
+        : `Takim ${numericTeamIds[0]}`,
+    allowedCountryIds: [],
+    allowedBrandIds: [],
+  };
+}
+
+function extractNumericMetricValue(intent, rows = []) {
+  if (!rows?.length) {
+    return 0;
+  }
+
+  const first = rows[0] || {};
+  const normalizedIntent = String(intent || "").trim();
+
+  if (normalizedIntent === "avgVisitDuration") {
+    return Number(first.avgDurationSec) || 0;
+  }
+
+  const amountIntents = new Set([
+    "totalClientDealAmount",
+    "totalPurchaseOrderAmount",
+    "totalInvoiceAmount",
+    "totalInvoicePayments",
+    "totalCosts",
+    "totalCommissions",
+    "totalPayments",
+  ]);
+
+  if (amountIntents.has(normalizedIntent)) {
+    return Number(first.totalAmount) || 0;
+  }
+
+  return Number(first.total ?? first.totalUsers ?? first.responseCount) || 0;
+}
+
+function normalizeCompletionStatusRows(rows = []) {
+  const map = new Map(
+    (rows || []).map((row) => [String(row.visitState || "").trim(), Number(row.total) || 0])
+  );
+
+  return [
+    { visitState: "Tamamlanan", total: map.get("Tamamlanan") ?? 0 },
+    { visitState: "Bekleyen", total: map.get("Bekleyen") ?? 0 },
+  ];
+}
+
+/**
+ * Secili takim kartlarinin toplam satiri: kart degerlerinin aritmetik toplami.
+ * Ortak kullanicilar tek sorguda dedupe edildiginde dusuk cikabilecegi icin
+ * birlestirilmis user-scope sorgusu yerine kullanilir.
+ */
+function sumTeamBreakdownMetricRows(intent, teamResults = []) {
+  const teams = teamResults || [];
+  if (!teams.length) {
+    return [];
+  }
+
+  const normalizedIntent = String(intent || "").trim();
+
+  if (normalizedIntent === "avgVisitDuration") {
+    return null;
+  }
+
+  if (normalizedIntent === "visitsByCompletionStatus") {
+    let tamamlanan = 0;
+    let bekleyen = 0;
+    teams.forEach((team) => {
+      const rows = normalizeCompletionStatusRows(team.rows || []);
+      tamamlanan += Number(rows.find((row) => row.visitState === "Tamamlanan")?.total) || 0;
+      bekleyen += Number(rows.find((row) => row.visitState === "Bekleyen")?.total) || 0;
+    });
+    return normalizeCompletionStatusRows([
+      { visitState: "Tamamlanan", total: tamamlanan },
+      { visitState: "Bekleyen", total: bekleyen },
+    ]);
+  }
+
+  if (["visitsByState", "visitsByType"].includes(normalizedIntent)) {
+    const merged = new Map();
+    teams.forEach((team) => {
+      (team.rows || []).forEach((row) => {
+        const key = row.visitState || row.visitType || "Diger";
+        merged.set(key, (merged.get(key) || 0) + (Number(row.total) || 0));
+      });
+    });
+
+    if (normalizedIntent === "visitsByType") {
+      return Array.from(merged.entries()).map(([visitType, total]) => ({ visitType, total }));
+    }
+
+    return Array.from(merged.entries()).map(([visitState, total]) => ({ visitState, total }));
+  }
+
+  const amountIntents = new Set([
+    "totalClientDealAmount",
+    "totalPurchaseOrderAmount",
+    "totalInvoiceAmount",
+    "totalInvoicePayments",
+    "totalCosts",
+    "totalCommissions",
+    "totalPayments",
+  ]);
+
+  const sum = teams.reduce(
+    (acc, team) => acc + extractNumericMetricValue(normalizedIntent, team.rows || []),
+    0
+  );
+
+  if (amountIntents.has(normalizedIntent)) {
+    return [{ totalAmount: sum }];
+  }
+
+  return [{ total: sum }];
+}
+
 function formatOperationalDisplayLabel(scopeLabel = "Takim") {
   const name = String(scopeLabel || "Takim").trim() || "Takim";
   return `Takim (${name})`;
@@ -342,20 +640,106 @@ function formatCompanyDisplayLabel(scopeLabel = "Sirket geneli") {
   return `Sirket geneli (${name})`;
 }
 
+function shouldUseScopeAnswerPrefix(userContext = null, scopePlan = {}, scopePayload = {}) {
+  if (!userContext || userContext.isPureCompanyScopeUser) {
+    return false;
+  }
+
+  const level = Number(userContext.operationalLevel ?? userContext.hierarchyLevel);
+  if (level !== 2 && level !== 3) {
+    return false;
+  }
+
+  if (scopePayload.companyTeamScope) {
+    return false;
+  }
+
+  if (scopePayload.dualScope || scopePayload.singleTeamScope) {
+    return false;
+  }
+
+  if (scopePlan?.source === "toolbar") {
+    return false;
+  }
+
+  const mode = String(scopePlan?.mode || "");
+  if (mode === "denied" || mode === "clarify" || mode === "message") {
+    return false;
+  }
+
+  return true;
+}
+
+function buildScopeAnswerPrefix(userContext = null, scopePlan = {}, scopePayload = {}) {
+  if (!shouldUseScopeAnswerPrefix(userContext, scopePlan, scopePayload)) {
+    return "";
+  }
+
+  const mode = String(scopePlan?.mode || "");
+  const scopePreference = scopePlan?.scopePreference;
+  const activeMode = userContext.activeScopeMode || userContext.scopeMode;
+
+  if (
+    mode === "company" ||
+    scopePreference === "company" ||
+    activeMode === "company"
+  ) {
+    return `${formatCompanyDisplayLabel(userContext.companyScopeLabel)} icin:`;
+  }
+
+  if (scopePayload.multiTeamScope) {
+    if (scopePayload.multiTeamScope.scopeSource === "subscription") {
+      return `${formatCompanyDisplayLabel(userContext.companyScopeLabel || "Sirket geneli")} icin:`;
+    }
+
+    const teamCount =
+      scopePayload.multiTeamScope.teamTotalCount ||
+      scopePayload.multiTeamScope.teams?.length ||
+      0;
+    if (teamCount > 1) {
+      return `Yonettiginiz ${teamCount} takim icin:`;
+    }
+  }
+
+  return `${formatOperationalDisplayLabel(userContext.operationalScopeLabel)} icin:`;
+}
+
+function prefixScopeAnswer(prefix = "", body = "") {
+  const text = String(body || "").trim();
+  const header = String(prefix || "").trim();
+  if (!header || !text) {
+    return text;
+  }
+  if (text.startsWith(header)) {
+    return text;
+  }
+  return `${header}\n${text}`;
+}
+
 module.exports = {
   DUAL_SCOPE_SUMMARY_INTENTS,
   isDualScopeSummaryIntent,
+  isHybridDualScopeIntent,
   isMultiTeamBreakdownIntent,
   isScopedQueryIntent,
   SCOPED_DISTRIBUTION_INTENTS,
   detectScopePreferenceFromQuestion,
+  detectTeamBreakdownFromQuestion,
   buildScopedUserContext,
   shouldRunDualScopeQuery,
   shouldRunMultiTeamScopeQuery,
   shouldRunSingleTeamScopeQuery,
   resolveScopePlan,
   resolveManagedTeams,
+  resolveScopeTeams,
+  resolveSubscriptionTeams,
   buildSingleTeamScopedContext,
+  buildSelectedTeamsCombinedContext,
+  sumTeamBreakdownMetricRows,
   formatOperationalDisplayLabel,
   formatCompanyDisplayLabel,
+  shouldUseScopeAnswerPrefix,
+  buildScopeAnswerPrefix,
+  prefixScopeAnswer,
+  TEAM_DISPLAY_LIMIT,
 };

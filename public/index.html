@@ -166,7 +166,8 @@
       color: #35507a;
     }
 
-    .kpi-card.kpi-card--member-hidden {
+    .kpi-card.kpi-card--member-hidden,
+    .kpi-card.kpi-card--team-breakdown-hidden {
       display: none;
     }
 
@@ -184,6 +185,18 @@
 
     .member-breakdown-toggle:hover {
       background: #dfeaf8;
+    }
+
+    .scope-overlap-notice {
+      grid-column: 1 / -1;
+      margin: 4px 0 0;
+      padding: 10px 12px;
+      border: 1px solid #e8dcc4;
+      border-radius: 8px;
+      background: #fff9ef;
+      color: #6b5a3e;
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     .chat-log {
@@ -238,6 +251,12 @@
       margin-bottom: 2px;
     }
 
+    .msg-content .msg-scope-header {
+      font-weight: 600;
+      color: #2f4568;
+      margin-bottom: 4px;
+    }
+
     .msg.user .msg-role {
       color: #c34e1e;
     }
@@ -251,6 +270,397 @@
       border-radius: 10px;
       background: #ffffff;
       padding: 10px;
+    }
+
+    .assistant-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .assistant-header h2 {
+      margin: 0;
+    }
+
+    .assistant-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .scope-toggle-group {
+      display: inline-flex;
+      align-items: stretch;
+      position: relative;
+      border: 1px solid #c8d6ef;
+      border-radius: 8px;
+      overflow: visible;
+      background: #fff;
+    }
+
+    .scope-toggle-group.hidden {
+      display: none;
+    }
+
+    .scope-teams-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: stretch;
+      border-right: 1px solid #c8d6ef;
+    }
+
+    .scope-teams-menu {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 4px);
+      min-width: 260px;
+      max-height: 300px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #d7e1f2;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(31, 45, 74, 0.12);
+      padding: 8px;
+      z-index: 30;
+    }
+
+    .scope-teams-menu.hidden {
+      display: none;
+    }
+
+    .scope-teams-menu label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .scope-teams-menu .scope-menu-all {
+      border-bottom: 1px solid #e8eef8;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .scope-teams-menu .scope-menu-empty {
+      font-size: 12px;
+      color: #6b7c99;
+      padding: 6px 4px;
+    }
+
+    .scope-toggle-btn.scope-menu-btn {
+      padding: 8px 10px;
+      min-width: 32px;
+      border-left: 1px solid #c8d6ef;
+    }
+
+    .scope-toggle-btn.scope-menu-btn.menu-open {
+      background: #fff4ef;
+      color: #cc4f1c;
+    }
+
+    .scope-toggle-btn.scope-menu-btn.active {
+      background: #e55a1e;
+      color: #fff;
+    }
+
+    .scope-toggle-btn.scope-menu-btn.active.menu-open {
+      background: #cc4f1c;
+      color: #fff;
+    }
+
+    .scope-toggle-btn {
+      width: auto;
+      min-width: 0;
+      flex: 0 0 auto;
+      border: none;
+      border-right: 1px solid #c8d6ef;
+      background: #fff;
+      color: #2f4568;
+      border-radius: 0;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: none;
+    }
+
+    .scope-toggle-btn:last-child {
+      border-right: none;
+    }
+
+    .scope-toggle-btn:hover:not(:disabled):not(.active) {
+      background: #f3f7ff;
+    }
+
+    .scope-toggle-btn.active {
+      background: #e55a1e;
+      color: #fff;
+    }
+
+    .scope-toggle-btn:disabled,
+    .scope-toggle-btn.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .help-open-btn {
+      width: 46px;
+      height: 46px;
+      min-width: 46px;
+      padding: 0;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ff8347, #e55a1e);
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 4px 14px rgba(229, 90, 30, 0.35);
+      flex-shrink: 0;
+    }
+
+    .help-open-btn:hover {
+      background: linear-gradient(145deg, #ff9259, #d44f15);
+      transform: scale(1.04);
+    }
+
+    .help-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .help-modal-backdrop.hidden {
+      display: none;
+    }
+
+    .help-modal {
+      position: relative;
+      width: min(75vw, 980px);
+      height: min(78vh, 820px);
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+      border: 1px solid #e4e7ef;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .help-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 22px;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .help-modal-close:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .help-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 32px 24px;
+      overflow: hidden;
+    }
+
+    .help-step.hidden {
+      display: none;
+    }
+
+    .help-step h2 {
+      margin: 0 0 8px;
+      color: #1e293b;
+      font-size: 24px;
+    }
+
+    .help-role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 24px;
+      flex: 1;
+      align-content: center;
+    }
+
+    .help-role-btn {
+      min-height: 110px;
+      padding: 16px;
+      text-align: left;
+      background: #f8fafc;
+      color: #1e293b;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .help-role-btn:hover {
+      border-color: #f2b091;
+      background: #fff7f3;
+      color: #c34e1e;
+    }
+
+    .help-role-btn:disabled,
+    .help-role-btn.is-locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      color: #94a3b8;
+      box-shadow: none;
+    }
+
+    .help-role-btn:disabled:hover,
+    .help-role-btn.is-locked:hover {
+      border-color: #e2e8f0;
+      background: #f1f5f9;
+      color: #94a3b8;
+      transform: none;
+    }
+
+    .help-role-btn.is-current {
+      border-color: #e55a1e;
+      background: #fff4ef;
+    }
+
+    .help-role-btn.is-current strong {
+      color: #c34e1e;
+    }
+
+    .help-access-banner {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #eef4fc;
+      border: 1px solid #c9d8ef;
+      color: #35507a;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .help-role-btn strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 6px;
+      color: #e55a1e;
+    }
+
+    .help-questions-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .help-back-btn {
+      width: auto;
+      padding: 8px 14px;
+      background: #fff;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+    }
+
+    .help-back-btn:hover {
+      background: #f8fafc;
+    }
+
+    .help-role-subtitle {
+      margin: 0 0 12px;
+      flex-shrink: 0;
+    }
+
+    .help-domain-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .help-domain-tab {
+      width: auto;
+      padding: 8px 14px;
+      background: #fff;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .help-domain-tab.active {
+      background: #fff4ef;
+      color: #e55a1e;
+      border-color: #f2b091;
+    }
+
+    .help-questions-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-content: flex-start;
+      padding-right: 4px;
+    }
+
+    .help-question-chip {
+      width: auto;
+      max-width: 100%;
+      padding: 10px 14px;
+      text-align: left;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .help-question-chip:hover {
+      background: #eef4fc;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+
+    @media (max-width: 720px) {
+      .help-modal {
+        width: 94vw;
+        height: 88vh;
+      }
+
+      .help-role-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .help-step {
+        padding: 20px 16px 16px;
+      }
     }
 
     .sql-panel {
@@ -546,8 +956,28 @@
     </section>
 
     <section class="panel">
-      <h2>Asistan</h2>
-      <p class="muted">Veri backendden, anlatim LLM'den gelir.</p>
+      <div class="assistant-header">
+        <h2>Asistan</h2>
+        <div class="assistant-header-actions">
+          <div id="scopeToggleGroup" class="scope-toggle-group hidden">
+            <div class="scope-teams-wrap">
+              <button type="button" id="scopeTeamsBtn" class="scope-toggle-btn">Takimlar</button>
+              <button
+                type="button"
+                id="scopeTeamsMenuBtn"
+                class="scope-toggle-btn scope-menu-btn"
+                title="Yonetilen takimlari sec"
+                aria-label="Yonetilen takimlari sec"
+              >
+                ▼
+              </button>
+              <div id="scopeTeamsMenu" class="scope-teams-menu hidden"></div>
+            </div>
+            <button type="button" id="scopeCompanyBtn" class="scope-toggle-btn">Sirketler</button>
+          </div>
+          <button type="button" id="helpOpenBtn" class="help-open-btn" title="Ornek sorular" aria-label="Ornek sorular">?</button>
+        </div>
+      </div>
       <div class="chat-log" id="chatLog">
         <div class="msg bot">
           <div class="msg-role">Asistan</div>
@@ -562,6 +992,46 @@
         </div>
       </div>
     </section>
+  </div>
+
+  <div id="helpModalBackdrop" class="help-modal-backdrop hidden" aria-hidden="true">
+    <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+      <button type="button" id="helpCloseBtn" class="help-modal-close" aria-label="Kapat">&times;</button>
+
+      <div id="helpStepRole" class="help-step">
+        <h2 id="helpModalTitle">Siz kimsiniz?</h2>
+        <p class="muted">Ornek sorular hesabinizin hiyerarsi seviyesine gore acilir.</p>
+        <p id="helpAccessBanner" class="help-access-banner hidden"></p>
+        <div class="help-role-grid">
+          <button type="button" class="help-role-btn" data-role="L1">
+            <strong>L1 — Saha calisani</strong>
+            Yalnizca kendi ziyaret, musteri ve siparis verileri
+          </button>
+          <button type="button" class="help-role-btn" data-role="L2">
+            <strong>L2 — Takim lideri</strong>
+            Takim birlesik veri + finans intentleri
+          </button>
+          <button type="button" class="help-role-btn" data-role="L3">
+            <strong>L3 — Coklu takim lideri</strong>
+            Birden fazla takim + toplam veya tek takim + uyeler
+          </button>
+          <button type="button" class="help-role-btn" data-role="L4">
+            <strong>L4 — Admin</strong>
+            Sirket geneli, tum intentler
+          </button>
+        </div>
+      </div>
+
+      <div id="helpStepQuestions" class="help-step hidden">
+        <div class="help-questions-header">
+          <button type="button" id="helpBackBtn" class="help-back-btn">&larr; Geri</button>
+          <h2 id="helpRoleTitle">Ornek sorular</h2>
+        </div>
+        <p id="helpRoleSubtitle" class="muted help-role-subtitle"></p>
+        <div class="help-domain-tabs" id="helpDomainTabs"></div>
+        <div class="help-questions-list" id="helpQuestionsList"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -617,6 +1087,15 @@ async function login() {
     }
 
     hideLogin();
+    if (typeof loadUserHelpAccess === "function") {
+      loadUserHelpAccess().catch(() => {});
+    }
+    if (typeof initScopeToggleButtons === "function") {
+      initScopeToggleButtons().catch(() => {});
+    }
+    if (typeof appendHierarchyLoginHint === "function") {
+      appendHierarchyLoginHint().catch(() => {});
+    }
 
   } catch (err) {
     loginError.innerText = err.message;
@@ -635,6 +1114,31 @@ async function login() {
     const fieldIdEl = document.getElementById("fieldId");
     const questionEl = document.getElementById("question");
     const sqlPanel = document.getElementById("sqlPanel");
+    const helpOpenBtn = document.getElementById("helpOpenBtn");
+    const helpModalBackdrop = document.getElementById("helpModalBackdrop");
+    const helpCloseBtn = document.getElementById("helpCloseBtn");
+    const helpStepRole = document.getElementById("helpStepRole");
+    const helpStepQuestions = document.getElementById("helpStepQuestions");
+    const helpBackBtn = document.getElementById("helpBackBtn");
+    const helpRoleTitle = document.getElementById("helpRoleTitle");
+    const helpRoleSubtitle = document.getElementById("helpRoleSubtitle");
+    const helpDomainTabs = document.getElementById("helpDomainTabs");
+    const helpQuestionsList = document.getElementById("helpQuestionsList");
+    const helpRoleButtons = document.querySelectorAll(".help-role-btn[data-role]");
+    const helpAccessBanner = document.getElementById("helpAccessBanner");
+
+    const HELP_ROLE_LEVELS = { L1: 1, L2: 2, L3: 3, L4: 4 };
+    const HELP_ROLE_LABELS = {
+      L1: "L1 — Saha calisani",
+      L2: "L2 — Takim lideri",
+      L3: "L3 — Coklu takim lideri",
+      L4: "L4 — Admin",
+    };
+
+    let sampleQuestionsCatalog = null;
+    let selectedHelpRole = null;
+    let selectedHelpDomainId = "visit";
+    let userHelpAccess = null;
     const sqlPreview = document.getElementById("sqlPreview");
     const sqlBind = document.getElementById("sqlBind");
     const sqlScope = document.getElementById("sqlScope");
@@ -645,6 +1149,490 @@ async function login() {
     let chartLoadSeq = 0;
     let allowedCharts = new Set(["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"]);
     let lastChatResult = null;
+    let scopeToolbarConfig = null;
+    let scopeSelection = {
+      teamsActive: false,
+      companyActive: false,
+      teamScope: "all",
+      teamIds: [],
+    };
+
+    const scopeToggleGroup = document.getElementById("scopeToggleGroup");
+    const scopeTeamsBtn = document.getElementById("scopeTeamsBtn");
+    const scopeTeamsMenuBtn = document.getElementById("scopeTeamsMenuBtn");
+    const scopeTeamsMenu = document.getElementById("scopeTeamsMenu");
+    const scopeCompanyBtn = document.getElementById("scopeCompanyBtn");
+
+    function getManagedTeamsList(config = scopeToolbarConfig) {
+      return config?.operationalTeams || [];
+    }
+
+    function closeTeamsMenu() {
+      if (!scopeTeamsMenu) {
+        return;
+      }
+      scopeTeamsMenu.classList.add("hidden");
+      if (scopeTeamsMenuBtn) {
+        scopeTeamsMenuBtn.classList.remove("menu-open");
+      }
+    }
+
+    function openTeamsMenu() {
+      if (!scopeTeamsMenu || !scopeTeamsMenuBtn) {
+        return;
+      }
+      renderTeamsMenu();
+      scopeTeamsMenu.classList.remove("hidden");
+      scopeTeamsMenuBtn.classList.add("menu-open");
+    }
+
+    function toggleTeamsMenu() {
+      if (!scopeTeamsMenu) {
+        return;
+      }
+      if (scopeTeamsMenu.classList.contains("hidden")) {
+        openTeamsMenu();
+      } else {
+        closeTeamsMenu();
+      }
+    }
+
+    function renderTeamsMenu() {
+      if (!scopeTeamsMenu || !scopeToolbarConfig) {
+        return;
+      }
+
+      const teams = getManagedTeamsList();
+      if (!teams.length) {
+        scopeTeamsMenu.innerHTML =
+          '<div class="scope-menu-empty">Yonetilen takim bulunamadi.</div>';
+        return;
+      }
+
+      const parts = [];
+      if (teams.length > 1) {
+        const allChecked = scopeSelection.teamScope === "all";
+        parts.push(`
+          <label class="scope-menu-all">
+            <input type="checkbox" name="scopeManagedTeam" value="all" ${allChecked ? "checked" : ""} />
+            Tum takimlarim
+          </label>
+        `);
+      }
+
+      teams.forEach((team) => {
+        const allChecked = scopeSelection.teamScope === "all";
+        const checked =
+          allChecked ||
+          (scopeSelection.teamIds || []).map(Number).includes(Number(team.teamId));
+        parts.push(`
+          <label>
+            <input type="checkbox" name="scopeManagedTeam" value="${team.teamId}" ${checked ? "checked" : ""} />
+            ${escapeHtml(team.teamName || `Takim ${team.teamId}`)}
+          </label>
+        `);
+      });
+
+      scopeTeamsMenu.innerHTML = parts.join("");
+    }
+
+    function syncTeamsSelectAllCheckbox() {
+      if (!scopeTeamsMenu) {
+        return;
+      }
+      const allInput = scopeTeamsMenu.querySelector(
+        'input[name="scopeManagedTeam"][value="all"]'
+      );
+      if (!allInput) {
+        return;
+      }
+      const teamInputs = [
+        ...scopeTeamsMenu.querySelectorAll('input[name="scopeManagedTeam"]'),
+      ].filter((el) => el.value !== "all");
+      allInput.checked =
+        teamInputs.length > 0 && teamInputs.every((el) => el.checked);
+    }
+
+    function readTeamsMenuSelection() {
+      if (!scopeTeamsMenu || !scopeToolbarConfig) {
+        return;
+      }
+
+      const teams = getManagedTeamsList();
+      const inputs = scopeTeamsMenu.querySelectorAll('input[name="scopeManagedTeam"]');
+      const checked = [...inputs].filter((el) => el.checked);
+
+      if (teams.length > 1 && checked.some((el) => el.value === "all")) {
+        scopeSelection.teamScope = "all";
+        scopeSelection.teamIds = [];
+      } else {
+        const teamIds = checked
+          .map((el) => Number(el.value))
+          .filter((id) => Number.isFinite(id) && id > 0);
+
+        if (!teamIds.length) {
+          scopeSelection.teamScope = "none";
+          scopeSelection.teamIds = [];
+        } else if (teamIds.length === 1) {
+          scopeSelection.teamScope = "single";
+          scopeSelection.teamIds = teamIds;
+        } else {
+          scopeSelection.teamScope = "multi";
+          scopeSelection.teamIds = teamIds;
+        }
+      }
+
+      if (!scopeToolbarConfig.teamsButton?.locked) {
+        scopeSelection.teamsActive = true;
+      }
+    }
+
+    function formatTeamsButtonLabel() {
+      if (!scopeToolbarConfig || scopeToolbarConfig.teamsButton?.locked) {
+        return "Takimlar";
+      }
+      if (!scopeSelection.teamsActive) {
+        return "Takimlar";
+      }
+      if (scopeSelection.teamScope === "all") {
+        const teams = getManagedTeamsList();
+        return teams.length > 1 ? `Takimlar (${teams.length})` : "Takimlar";
+      }
+      if (!(scopeSelection.teamIds || []).length) {
+        return "Takimlar";
+      }
+      const teams = getManagedTeamsList();
+      if (scopeSelection.teamIds.length === 1) {
+        const team = teams.find((t) => Number(t.teamId) === Number(scopeSelection.teamIds[0]));
+        const name = team?.teamName || "1 takim";
+        return name.length > 18 ? `Takimlar (${name.slice(0, 16)}…)` : `Takimlar · ${name}`;
+      }
+      return `Takimlar (${scopeSelection.teamIds.length})`;
+    }
+
+    function mapDefaultToScopeSelection(defaultSelection = {}, config = {}) {
+      const mode = defaultSelection.mode || "teams";
+      if (mode === "self") {
+        return {
+          teamsActive: false,
+          companyActive: false,
+          teamScope: "single",
+          teamIds: [],
+        };
+      }
+      if (mode === "company") {
+        return {
+          teamsActive: false,
+          companyActive: !config.companyButton?.locked,
+          teamScope: "none",
+          teamIds: [],
+        };
+      }
+      if (mode === "both") {
+        return {
+          teamsActive: !config.teamsButton?.locked,
+          companyActive: !config.companyButton?.locked,
+          teamScope: "all",
+          teamIds: [],
+        };
+      }
+      return {
+        teamsActive: !config.teamsButton?.locked,
+        companyActive: false,
+        teamScope: defaultSelection.teamScope || "all",
+        teamIds: [...(defaultSelection.teamIds || [])],
+      };
+    }
+
+    function selectAllTeamsInScope() {
+      scopeSelection.teamScope = "all";
+      scopeSelection.teamIds = [];
+    }
+
+    function activateTeamsSelection() {
+      scopeSelection.teamsActive = true;
+      selectAllTeamsInScope();
+    }
+
+    function ensureScopeTeamDefaults() {
+      if (!scopeSelection.teamsActive) {
+        return;
+      }
+      if (scopeSelection.teamScope === "all") {
+        scopeSelection.teamIds = [];
+        return;
+      }
+      if (scopeSelection.teamIds?.length) {
+        return;
+      }
+      if (
+        scopeSelection.companyActive &&
+        scopeToolbarConfig?.allowDualScopeSelect
+      ) {
+        scopeSelection.teamScope = "all";
+        scopeSelection.teamIds = [];
+        return;
+      }
+      if (!scopeSelection.companyActive) {
+        scopeSelection.teamScope = "all";
+        scopeSelection.teamIds = [];
+      }
+    }
+
+    function isSelfOnlyScopeToolbar(config = scopeToolbarConfig) {
+      if (!config) {
+        return true;
+      }
+      const level = Number(config.operationalLevel ?? 1);
+      if (level <= 1) {
+        return true;
+      }
+      return !!config.teamsButton?.locked && !!config.companyButton?.locked;
+    }
+
+    function buildScopeSelectionPayload() {
+      if (isSelfOnlyScopeToolbar()) {
+        return null;
+      }
+      ensureScopeTeamDefaults();
+      const payload = {
+        teamsActive: !!scopeSelection.teamsActive,
+        companyActive: !!scopeSelection.companyActive,
+        teamScope: scopeSelection.teamScope || "all",
+        teamIds: [...(scopeSelection.teamIds || [])],
+      };
+
+      if (payload.teamsActive) {
+        if (payload.teamScope === "all") {
+          payload.teamIds = [];
+        } else if (payload.teamIds.length === 1) {
+          payload.teamScope = "single";
+        } else if (payload.teamIds.length > 1) {
+          payload.teamScope = "multi";
+        } else if (payload.teamsActive && payload.companyActive) {
+          payload.teamScope = "all";
+          payload.teamIds = [];
+        } else {
+          payload.teamScope = "all";
+          payload.teamIds = [];
+        }
+      }
+
+      if (payload.teamsActive && payload.companyActive) {
+        payload.mode = "both";
+      } else if (payload.companyActive) {
+        payload.mode = "company";
+      } else if (payload.teamsActive) {
+        payload.mode = "teams";
+      }
+      return payload;
+    }
+
+    function applyScopeToggleLocks(config = scopeToolbarConfig) {
+      if (!scopeToggleGroup || !scopeTeamsBtn || !scopeCompanyBtn) {
+        return;
+      }
+
+      scopeToggleGroup.classList.remove("hidden");
+      const teamsLocked = !!config?.teamsButton?.locked;
+      const companyLocked = !!config?.companyButton?.locked;
+      scopeTeamsBtn.disabled = teamsLocked;
+      scopeCompanyBtn.disabled = companyLocked;
+      scopeTeamsBtn.classList.toggle("locked", teamsLocked);
+      scopeCompanyBtn.classList.toggle("locked", companyLocked);
+    }
+
+    function syncScopeToggleUi() {
+      if (!scopeTeamsBtn || !scopeCompanyBtn) {
+        return;
+      }
+
+      const teamsUsable = !scopeToolbarConfig?.teamsButton?.locked;
+      const companyUsable = !scopeToolbarConfig?.companyButton?.locked;
+
+      if (teamsUsable && !companyUsable) {
+        scopeSelection.teamsActive = true;
+        scopeSelection.companyActive = false;
+        if (scopeSelection.teamScope !== "single") {
+          selectAllTeamsInScope();
+        }
+      } else if (!teamsUsable && companyUsable) {
+        scopeSelection.teamsActive = false;
+        scopeSelection.companyActive = true;
+      } else if (!teamsUsable && !companyUsable) {
+        scopeSelection.teamsActive = false;
+        scopeSelection.companyActive = false;
+      } else if (teamsUsable && companyUsable) {
+        if (!scopeSelection.teamsActive && !scopeSelection.companyActive) {
+          scopeSelection.teamsActive = true;
+          scopeSelection.companyActive = true;
+          selectAllTeamsInScope();
+        }
+      }
+
+      scopeTeamsBtn.classList.toggle("active", !!scopeSelection.teamsActive && teamsUsable);
+      scopeCompanyBtn.classList.toggle("active", !!scopeSelection.companyActive && companyUsable);
+      if (scopeTeamsMenuBtn) {
+        scopeTeamsMenuBtn.classList.toggle("active", !!scopeSelection.teamsActive && teamsUsable);
+      }
+      if (scopeTeamsBtn && teamsUsable) {
+        scopeTeamsBtn.textContent = formatTeamsButtonLabel();
+      } else if (scopeTeamsBtn) {
+        scopeTeamsBtn.textContent = "Takimlar";
+      }
+      if (scopeTeamsMenuBtn) {
+        const teams = getManagedTeamsList(scopeToolbarConfig);
+        const teamsLocked = !!scopeToolbarConfig?.teamsButton?.locked;
+        scopeTeamsMenuBtn.disabled = teamsLocked || teams.length === 0;
+        scopeTeamsMenuBtn.classList.toggle("locked", teamsLocked || teams.length === 0);
+      }
+      applyScopeToggleLocks(scopeToolbarConfig);
+
+      if (scopeTeamsMenu && !scopeTeamsMenu.classList.contains("hidden")) {
+        renderTeamsMenu();
+      }
+    }
+
+    async function initScopeToggleButtons() {
+      if (!getToken() || !scopeTeamsBtn || !scopeCompanyBtn) {
+        return;
+      }
+
+      try {
+        const data = await fetchJson("/auth/me");
+        const config = data.context?.scopeToolbar;
+        if (!config) {
+          scopeToolbarConfig = null;
+          if (scopeToggleGroup) {
+            scopeToggleGroup.classList.add("hidden");
+          }
+          return;
+        }
+
+        scopeToolbarConfig = config;
+        scopeSelection = mapDefaultToScopeSelection(config.defaultSelection, config);
+        if (isSelfOnlyScopeToolbar(config)) {
+          scopeSelection.teamsActive = false;
+          scopeSelection.companyActive = false;
+        } else {
+          ensureScopeTeamDefaults();
+        }
+        closeTeamsMenu();
+        syncScopeToggleUi();
+      } catch (_error) {
+        if (scopeToggleGroup) {
+          scopeToggleGroup.classList.add("hidden");
+        }
+      }
+    }
+
+    if (scopeTeamsBtn) {
+      scopeTeamsBtn.addEventListener("click", () => {
+        if (scopeTeamsBtn.disabled) {
+          return;
+        }
+
+        if (scopeToolbarConfig?.allowDualScopeSelect) {
+          if (scopeSelection.teamsActive) {
+            scopeSelection.teamsActive = false;
+            if (!scopeSelection.companyActive) {
+              scopeSelection.companyActive = true;
+            }
+          } else {
+            activateTeamsSelection();
+          }
+        } else {
+          activateTeamsSelection();
+          scopeSelection.companyActive = false;
+        }
+
+        closeTeamsMenu();
+        syncScopeToggleUi();
+      });
+    }
+
+    if (scopeTeamsMenuBtn) {
+      scopeTeamsMenuBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (scopeTeamsMenuBtn.disabled) {
+          return;
+        }
+        if (!scopeSelection.teamsActive && !scopeToolbarConfig?.teamsButton?.locked) {
+          activateTeamsSelection();
+        }
+        toggleTeamsMenu();
+        syncScopeToggleUi();
+      });
+    }
+
+    if (scopeTeamsMenu) {
+      scopeTeamsMenu.addEventListener("change", (event) => {
+        const input = event.target;
+        if (input?.name !== "scopeManagedTeam") {
+          return;
+        }
+
+        if (input.value === "all") {
+          scopeTeamsMenu.querySelectorAll('input[name="scopeManagedTeam"]').forEach((el) => {
+            if (el.value !== "all") {
+              el.checked = input.checked;
+            }
+          });
+        } else {
+          if (!input.checked) {
+            const allInput = scopeTeamsMenu.querySelector(
+              'input[name="scopeManagedTeam"][value="all"]'
+            );
+            if (allInput) {
+              allInput.checked = false;
+            }
+          } else {
+            syncTeamsSelectAllCheckbox();
+          }
+        }
+
+        readTeamsMenuSelection();
+        syncScopeToggleUi();
+      });
+    }
+
+    if (scopeCompanyBtn) {
+      scopeCompanyBtn.addEventListener("click", () => {
+        if (scopeCompanyBtn.disabled) {
+          return;
+        }
+
+        closeTeamsMenu();
+
+        if (scopeToolbarConfig?.allowDualScopeSelect) {
+          scopeSelection.companyActive = !scopeSelection.companyActive;
+          if (!scopeSelection.teamsActive && !scopeSelection.companyActive) {
+            scopeSelection.companyActive = true;
+          }
+        } else {
+          scopeSelection.companyActive = true;
+          scopeSelection.teamsActive = false;
+          scopeSelection.teamScope = "all";
+          scopeSelection.teamIds = [];
+        }
+
+        syncScopeToggleUi();
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      if (!scopeTeamsMenu || scopeTeamsMenu.classList.contains("hidden")) {
+        return;
+      }
+      if (
+        scopeTeamsMenu.contains(event.target) ||
+        scopeTeamsBtn?.contains(event.target) ||
+        scopeTeamsMenuBtn?.contains(event.target)
+      ) {
+        return;
+      }
+      closeTeamsMenu();
+    });
 
     function addMessage(text, role) {
       const div = document.createElement("div");
@@ -668,22 +1656,39 @@ async function login() {
         return escaped.replace(/\n/g, "<br>");
       }
 
-      const lines = escaped.split("\n").map((line) => line.trimEnd());
-      const listItems = [];
-      const normalLines = [];
-      lines.forEach((line) => {
-        if (line.startsWith("- ")) {
-          listItems.push(line.slice(2));
-        } else {
-          normalLines.push(line);
+      const parts = [];
+      let listItems = [];
+
+      function flushList() {
+        if (!listItems.length) {
+          return;
         }
+        parts.push(`<ul>${listItems.map((item) => `<li>${item}</li>`).join("")}</ul>`);
+        listItems = [];
+      }
+
+      escaped.split("\n").forEach((line) => {
+        const trimmed = line.trimEnd();
+        if (!trimmed.trim()) {
+          flushList();
+          parts.push("<br>");
+          return;
+        }
+
+        if (trimmed.startsWith("- ")) {
+          listItems.push(trimmed.slice(2));
+          return;
+        }
+
+        flushList();
+        const lineClass = / icin:$/.test(trimmed.trim())
+          ? "msg-line msg-scope-header"
+          : "msg-line";
+        parts.push(`<div class="${lineClass}">${trimmed}</div>`);
       });
 
-      let html = normalLines.filter(Boolean).join("<br>");
-      if (listItems.length) {
-        html += `<ul>${listItems.map((item) => `<li>${item}</li>`).join("")}</ul>`;
-      }
-      return html || escaped.replace(/\n/g, "<br>");
+      flushList();
+      return parts.join("") || escaped.replace(/\n/g, "<br>");
     }
 
     function formatScopeIdList(list) {
@@ -700,6 +1705,8 @@ async function login() {
       const lines = [
         `User #${scope.userId} | Subscription: ${scope.subscriptionId ?? "—"}`,
         `Admin: ${scope.isAdmin ? "evet" : "hayir"} | manageAll: ${scope.manageAll ? "evet" : "hayir"}`,
+        `Hiyerarsi: ${scope.hierarchyLabel || scope.hierarchyLevel || "—"} | saf L4: ${scope.isPureCompanyScopeUser ? "evet" : "hayir"}`,
+        `Yonetilen takim: ${scope.managedTeamCount ?? "—"} | Subscription takim: ${scope.subscriptionTeamCount ?? "—"}`,
         `Roller: ${formatScopeIdList(scope.roleIds)}`,
         `Intent izinleri: ${formatScopeIdList(scope.allowedIntents)}`,
         `Metric security_scope: ${scope.metricSecurityScope || "—"}`,
@@ -711,6 +1718,10 @@ async function login() {
         if (scope.scopeCheck.warnings?.length) {
           lines.push(`Uyarilar: ${scope.scopeCheck.warnings.join("; ")}`);
         }
+      }
+
+      if (scope.subscriptionTeamCount > 0 && Array.isArray(scope.subscriptionTeamNames)) {
+        lines.push(`L4 takim ornekleri: ${scope.subscriptionTeamNames.join(", ")}`);
       }
 
       const labels = {
@@ -936,9 +1947,43 @@ async function login() {
             el.classList.add("kpi-card--member-hidden");
           }
         }
+        if (card.variant === "team-breakdown") {
+          el.classList.add("kpi-card--team-breakdown");
+          if (card.hidden) {
+            el.classList.add("kpi-card--team-breakdown-hidden");
+          }
+        }
         el.innerHTML = `<div class="kpi-title">${card.title}</div><div class="kpi-value">${card.value}</div>`;
         kpiArea.appendChild(el);
       });
+    }
+
+    function appendBreakdownShowMoreToggle(hiddenClass, hiddenCount, label) {
+      if (!hiddenCount || hiddenCount <= 0) {
+        return;
+      }
+
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "member-breakdown-toggle";
+      toggle.textContent = label;
+      toggle.addEventListener("click", () => {
+        kpiArea.querySelectorAll(`.${hiddenClass}`).forEach((el) => {
+          el.classList.remove(hiddenClass);
+        });
+        toggle.remove();
+      });
+      kpiArea.appendChild(toggle);
+    }
+
+    function appendScopeOverlapNotice(message) {
+      if (!message || !kpiArea) {
+        return;
+      }
+      const notice = document.createElement("div");
+      notice.className = "scope-overlap-notice";
+      notice.textContent = message;
+      kpiArea.appendChild(notice);
     }
 
     function pickScopeRowValue(scopeRows, valueCandidates) {
@@ -1002,20 +2047,168 @@ async function login() {
 
       renderKpiCards(cards);
 
-      if (scope.hasMoreMembers && members.length > displayLimit) {
-        const hiddenCount = members.length - displayLimit;
-        const toggle = document.createElement("button");
-        toggle.type = "button";
-        toggle.className = "member-breakdown-toggle";
-        toggle.textContent = `Tumunu goster (${hiddenCount} kisi daha)`;
-        toggle.addEventListener("click", () => {
-          kpiArea.querySelectorAll(".kpi-card--member-hidden").forEach((el) => {
-            el.classList.remove("kpi-card--member-hidden");
+      const hiddenMemberCount = Math.max(0, members.length - displayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--member-hidden",
+        hiddenMemberCount,
+        `Daha fazla goster (${hiddenMemberCount} kisi daha)`
+      );
+    }
+
+    function renderCompanyTeamBreakdown(data, { title, normalizedIntent, valueCandidates }) {
+      const scope = data.companyTeamScope || {};
+      const teams = scope.teams || [];
+      const displayLimit = scope.displayLimit || 15;
+      const cards = [];
+
+      const pushValueCard = (cardTitle, rows) => {
+        if (normalizedIntent === "visitsbycompletionstatus") {
+          const tam = (rows || []).find((row) => row.visitState === "Tamamlanan");
+          const bek = (rows || []).find((row) => row.visitState === "Bekleyen");
+          cards.push({
+            title: cardTitle,
+            value: `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`,
           });
-          toggle.remove();
+          return;
+        }
+
+        const first = (rows || [])[0] || {};
+        const valueKeyLocal =
+          valueCandidates.find((key) => first[key] !== undefined) ||
+          Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+        cards.push({
+          title: cardTitle,
+          value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
         });
-        kpiArea.appendChild(toggle);
+      };
+
+      pushValueCard(`${scope.company?.displayLabel || "Sirket geneli"} — ${title}`, scope.company?.rows || []);
+
+      teams.forEach((team, index) => {
+        const card = {
+          title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+          variant: "team-breakdown",
+          hidden: index >= displayLimit,
+        };
+        if (normalizedIntent === "visitsbycompletionstatus") {
+          const rows = team.rows || [];
+          const tam = rows.find((row) => row.visitState === "Tamamlanan");
+          const bek = rows.find((row) => row.visitState === "Bekleyen");
+          card.value = `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`;
+        } else {
+          const first = (team.rows || [])[0] || {};
+          const valueKeyLocal =
+            valueCandidates.find((key) => first[key] !== undefined) ||
+            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+          card.value = formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+        }
+        cards.push(card);
+      });
+
+      const members = scope.members || [];
+      const memberDisplayLimit = scope.memberDisplayLimit || 15;
+      members.forEach((member, index) => {
+        cards.push({
+          title: member.displayLabel || member.userName || `Kullanici ${member.userId}`,
+          value: member.displayValue || "-",
+          variant: "member",
+          hidden: index >= memberDisplayLimit,
+        });
+      });
+
+      pushValueCard(
+        `${scope.selectedCombined?.label || "Secili takimlar toplami"} — ${title}`,
+        scope.selectedCombined?.rows || []
+      );
+
+      renderKpiCards(cards);
+
+      const hiddenTeamCount = Math.max(0, teams.length - displayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--team-breakdown-hidden",
+        hiddenTeamCount,
+        `Daha fazla goster (${hiddenTeamCount} takim daha)`
+      );
+
+      const hiddenMemberCount = Math.max(0, members.length - memberDisplayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--member-hidden",
+        hiddenMemberCount,
+        `Daha fazla goster (${hiddenMemberCount} kisi daha)`
+      );
+
+      appendScopeOverlapNotice(scope.overlapNotice);
+    }
+
+    function renderMultiTeamBreakdown(data, { title, normalizedIntent, valueCandidates }) {
+      const scope = data.multiTeamScope || {};
+      const teams = scope.teams || [];
+      const displayLimit = scope.displayLimit || 15;
+      const combinedRows = scope.combined?.rows || [];
+      const combinedTitle =
+        scope.scopeSource === "subscription"
+          ? `Sirket geneli — ${title}`
+          : scope.scopeSource === "selected"
+            ? `${scope.combined?.label || "Secili takimlar toplami"} — ${title}`
+            : `Toplam — ${title}`;
+
+      const cards = [];
+
+      if (normalizedIntent === "visitsbycompletionstatus") {
+        teams.forEach((team, index) => {
+          const rows = team.rows || [];
+          const tam = rows.find((row) => row.visitState === "Tamamlanan");
+          const bek = rows.find((row) => row.visitState === "Bekleyen");
+          cards.push({
+            title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+            value: `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`,
+            variant: "team-breakdown",
+            hidden: index >= displayLimit,
+          });
+        });
+        const tamTotal = combinedRows.find((row) => row.visitState === "Tamamlanan");
+        const bekTotal = combinedRows.find((row) => row.visitState === "Bekleyen");
+        cards.push({
+          title: combinedTitle,
+          value: `Tamamlanan: ${formatDisplayNumber(tamTotal?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bekTotal?.total ?? 0)}`,
+          variant: "team-total",
+        });
+      } else {
+        teams.forEach((team, index) => {
+          const first = (team.rows || [])[0] || {};
+          const valueKeyLocal =
+            valueCandidates.find((key) => first[key] !== undefined) ||
+            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+          cards.push({
+            title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+            value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+            variant: "team-breakdown",
+            hidden: index >= displayLimit,
+          });
+        });
+        const combinedFirst = combinedRows[0] || {};
+        const combinedValueKey =
+          valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+          Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
+        cards.push({
+          title: combinedTitle,
+          value: formatDisplayNumber(
+            combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+          ),
+          variant: "team-total",
+        });
       }
+
+      renderKpiCards(cards);
+
+      const hiddenTeamCount = Math.max(0, teams.length - displayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--team-breakdown-hidden",
+        hiddenTeamCount,
+        `Daha fazla goster (${hiddenTeamCount} takim daha)`
+      );
+
+      appendScopeOverlapNotice(scope.overlapNotice);
     }
 
     function formatDisplayNumber(value) {
@@ -1075,7 +2268,13 @@ async function login() {
         distributorsbystatus: "Duruma Göre Distribütör Dağılımı",
       };
 
-      if (!rows.length && !data.dualScope && !data.multiTeamScope && !data.singleTeamScope) {
+      if (
+        !rows.length &&
+        !data.dualScope &&
+        !data.multiTeamScope &&
+        !data.singleTeamScope &&
+        !data.companyTeamScope
+      ) {
         chartLoadSeq++;
         resetChartArea(true);
         applyChartAvailability(["kpiCards"]);
@@ -1148,11 +2347,12 @@ async function login() {
         const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
         const opRows = data.dualScope.operational.rows || [];
         const coRows = data.dualScope.company.rows || [];
-        const opFirst = opRows[0] || {};
-        const coFirst = coRows[0] || {};
-        const valueKeyLocal =
-          valueCandidates.find((key) => opFirst[key] !== undefined) ||
-          Object.keys(opFirst).find((key) => !Number.isNaN(Number(opFirst[key])));
+        const distributionIntents = new Set([
+          "visitsbystate",
+          "visitsbycompletionstatus",
+          "visitsbytype",
+        ]);
+        const isDistribution = distributionIntents.has(normalizedIntent);
 
         chartLoadSeq++;
         resetChartArea(true);
@@ -1170,11 +2370,15 @@ async function login() {
         renderKpiCards([
           {
             title: `${opCardTitle} — ${title}`,
-            value: formatDisplayNumber(valueKeyLocal ? opFirst[valueKeyLocal] : "-"),
+            value: isDistribution
+              ? formatTeamScopeValue(normalizedIntent, opRows, valueCandidates)
+              : pickScopeRowValue(opRows, valueCandidates),
           },
           {
             title: `${coCardTitle} — ${title}`,
-            value: formatDisplayNumber(valueKeyLocal ? coFirst[valueKeyLocal] : "-"),
+            value: isDistribution
+              ? formatTeamScopeValue(normalizedIntent, coRows, valueCandidates)
+              : pickScopeRowValue(coRows, valueCandidates),
           },
         ]);
 
@@ -1245,7 +2449,28 @@ async function login() {
         }
       }
 
-      // L3 cok takimli yonetici: takim bazli KPI + toplam
+      // Sirket + secili takimlar
+      if (scopeDisplay === "company_team_breakdown" || data.companyTeamScope?.company) {
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = title;
+        renderCompanyTeamBreakdown(data, {
+          title,
+          normalizedIntent,
+          valueCandidates,
+        });
+        return true;
+      }
+
+      // L3 / L4 cok takimli: takim bazli KPI + toplam
       if (scopeDisplay === "breakdown" || data.multiTeamScope?.teams?.length) {
         const title =
           chartTitleMap[normalizedIntent] ||
@@ -1253,63 +2478,16 @@ async function login() {
           data.intent ||
           "Sorgu Sonucu";
 
-        if (
-          normalizedIntent === "visitsbycompletionstatus" &&
-          data.multiTeamScope?.teams?.length
-        ) {
-          const teamCards = data.multiTeamScope.teams.map((team) => {
-            const rows = team.rows || [];
-            const tam = rows.find((row) => row.visitState === "Tamamlanan");
-            const bek = rows.find((row) => row.visitState === "Bekleyen");
-            return {
-              title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
-              value: `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`,
-            };
-          });
-          const combinedRows = data.multiTeamScope.combined?.rows || [];
-          const tamTotal = combinedRows.find((row) => row.visitState === "Tamamlanan");
-          const bekTotal = combinedRows.find((row) => row.visitState === "Bekleyen");
-          teamCards.push({
-            title: `Toplam — ${title}`,
-            value: `Tamamlanan: ${formatDisplayNumber(tamTotal?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bekTotal?.total ?? 0)}`,
-          });
-
-          chartLoadSeq++;
-          resetChartArea(true);
-          applyChartAvailability(["kpiCards"]);
-          applySelectedChart("kpiCards");
-          chartTitle.textContent = title;
-          renderKpiCards(teamCards);
-          return true;
-        }
-
-        const teamCards = data.multiTeamScope.teams.map((team) => {
-          const first = (team.rows || [])[0] || {};
-          const valueKeyLocal =
-            valueCandidates.find((key) => first[key] !== undefined) ||
-            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-          return {
-            title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
-            value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
-          };
-        });
-        const combinedFirst = (data.multiTeamScope.combined?.rows || [])[0] || {};
-        const combinedValueKey =
-          valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
-          Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
-        teamCards.push({
-          title: `Toplam — ${title}`,
-          value: formatDisplayNumber(
-            combinedValueKey ? combinedFirst[combinedValueKey] : "-"
-          ),
-        });
-
         chartLoadSeq++;
         resetChartArea(true);
         applyChartAvailability(["kpiCards"]);
         applySelectedChart("kpiCards");
         chartTitle.textContent = title;
-        renderKpiCards(teamCards);
+        renderMultiTeamBreakdown(data, {
+          title,
+          normalizedIntent,
+          valueCandidates,
+        });
         return true;
       }
 
@@ -1317,6 +2495,11 @@ async function login() {
       if (rows.length === 1 && valueKey) {
         const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
         const value = firstRow[valueKey];
+        const isCompanySingleKpi =
+          data.scope?.isPureCompanyScopeUser &&
+          !data.singleTeamScope &&
+          !data.multiTeamScope?.teams?.length &&
+          !data.dualScope;
 
         chartLoadSeq++;
         resetChartArea(true);
@@ -1326,7 +2509,7 @@ async function login() {
 
         renderKpiCards([
           {
-            title,
+            title: isCompanySingleKpi ? `Sirket geneli — ${title}` : title,
             value: formatDisplayNumber(value),
           },
         ]);
@@ -1485,11 +2668,265 @@ async function login() {
       loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
     });
 
-    askBtn.addEventListener("click", async () => {
-      const question = questionEl.value;
+    askBtn.addEventListener("click", () => {
+      submitQuestion(questionEl.value);
+    });
+
+    function resolveMaxHelpLevel(context = {}) {
+      const operationalLevel = Number(context.operationalLevel);
+      if (operationalLevel >= 4) {
+        return 4;
+      }
+      if (operationalLevel >= 3) {
+        return 3;
+      }
+      if (operationalLevel >= 2) {
+        return 2;
+      }
+      return 1;
+    }
+
+    function resolveHelpRoleKey(maxLevel) {
+      return `L${maxLevel}`;
+    }
+
+    function applyHelpRoleLocks() {
+      const maxLevel = userHelpAccess?.maxLevel || 0;
+      const loggedIn = maxLevel > 0;
+
+      if (helpAccessBanner) {
+        if (!loggedIn) {
+          helpAccessBanner.textContent =
+            "Ornek sorular icin once giris yapin. Rol secenekleri hesabinizin hiyerarsisine gore otomatik acilir.";
+          helpAccessBanner.classList.remove("hidden");
+        } else {
+          const roleLabel =
+            HELP_ROLE_LABELS[userHelpAccess.roleKey] || userHelpAccess.roleKey;
+          let text = `Giris: ${userHelpAccess.userName}. En fazla ${roleLabel} orneklerine erisebilirsiniz.`;
+          if (userHelpAccess.isHybrid) {
+            text +=
+              " Admin + takim lideri hesabi: operational seviye (L2) gecerlidir, L4 ornekleri kapalidir.";
+          }
+          helpAccessBanner.textContent = text;
+          helpAccessBanner.classList.remove("hidden");
+        }
+      }
+
+      helpRoleButtons.forEach((button) => {
+        const roleKey = button.dataset.role;
+        const roleLevel = HELP_ROLE_LEVELS[roleKey] || 0;
+        const locked = !loggedIn || roleLevel > maxLevel;
+        button.disabled = locked;
+        button.classList.toggle("is-locked", locked);
+        button.classList.toggle(
+          "is-current",
+          loggedIn && roleKey === userHelpAccess.roleKey
+        );
+      });
+    }
+
+    async function loadUserHelpAccess() {
+      const token = getToken();
+      if (!token) {
+        userHelpAccess = null;
+        applyHelpRoleLocks();
+        return;
+      }
+
+      try {
+        const data = await fetchJson("/auth/me");
+        const ctx = data.context || {};
+        const maxLevel = resolveMaxHelpLevel(ctx);
+        const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+        userHelpAccess = {
+          maxLevel,
+          roleKey: resolveHelpRoleKey(maxLevel),
+          userName:
+            storedUser?.name || data.user?.name || data.user?.email || "Kullanici",
+          isHybrid: !!ctx.isHybridScopeUser,
+          managedTeamCount: (ctx.managedTeamIds || []).length,
+          isPureCompanyScopeUser: !!ctx.isPureCompanyScopeUser,
+          subscriptionTeamCount: (ctx.subscriptionTeams || []).length,
+        };
+      } catch (_error) {
+        userHelpAccess = null;
+      }
+
+      applyHelpRoleLocks();
+    }
+
+    async function appendHierarchyLoginHint() {
+      if (!getToken()) {
+        return;
+      }
+
+      try {
+        const data = await fetchJson("/auth/me");
+        const ctx = data.context || {};
+        const parts = [];
+
+        if (ctx.isPureCompanyScopeUser) {
+          const teamCount = (ctx.subscriptionTeams || []).length;
+          parts.push(
+            `L4 (Admin): ${teamCount} takim erisilebilir. Ornek sorular: "ziyaret sayisi" | "CP REMOTE-Ahmed ziyaret sayisi" | "takim bazinda ziyaret sayisi".`
+          );
+        } else if ((ctx.managedTeamIds || []).length > 1) {
+          parts.push(
+            `L3 scope: ${ctx.managedTeamIds.length} yonetilen takim. Genel KPI sorularinda takim+toplam beklenir.`
+          );
+        } else if ((ctx.managedTeamIds || []).length === 1) {
+          parts.push("L2 scope: 1 yonetilen takim.");
+        } else if (Number(ctx.operationalLevel) === 1) {
+          parts.push("L1 scope: yalnizca kendi veriniz.");
+        }
+
+        if (parts.length) {
+          addMessage(parts.join(" "), "bot");
+        }
+      } catch (_error) {
+        // ignore
+      }
+    }
+
+    async function loadSampleQuestionsCatalog() {
+      if (sampleQuestionsCatalog) {
+        return sampleQuestionsCatalog;
+      }
+
+      const response = await fetch("/data/role-sample-questions.json");
+      if (!response.ok) {
+        throw new Error("Ornek sorular yuklenemedi");
+      }
+      sampleQuestionsCatalog = await response.json();
+      return sampleQuestionsCatalog;
+    }
+
+    function openHelpModal() {
+      applyHelpRoleLocks();
+      helpModalBackdrop.classList.remove("hidden");
+      helpModalBackdrop.setAttribute("aria-hidden", "false");
+      showHelpRoleStep();
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeHelpModal() {
+      helpModalBackdrop.classList.add("hidden");
+      helpModalBackdrop.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function showHelpRoleStep() {
+      helpStepRole.classList.remove("hidden");
+      helpStepQuestions.classList.add("hidden");
+      selectedHelpRole = null;
+    }
+
+    function renderHelpDomainTabs(roleData) {
+      helpDomainTabs.innerHTML = "";
+      const domains = roleData?.domains || [];
+
+      domains.forEach((domain, index) => {
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.className = `help-domain-tab${domain.id === selectedHelpDomainId || (!selectedHelpDomainId && index === 0) ? " active" : ""}`;
+        tab.textContent = domain.label || domain.id;
+        tab.dataset.domainId = domain.id;
+        if (index === 0 && !domains.find((item) => item.id === selectedHelpDomainId)) {
+          selectedHelpDomainId = domain.id;
+        }
+        tab.addEventListener("click", () => {
+          selectedHelpDomainId = domain.id;
+          renderHelpDomainTabs(roleData);
+          renderHelpQuestionsList(roleData);
+        });
+        helpDomainTabs.appendChild(tab);
+      });
+    }
+
+    function renderHelpQuestionsList(roleData) {
+      helpQuestionsList.innerHTML = "";
+      const domain = (roleData?.domains || []).find((item) => item.id === selectedHelpDomainId);
+      const questions = domain?.questions || [];
+
+      if (!questions.length) {
+        helpQuestionsList.innerHTML = '<p class="muted">Bu kategori icin ornek soru yok.</p>';
+        return;
+      }
+
+      questions.forEach((item) => {
+        const text = String(item.text || "").trim();
+        if (!text) return;
+
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "help-question-chip";
+        chip.textContent = text;
+        chip.addEventListener("click", () => {
+          closeHelpModal();
+          questionEl.value = text;
+          questionEl.focus();
+          submitQuestion(text);
+        });
+        helpQuestionsList.appendChild(chip);
+      });
+    }
+
+    async function showHelpQuestionsStep(roleKey) {
+      const roleLevel = HELP_ROLE_LEVELS[roleKey] || 0;
+      if (!userHelpAccess || roleLevel > userHelpAccess.maxLevel) {
+        return;
+      }
+
+      try {
+        const catalog = await loadSampleQuestionsCatalog();
+        const roleData = catalog?.roles?.[roleKey];
+        if (!roleData) {
+          addMessage(`Ornek sorular bulunamadi: ${roleKey}`, "bot");
+          return;
+        }
+
+        selectedHelpRole = roleKey;
+        selectedHelpDomainId = roleData.domains?.[0]?.id || "visit";
+        helpRoleTitle.textContent = roleData.title || roleKey;
+        helpRoleSubtitle.textContent = roleData.subtitle || "";
+
+        helpStepRole.classList.add("hidden");
+        helpStepQuestions.classList.remove("hidden");
+        renderHelpDomainTabs(roleData);
+        renderHelpQuestionsList(roleData);
+      } catch (error) {
+        addMessage(`Ornek sorular yuklenemedi: ${error.message}`, "bot");
+        closeHelpModal();
+      }
+    }
+
+    helpOpenBtn.addEventListener("click", openHelpModal);
+    helpCloseBtn.addEventListener("click", closeHelpModal);
+    helpBackBtn.addEventListener("click", showHelpRoleStep);
+    helpModalBackdrop.addEventListener("click", (event) => {
+      if (event.target === helpModalBackdrop) {
+        closeHelpModal();
+      }
+    });
+    helpRoleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.disabled) {
+          return;
+        }
+        showHelpQuestionsStep(button.dataset.role);
+      });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !helpModalBackdrop.classList.contains("hidden")) {
+        closeHelpModal();
+      }
+    });
+
+    async function submitQuestion(rawQuestion) {
+      const question = String(rawQuestion || "").trim();
       const filters = getFilters();
 
-      if (!question.trim()) {
+      if (!question) {
         addMessage("Lutfen soru gir.", "bot");
         return;
       }
@@ -1502,11 +2939,14 @@ async function login() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${getToken()}`
-          },          
-            body: JSON.stringify({
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify({
             question,
             filters,
+            ...(buildScopeSelectionPayload()
+              ? { scopeSelection: buildScopeSelectionPayload() }
+              : {}),
           }),
         });
         const dateInfo =
@@ -1523,18 +2963,20 @@ async function login() {
         renderChatResultVisualization(data);
 
         questionEl.value = "";
-
       } catch (error) {
         chatLog.lastElementChild.remove();
         addMessage(`Hata: ${error.message}`, "bot");
       }
-    });
+    }
 
     loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
     loginBtn.addEventListener("click", login);
 
     if (getToken()) {
       hideLogin();
+      loadUserHelpAccess().catch(() => {});
+      initScopeToggleButtons().catch(() => {});
+      appendHierarchyLoginHint().catch(() => {});
     }
   </script>
 </body>

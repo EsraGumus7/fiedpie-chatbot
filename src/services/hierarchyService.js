@@ -112,6 +112,57 @@ async function getSubscriptionUserIds(subscriptionId, dbQuery = queryDb) {
   return unique(result.recordset.map((x) => Number(x.Id)));
 }
 
+async function getSubscriptionTeams(subscriptionId, dbQuery = queryDb) {
+  if (!subscriptionId) {
+    return [];
+  }
+
+  const result = await dbQuery({
+    query: `
+      SELECT
+        t.Id AS teamId,
+        t.Name AS teamName
+      FROM dbo.Team t
+      WHERE t.Deleted = 0
+        AND t.SubscriptionId = @subscriptionId
+      ORDER BY t.Name;
+    `,
+    bind: { subscriptionId: Number(subscriptionId) },
+  });
+
+  return result.recordset.map((row) => ({
+    teamId: Number(row.teamId),
+    teamName: row.teamName || `Takim ${row.teamId}`,
+  }));
+}
+
+function isPureCompanyScopeUser({
+  companyCapable = false,
+  managedTeamIds = [],
+  isHybridScopeUser = false,
+  hierarchyLevel = HIERARCHY_LEVEL.SELF,
+} = {}) {
+  if (!companyCapable || isHybridScopeUser) {
+    return false;
+  }
+  if ((managedTeamIds || []).length > 0) {
+    return false;
+  }
+  return Number(hierarchyLevel) === HIERARCHY_LEVEL.COMPANY;
+}
+
+/** Saf L4 veya hibrit admin icin subscription takim listesi (scope eslestirme / breakdown). */
+function shouldLoadSubscriptionTeams({
+  companyCapable = false,
+  isHybridScopeUser = false,
+  isPureCompany = false,
+} = {}) {
+  if (!companyCapable) {
+    return false;
+  }
+  return !!isPureCompany || !!isHybridScopeUser;
+}
+
 async function buildAllowedUserIds({
   userId,
   hierarchyLevel,
@@ -238,6 +289,23 @@ async function resolveUserHierarchy({
     companyAllowedUserIds,
   });
 
+  const pureCompanyScopeUser = isPureCompanyScopeUser({
+    companyCapable,
+    managedTeamIds: managedIds,
+    isHybridScopeUser,
+    hierarchyLevel: effective.hierarchyLevel,
+  });
+
+  const loadSubscriptionTeams = shouldLoadSubscriptionTeams({
+    companyCapable,
+    isHybridScopeUser,
+    isPureCompany: pureCompanyScopeUser,
+  });
+
+  const subscriptionTeams = loadSubscriptionTeams
+    ? await getSubscriptionTeams(user.SubscriptionId, dbQuery)
+    : [];
+
   return {
     hierarchyLevel: effective.hierarchyLevel,
     hierarchyLabel: effective.hierarchyLabel,
@@ -258,17 +326,22 @@ async function resolveUserHierarchy({
     isHybridScopeUser,
     defaultScopeMode,
     managedTeamIds: managedIds,
+    subscriptionTeams,
+    isPureCompanyScopeUser: pureCompanyScopeUser,
   };
 }
 
 module.exports = {
   HIERARCHY_LEVEL,
   isCompanyCapable,
+  isPureCompanyScopeUser,
   resolveOperationalLevel,
   resolveHierarchyLevel,
   getHierarchyLabel,
   getTeamUserIds,
   getSubscriptionUserIds,
+  getSubscriptionTeams,
+  shouldLoadSubscriptionTeams,
   buildAllowedUserIds,
   resolveUserHierarchy,
 };

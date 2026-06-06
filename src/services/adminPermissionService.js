@@ -1067,6 +1067,11 @@ async function getEffectivePermissions(userId) {
         teamId: Number(team.teamId),
         teamName: team.teamName || `Takim ${team.teamId}`,
       })),
+    subscriptionTeams: (context.subscriptionTeams || []).map((team) => ({
+      teamId: Number(team.teamId),
+      teamName: team.teamName || `Takim ${team.teamId}`,
+    })),
+    isPureCompanyScopeUser: !!context.isPureCompanyScopeUser,
     teamIds: context.teamIds || [],
 
     allowedCompanyIds: context.allowedCompanyIds ?? [context.subscriptionId],

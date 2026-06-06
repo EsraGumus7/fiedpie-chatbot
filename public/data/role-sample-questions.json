@@ -1,0 +1,228 @@
+{
+  "roles": {
+    "L1": {
+      "title": "Saha calisani (L1)",
+      "subtitle": "Yalnizca kendi veriniz — PKG_FIELD (50 intent)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            { "text": "ziyaret sayisi" },
+            { "text": "bugun ziyaret sayisi" },
+            { "text": "ortalama ziyaret suresi kac" },
+            { "text": "tamamlanan ve bekleyen ziyaret" },
+            { "text": "bugun bekleyen ziyaret" },
+            { "text": "hangi durumda kac ziyaret var" },
+            { "text": "ziyaret tiplerine gore dagilim" },
+            { "text": "ziyaret trendi nasil" },
+            { "text": "en cok doldurulan alanlar hangileri" },
+            { "text": "raf alani kac kayitta dolu" }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            { "text": "aktif musteri sayisi kac" },
+            { "text": "toplam firma sayisi nedir" },
+            { "text": "pasif musteri sayisi kac" },
+            { "text": "musterilerin gruplara gore dagilimi" },
+            { "text": "duruma gore musteri dagilimi" },
+            { "text": "ulkelere gore musteri dagilimi" },
+            { "text": "musteri kazanim trendi nasil" },
+            { "text": "toplam kac distributor var" },
+            { "text": "toplam tuketici sayisi nedir" },
+            { "text": "toplam musteri dosyasi sayisi kac" }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satis",
+          "questions": [
+            { "text": "toplam siparis sayisi nedir" },
+            { "text": "toplam siparis tutari ne kadar" },
+            { "text": "durumlarina gore siparis dagilimi" },
+            { "text": "gunluk siparis trendi" },
+            { "text": "kac aktif kampanya var" },
+            { "text": "toplam kampanya sayisi" },
+            { "text": "toplam maliyet tutari" },
+            { "text": "kategorilere gore maliyetler" },
+            { "text": "takip edilen kargo sayisi" },
+            { "text": "musteriye ozel fiyat tanimlari" }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            { "text": "kullanici ziyaret ozeti" },
+            { "text": "personel ziyaret ozeti" },
+            { "text": "gerceklesen ziyaretlerim" }
+          ]
+        }
+      ]
+    },
+    "L2": {
+      "title": "Takim lideri (L2)",
+      "subtitle": "Takim birlesik veri + finans — PKG_MANAGER (68 intent)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            { "text": "ziyaret sayisi" },
+            { "text": "Stark ziyaret sayisi" },
+            { "text": "Stark bugun bekleyen ziyaret" },
+            { "text": "tamamlanan ve bekleyen ziyaret" },
+            { "text": "ortalama ziyaret suresi kac" },
+            { "text": "ziyaretler duruma gore nasil dagiliyor" },
+            { "text": "ziyaret trendi nasil" }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            { "text": "aktif musteri sayisi kac" },
+            { "text": "toplam firma sayisi nedir" },
+            { "text": "musterilerin gruplara gore dagilimi" },
+            { "text": "duruma gore distributor dagilimi" },
+            { "text": "musteri kazanim trendi nasil" }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satis / Finans",
+          "questions": [
+            { "text": "toplam siparis sayisi nedir" },
+            { "text": "toplam fatura sayisi" },
+            { "text": "toplam fatura tutari nedir" },
+            { "text": "odenmemis fatura bakiyesi ne kadar" },
+            { "text": "fatura durum dagilimi" },
+            { "text": "faturalardan yapilan toplam tahsilat" },
+            { "text": "kac aktif kampanya var" },
+            { "text": "toplam komisyon tutari" }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            { "text": "takimlara gore kullanici dagilimi" },
+            { "text": "aktif kullanici sayisi kac" },
+            { "text": "kullanici durum ozeti" },
+            { "text": "basarili ve basarisiz login dagilimi" },
+            { "text": "kullanici ziyaret ozeti" }
+          ]
+        }
+      ]
+    },
+    "L3": {
+      "title": "Coklu takim lideri (L3)",
+      "subtitle": "5 takim + toplam veya tek takim + uyeler — PKG_MANAGER",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            { "text": "ziyaret sayisi" },
+            { "text": "Rodolfo takimi ziyaret sayisi" },
+            { "text": "rodolfo ziyaret sayisi" },
+            { "text": "Rodolfo bugun bekleyen ziyaret" },
+            { "text": "tamamlanan ve bekleyen ziyaret" },
+            { "text": "ortalama ziyaret suresi kac" },
+            { "text": "ziyaret trendi nasil" }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            { "text": "aktif musteri sayisi kac" },
+            { "text": "Rodolfo aktif musteri sayisi" },
+            { "text": "musterilerin gruplara gore dagilimi" },
+            { "text": "toplam kac distributor var" },
+            { "text": "musteri kazanim trendi nasil" }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satis / Finans",
+          "questions": [
+            { "text": "toplam siparis sayisi" },
+            { "text": "Rodolfo toplam siparis sayisi" },
+            { "text": "toplam fatura sayisi" },
+            { "text": "toplam fatura tutari nedir" },
+            { "text": "durumlarina gore siparis dagilimi" },
+            { "text": "kac aktif kampanya var" }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            { "text": "takimlara gore kullanici dagilimi" },
+            { "text": "kullanici durum ozeti" },
+            { "text": "aktif personel kac" },
+            { "text": "kullanici ziyaret ozeti" }
+          ]
+        }
+      ]
+    },
+    "L4": {
+      "title": "Admin (L4)",
+      "subtitle": "Sirket geneli — tum intentler (* paketi)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            { "text": "sirket ziyaret sayisi" },
+            { "text": "ziyaret sayisi" },
+            { "text": "takim bazinda ziyaret sayisi" },
+            { "text": "CP REMOTE-Ahmed ziyaret sayisi" },
+            { "text": "tamamlanan ve bekleyen ziyaret" },
+            { "text": "ziyaret trendi nasil" },
+            { "text": "hangi durumda kac ziyaret var" }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            { "text": "sirket aktif musteri sayisi" },
+            { "text": "toplam firma sayisi nedir" },
+            { "text": "musterilerin gruplara gore dagilimi" },
+            { "text": "ulkelere gore musteri dagilimi" },
+            { "text": "toplam kac distributor var" }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satis / Finans",
+          "questions": [
+            { "text": "toplam fatura sayisi" },
+            { "text": "toplam fatura tutari nedir" },
+            { "text": "odenmemis fatura bakiyesi ne kadar" },
+            { "text": "toplam siparis sayisi nedir" },
+            { "text": "iyzico uzerinden kac islem gecti" },
+            { "text": "toplam genel odeme tutari" }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            { "text": "toplam kac kullanici var" },
+            { "text": "hangi rolde kac kisi var" },
+            { "text": "takimlara gore kullanici dagilimi" },
+            { "text": "son login kayitlari neler" },
+            { "text": "kac admin kullanici var" },
+            { "text": "aktif kullanici sayisi kac" }
+          ]
+        }
+      ]
+    }
+  }
+}

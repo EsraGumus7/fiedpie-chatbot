@@ -303,7 +303,7 @@ Türkçe karakter normalizasyonu zorunlu (`şirket` → `sirket`).
 | L1 | — | `self` | `single` |
 | L2 | 1 yönetilen takım | `single_team` (birleşik ekip) | `single` |
 | L3 | 2+ yönetilen takım | `multi_team` (KPI + dağılım intent'leri) | `breakdown` + toplam |
-| L4 | admin, takım yok | `company` | `single` |
+| L4 | admin, takım yok | `self` / `company` scope* | `single` (şirket toplamı) |
 | Hibrit | admin + ≥1 takım | `dual` | `dual` (operational + company) |
 
 ---
@@ -317,10 +317,13 @@ Türkçe karakter normalizasyonu zorunlu (`şirket` → `sirket`).
 | L1 | `self` / single | Takım adı yok sayılır veya red | `denied` |
 | L2 | `single_team` / single | `single_team` / single | `company` if capable else `denied` |
 | L3 | `multi_team` / breakdown+toplam | `single_team` / single | `denied` (saf L3) |
-| L4 | `company` / single | `single_team`* / single | `company` / single |
+| L4 | `self` / single (şirket toplamı) | `single_team` + üye kırılımı* | `company` / single |
+| L4 (ek) | `multi_team` yalnızca **takım bazında** ipucu ile** | — | — |
 | Hibrit | `dual` | `single_team` / single (+ şirket istenirse ayrı soru) | operational veya `dual` |
 
-\* L4 + takım adı: subscription içi o takımın üyeleri (`UserTeam`), liderlik şart değil — **onaylı**.
+\* L4 + takım adı: subscription içi o takımın üyeleri (`UserTeam`), liderlik şart değil — **onaylı (2026-06, F8b)**.
+
+\*\* L4 + takım bazında: `takim bazinda`, `takimlara gore`, `her takim`, `tum takimlar`, `ekip ekip` → `multi_team` + `scopeSource: subscription` — **onaylı (2026-06, F8c)**. Genel soru (`ziyaret sayısı`) tek şirket toplamı kalır.
 
 **B) Dağılım / trend intent’leri** (`visitsByState`, `visitTrend`, `usersByTeam`, `purchaseOrdersByStatus`, …)
 
@@ -380,6 +383,23 @@ Tüm domain’lerde ortak param modeli; intent başına inherit değil **paylaş
 | **F7d** | Cevap renderer tek giriş | `api.js`, `index.html` |
 
 **Mevcut durum (2026-06):** F7a–F7d **tamamlandi** — `resolveScopePlan`, `parseQuestionFilters`, param-aware visit template, `renderScopeAnswer` + UI `scopePlan.display`.
+
+---
+
+#### 4.4.6 L4 scope (F8 — 2026-06, tamamlandi)
+
+Saf L4 admin (`isPureCompanyScopeUser`: `companyCapable`, yönetilen takım yok, hibrit değil):
+
+| Adım | Is | Dosya | Tetikleyici |
+|------|-----|-------|-------------|
+| **F8a** | Subscription takım listesi | `hierarchyService.getSubscriptionTeams` | Login / `getEffectivePermissions` |
+| **F8b** | Takım adı → `single_team` + üye kırılımı | `resolveScopeTeams`, `detectTeamFromQuestion` | `CP REMOTE-Ahmed ziyaret sayisi` |
+| **F8c** | Takım bazında → N takım + şirket toplamı | `detectTeamBreakdownFromQuestion`, `multi_team` | `takim bazinda ziyaret sayisi` |
+| **F8d** | UI etiketleri + testler | `index.html`, `scripts/test-l4-scope.js` | KPI: `Sirket geneli — …`; 15 takım limiti |
+
+**Test:** `node scripts/test-l4-scope.js` (Mireille #12942). **Help popup:** `?` → L4 örnek sorular (`role-sample-questions.json`).
+
+**Yol haritasi:** `docs/scope-toolbar-roadmap.md` (F9a–F9h)
 
 ---
 
@@ -449,7 +469,9 @@ SQL: SubscriptionId + UserId IN (scopePlan.allowedUserIds) + params
 - [ ] **L1 saha:** `userTotalCount` / fatura intent’leri → denied (PKG_FIELD dışı)
 - [ ] **L2 takım lideri:** ekip ziyaret toplamı + ekip `usersByTeam` + tam sales paketi
 - [ ] **L3 çok takım:** Amer/Ali tipi — birleşik `allowedUserIds` ile client/sales aggregate
-- [ ] **L4 admin:** `*` intent + subscription geneli scope; başka tenant’ta 0 satır
+- [x] **L4 admin:** `*` intent + subscription geneli scope; başka tenant'ta 0 satır
+- [x] **L4 takım adı:** subscription takımı + üye kırılımı (F8b)
+- [x] **L4 takım bazında:** explicit ipucu → multi_team breakdown + şirket toplamı (F8c)
 - [ ] Intent yok → denied; scope geniş olsa bile
 - [ ] **F3b sonrası:** client count sorgusu L1’de yalnızca scope içi müşteri; L4’te tenant geneli
 
