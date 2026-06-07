@@ -1,0 +1,82 @@
+{
+  "domain": "saha_operasyonlari",
+  "version": "1.0.0",
+  "owner": "field-operations-team",
+  "refresh_frequency": "near-real-time",
+  "tables": [
+    {
+      "table": "dbo.Visit",
+      "description_tr": "Saha personelinin ziyaret kaydi.",
+      "primary_key": ["Id"],
+      "pii": false,
+      "columns": [
+        { "name": "Id", "type": "int", "business_name_tr": "Ziyaret ID", "pii": false },
+        { "name": "UserId", "type": "int", "business_name_tr": "Personel", "pii": false },
+        { "name": "ClientId", "type": "int", "business_name_tr": "Musteri", "pii": false },
+        { "name": "VisitStateId", "type": "int", "business_name_tr": "Ziyaret Durumu", "pii": false },
+        { "name": "VisitTypeId", "type": "int", "business_name_tr": "Ziyaret Tipi", "pii": false },
+        { "name": "Realized", "type": "bit", "business_name_tr": "Gerceklesti", "pii": false },
+        { "name": "StartedAt", "type": "datetime", "business_name_tr": "Baslangic", "pii": false },
+        { "name": "EndedAt", "type": "datetime", "business_name_tr": "Bitis", "pii": false }
+      ]
+    },
+    {
+      "table": "dbo.VisitState",
+      "description_tr": "Ziyaret durum sozlugu.",
+      "primary_key": ["Id"],
+      "pii": false,
+      "columns": [
+        { "name": "Id", "type": "int", "business_name_tr": "Durum ID", "pii": false },
+        { "name": "Name", "type": "nvarchar", "business_name_tr": "Durum Adi", "pii": false }
+      ]
+    },
+    {
+      "table": "dbo.VisitType",
+      "description_tr": "Ziyaret tipi sozlugu.",
+      "primary_key": ["Id"],
+      "pii": false,
+      "columns": [
+        { "name": "Id", "type": "int", "business_name_tr": "Tip ID", "pii": false },
+        { "name": "Name", "type": "nvarchar", "business_name_tr": "Tip Adi", "pii": false }
+      ]
+    },
+    {
+      "table": "dbo.DynamicDataField",
+      "description_tr": "EAV form cevap degerleri.",
+      "primary_key": ["Id"],
+      "pii": "mixed",
+      "columns": [
+        { "name": "Id", "type": "int", "business_name_tr": "Kayit ID", "pii": false },
+        { "name": "DynamicDataId", "type": "int", "business_name_tr": "Form ID", "pii": false },
+        { "name": "DynamicDataConfigurationFieldId", "type": "int", "business_name_tr": "Field ID", "pii": false },
+        { "name": "StringValue", "type": "nvarchar", "business_name_tr": "Metin Degeri", "pii": true },
+        { "name": "DecimalValue", "type": "decimal", "business_name_tr": "Sayisal Deger", "pii": false },
+        { "name": "BoolValue", "type": "bit", "business_name_tr": "Boolean Deger", "pii": false },
+        { "name": "DateTimeValue", "type": "datetime", "business_name_tr": "Tarih Deger", "pii": false }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "from": "dbo.Visit.VisitStateId",
+      "to": "dbo.VisitState.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.Visit.VisitTypeId",
+      "to": "dbo.VisitType.Id",
+      "type": "N:1"
+    },
+    {
+      "from": "dbo.DynamicDataField.DynamicDataId",
+      "to": "dbo.DynamicData.Id",
+      "type": "N:1"
+    }
+  ],
+  "business_glossary_tr": [
+    { "term": "Gerceklesen ziyaret", "maps_to": "dbo.Visit.Realized = 1" },
+    { "term": "Ziyaret durumu", "maps_to": "dbo.VisitState.Name" },
+    { "term": "Ziyaret tipi", "maps_to": "dbo.VisitType.Name" },
+    { "term": "Field ID", "maps_to": "dbo.DynamicDataField.DynamicDataConfigurationFieldId" }
+  ]
+}

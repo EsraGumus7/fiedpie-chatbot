@@ -1,0 +1,123 @@
+{
+  "domain": "users",
+  "version": "1.0.0",
+  "metrics": [
+    {
+      "metric_id": "user_total_count",
+      "intent": "userTotalCount",
+      "description_tr": "Toplam kullanici sayisi",
+      "source_tables": ["dbo.[User]"],
+      "aggregation": "count",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_status_summary",
+      "intent": "userStatusSummary",
+      "description_tr": "Aktif, bloke ve silme talebi olan kullanici ozeti",
+      "source_tables": ["dbo.[User]"],
+      "aggregation": "summary",
+      "default_filters": [],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_admin_summary",
+      "intent": "userAdminSummary",
+      "description_tr": "Admin, API user, client user ve contractor ozeti",
+      "source_tables": ["dbo.[User]"],
+      "aggregation": "summary",
+      "default_filters": [],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_by_role",
+      "intent": "usersByRole",
+      "description_tr": "Rollere gore kullanici dagilimi",
+      "source_tables": ["dbo.[User]", "dbo.UserRole", "dbo.Role"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_by_team",
+      "intent": "usersByTeam",
+      "description_tr": "Takimlara gore kullanici dagilimi",
+      "source_tables": ["dbo.[User]", "dbo.UserTeam", "dbo.Team"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_by_brand",
+      "intent": "usersByBrand",
+      "description_tr": "Markalara gore kullanici dagilimi",
+      "source_tables": ["dbo.[User]", "dbo.UserBrand", "dbo.Brand"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_by_client",
+      "intent": "usersByClient",
+      "description_tr": "Clientlara gore kullanici dagilimi",
+      "source_tables": ["dbo.[User]", "dbo.ClientUser", "dbo.Client"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_recent_logins",
+      "intent": "userRecentLogins",
+      "description_tr": "Son kullanici giris kayitlari",
+      "source_tables": ["dbo.UserLogin", "dbo.[User]"],
+      "aggregation": "list",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_login_success_summary",
+      "intent": "userLoginSuccessSummary",
+      "description_tr": "Basarili ve basarisiz login dagilimi",
+      "source_tables": ["dbo.UserLogin"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_device_summary",
+      "intent": "userDeviceSummary",
+      "description_tr": "Kullanici cihaz kayit ozeti",
+      "source_tables": ["dbo.UserDevice"],
+      "aggregation": "summary",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_saved_view_summary",
+      "intent": "userSavedViewSummary",
+      "description_tr": "Kayitli gorunum ve filtre ozeti",
+      "source_tables": ["dbo.UserSavedView"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_step_summary",
+      "intent": "userStepSummary",
+      "description_tr": "Kullanici adim/hareket gecmisi ozeti",
+      "source_tables": ["dbo.UserStepHistory", "dbo.[User]"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "user_visit_summary",
+      "intent": "userVisitSummary",
+      "description_tr": "Kullanici bazli ziyaret ozeti",
+      "source_tables": ["dbo.Visit", "dbo.[User]"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    }
+  ]
+}
