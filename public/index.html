@@ -2131,20 +2131,20 @@
       const pickers =
         intent === "visitTrend"
           ? [
-              () => data.multiTeamScope?.combined?.rows,
-              () => data.companyTeamScope?.company?.rows,
-              () => data.dualScope?.company?.rows,
-              () => data.singleTeamScope?.rows,
-              () => data.rows,
-            ]
+            () => data.multiTeamScope?.combined?.rows,
+            () => data.companyTeamScope?.company?.rows,
+            () => data.dualScope?.company?.rows,
+            () => data.singleTeamScope?.rows,
+            () => data.rows,
+          ]
           : [
-              () => data.companyTeamScope?.company?.rows,
-              () => data.multiTeamScope?.combined?.rows,
-              () => data.dualScope?.company?.rows,
-              () => data.dualScope?.operational?.rows,
-              () => data.singleTeamScope?.rows,
-              () => data.rows,
-            ];
+            () => data.companyTeamScope?.company?.rows,
+            () => data.multiTeamScope?.combined?.rows,
+            () => data.dualScope?.company?.rows,
+            () => data.dualScope?.operational?.rows,
+            () => data.singleTeamScope?.rows,
+            () => data.rows,
+          ];
 
       for (const pick of pickers) {
         const rows = pick();
@@ -2208,13 +2208,13 @@
             ? { options: { indexAxis: "y" } }
             : chartConfig.chart === "stateStacked"
               ? {
-                  options: {
-                    scales: {
-                      x: { stacked: true },
-                      y: { stacked: true },
-                    },
+                options: {
+                  scales: {
+                    x: { stacked: true },
+                    y: { stacked: true },
                   },
-                }
+                },
+              }
               : {};
         resetChartArea(false);
         createChart(chartType, labels, values, "Kayit Sayisi", extra);
@@ -2671,14 +2671,14 @@
             normalizedIntent === "visittrend" && teamRows.length
               ? formatVisitTrendValue(teamRows)
               : isCardDistributionIntent(normalizedIntent) && teamRows.length
-              ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
-              : (() => {
-              const first = teamRows[0] || {};
-              const valueKeyLocal =
-                valueCandidates.find((key) => first[key] !== undefined) ||
-                Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-              return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
-            })();
+                ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
+                : (() => {
+                  const first = teamRows[0] || {};
+                  const valueKeyLocal =
+                    valueCandidates.find((key) => first[key] !== undefined) ||
+                    Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+                  return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+                })();
           cards.push({
             title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
             value: cardValue,
@@ -2690,16 +2690,16 @@
           normalizedIntent === "visittrend" && combinedRows.length
             ? formatVisitTrendValue(combinedRows)
             : isCardDistributionIntent(normalizedIntent) && combinedRows.length
-          ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
-          : (() => {
-            const combinedFirst = combinedRows[0] || {};
-            const combinedValueKey =
-              valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
-              Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
-            return formatDisplayNumber(
-              combinedValueKey ? combinedFirst[combinedValueKey] : "-"
-            );
-          })();
+              ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
+              : (() => {
+                const combinedFirst = combinedRows[0] || {};
+                const combinedValueKey =
+                  valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+                  Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
+                return formatDisplayNumber(
+                  combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                );
+              })();
         cards.push({
           title: combinedTitle,
           value: combinedValue,
