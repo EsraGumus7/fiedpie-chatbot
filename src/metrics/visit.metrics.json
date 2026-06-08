@@ -1,0 +1,85 @@
+{
+  "domain": "saha_operasyonlari",
+  "version": "1.0.0",
+  "metrics": [
+    {
+      "_comment_metric_id": "Metrigin teknik benzersiz kimligi",
+      "metric_id": "visit_count_realized",
+      "_comment_intent": "Intent parser bu intenti bulursa bu metriği calistir",
+      "intent": "visitCountRealized",
+      "_comment_description_tr": "Is birimine gostermek icin Turkce aciklama",
+      "description_tr": "Gerceklesen ziyaret toplam sayisi",
+      "_comment_source_tables": "Bu metrik hangi tablo(lar)dan beslenir",
+      "source_tables": ["dbo.Visit"],
+      "_comment_aggregation": "Hesaplama tipi: sayma islemi (COUNT)",
+      "aggregation": "count",
+      "_comment_default_filters": "Varsayilan is kurali filtresi: sadece gerceklesen ziyaretler",
+      "default_filters": ["Realized = 1"],
+      "_comment_security_scope": "Yetki modeli: tenant/kullanici kapsaminda calisir",
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "visit_avg_duration",
+      "intent": "avgVisitDuration",
+      "description_tr": "Ortalama ziyaret suresi (saniye)",
+      "source_tables": ["dbo.Visit"],
+      "aggregation": "avg",
+      "default_filters": ["Realized = 1", "StartedAt is not null", "EndedAt is not null"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "visit_by_state",
+      "intent": "visitsByState",
+      "description_tr": "Duruma gore ziyaret dagilimi",
+      "source_tables": ["dbo.Visit", "dbo.VisitState"],
+      "aggregation": "count_group_by",
+      "default_filters": [],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "visit_by_completion_status",
+      "intent": "visitsByCompletionStatus",
+      "description_tr": "Tamamlanan ve bekleyen ziyaret dagilimi",
+      "source_tables": ["dbo.Visit"],
+      "aggregation": "count_group_by",
+      "default_filters": [],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "visit_by_type",
+      "intent": "visitsByType",
+      "description_tr": "Tipe gore ziyaret dagilimi",
+      "source_tables": ["dbo.Visit", "dbo.VisitType"],
+      "aggregation": "count_group_by",
+      "default_filters": [],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "visit_daily_trend",
+      "intent": "visitTrend",
+      "description_tr": "Gunluk gerceklesen ziyaret trendi",
+      "source_tables": ["dbo.Visit"],
+      "aggregation": "count_group_by_date",
+      "default_filters": ["Realized = 1"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "dynamic_top_fields",
+      "intent": "dynamicTopFields",
+      "description_tr": "En cok doldurulan dynamic field listesi",
+      "source_tables": ["dbo.DynamicData", "dbo.DynamicDataField"],
+      "aggregation": "count_group_by",
+      "default_filters": ["last_30_days"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
+      "metric_id": "dynamic_field_summary",
+      "intent": "dynamicFieldSummary",
+      "description_tr": "Secilen field icin ozet dagilim",
+      "source_tables": ["dbo.DynamicData", "dbo.DynamicDataField"],
+      "aggregation": "count_and_avg",
+      "default_filters": ["last_30_days"],
+      "security_scope": "tenant_user_scope"
+    }
+  ]
+}
