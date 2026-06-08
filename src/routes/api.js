@@ -121,10 +121,10 @@ function buildScopePreview(userContext, metric, scopeDecision) {
     metricSecurityScope: metric?.security_scope || null,
     scopeCheck: scopeDecision
       ? {
-          allowed: scopeDecision.allowed,
-          reason: scopeDecision.reason || null,
-          warnings: scopeDecision.warnings || [],
-        }
+        allowed: scopeDecision.allowed,
+        reason: scopeDecision.reason || null,
+        warnings: scopeDecision.warnings || [],
+      }
       : null,
     hierarchyLevel: userContext.hierarchyLevel ?? null,
     hierarchyLabel: userContext.hierarchyLabel ?? null,
@@ -250,6 +250,19 @@ function extractPrimaryMetricValue(intent, rows = []) {
 
   return first.total ?? first.totalUsers ?? first.responseCount ?? null;
 }
+function getScopedMetricLabel(intent, filters = {}) {
+  const labels = {
+    visitCountRealized: buildVisitStatusLabel(filters),
+    totalPurchaseOrders: "siparis",
+    clientCountActive: "aktif firma",
+    totalInvoices: "fatura",
+    totalInvoiceAmount: "fatura tutari",
+    totalInvoiceBalance: "odenmemis fatura bakiyesi",
+    totalInvoicePayments: "fatura tahsilat tutari",
+  };
+
+  return labels[intent] || "kayit";
+}
 
 function summarizeDistributionBullets(intent, rows = []) {
   if (!rows.length) {
@@ -266,6 +279,15 @@ function summarizeDistributionBullets(intent, rows = []) {
     return rows
       .slice(0, 5)
       .map((row) => `- ${row.visitType}: ${formatNumber(row.total)} ziyaret`)
+      .join("\n");
+  }
+
+  if (intent === "invoicesByStatus") {
+    return rows
+      .map((row) => {
+        const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
+        return `- ${status}: ${formatNumber(row.total)} fatura`;
+      })
       .join("\n");
   }
 
@@ -298,13 +320,7 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
   const opValue = extractPrimaryMetricValue(intent, operational.rows || []);
   const companyValue = extractPrimaryMetricValue(intent, company.rows || []);
 
-  const metricLabels = {
-    visitCountRealized: "gerceklesen ziyaret",
-    totalPurchaseOrders: "siparis",
-    clientCountActive: "aktif firma",
-    totalInvoices: "fatura",
-  };
-  const metricLabel = metricLabels[intent] || "kayit";
+  const metricLabel = getScopedMetricLabel(intent, filters);
 
   if (intent === "avgVisitDuration") {
     return [
@@ -325,10 +341,13 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
     companyTeamScope.company?.displayLabel ||
     formatCompanyDisplayLabel(companyTeamScope.company?.label);
   const selectedLabel = companyTeamScope.selectedCombined?.label || "Secili takimlar toplami";
+  const metricLabel = getScopedMetricLabel(intent, filters);
 
   const companyBody = isDistributionIntent(intent)
     ? summarizeDistributionBullets(intent, companyTeamScope.company?.rows || [])
-    : `${formatNumber(extractPrimaryMetricValue(intent, companyTeamScope.company?.rows || []) ?? 0)}`;
+    : `${formatNumber(
+      extractPrimaryMetricValue(intent, companyTeamScope.company?.rows || []) ?? 0
+    )} ${metricLabel}`;
 
   const lines = [`${companyTitle} (${rangeInfo}):`, companyBody, ""];
 
@@ -339,7 +358,7 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
       lines.push(summarizeDistributionBullets(intent, team.rows || []));
     } else {
       const value = extractPrimaryMetricValue(intent, team.rows || []);
-      lines.push(`${title} (${rangeInfo}): ${formatNumber(value ?? 0)}`);
+      lines.push(`${title} (${rangeInfo}): ${formatNumber(value ?? 0)} ${metricLabel}`);
     }
     lines.push("");
   });
@@ -355,7 +374,7 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
     lines.push(summarizeDistributionBullets(intent, selectedRows));
   } else {
     const selectedValue = extractPrimaryMetricValue(intent, selectedRows);
-    lines.push(`${selectedLabel} (${rangeInfo}): ${formatNumber(selectedValue ?? 0)}`);
+    lines.push(`${selectedLabel} (${rangeInfo}): ${formatNumber(selectedValue ?? 0)} ${metricLabel}`);
   }
 
   if ((companyTeamScope.teams || []).length > 1) {
@@ -386,13 +405,7 @@ function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
     return lines.join("\n");
   }
 
-  const metricLabels = {
-    visitCountRealized: buildVisitStatusLabel(filters),
-    totalPurchaseOrders: "siparis",
-    clientCountActive: "aktif firma",
-    totalInvoices: "fatura",
-  };
-  const metricLabel = metricLabels[intent] || "kayit";
+  const metricLabel = getScopedMetricLabel(intent, filters);
   const lines = [`${title} (${rangeInfo}): ${formatNumber(value ?? 0)} ${metricLabel}`];
   appendMemberSummaryLines(lines, singleTeamScope, intent);
   return lines.join("\n");
@@ -444,7 +457,8 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
       const parts = rows
         .slice(0, 4)
         .map((row) => {
-          const label = row.visitState || row.visitType || "Diger";
+          const label =
+            row.visitState || row.visitType || row.statusName || row.stateName || row.groupName || "Diger";
           return `${label} ${formatNumber(row.total ?? 0)}`;
         })
         .join(", ");
@@ -462,7 +476,8 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
       const parts = combinedRows
         .slice(0, 4)
         .map((row) => {
-          const label = row.visitState || row.visitType || "Diger";
+          const label =
+            row.visitState || row.visitType || row.statusName || row.stateName || row.groupName || "Diger";
           return `${label} ${formatNumber(row.total ?? 0)}`;
         })
         .join(", ");
@@ -476,13 +491,7 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     return lines.join("\n");
   }
 
-  const metricLabels = {
-    visitCountRealized: buildVisitStatusLabel(filters),
-    totalPurchaseOrders: "siparis",
-    clientCountActive: "aktif firma",
-    totalInvoices: "fatura",
-  };
-  const metricLabel = metricLabels[intent] || "kayit";
+  const metricLabel = getScopedMetricLabel(intent, filters);
 
   const lines = (multiTeamScope.teams || []).map((team) => {
     const value = extractPrimaryMetricValue(intent, team.rows || []);
@@ -528,9 +537,12 @@ function applyIntentRowNormalization(intent, rows = []) {
 }
 
 function isDistributionIntent(intent = "") {
-  return ["visitsByState", "visitsByCompletionStatus", "visitsByType"].includes(
-    String(intent || "").trim()
-  );
+  return [
+    "visitsByState",
+    "visitsByCompletionStatus",
+    "visitsByType",
+    "invoicesByStatus",
+  ].includes(String(intent || "").trim());
 }
 
 function renderScopeAnswer(intent, params, scopePayload = {}) {
@@ -634,7 +646,13 @@ function summarizeRows(intent, rows, filters = {}) {
   ];
   if (amountIntents.includes(intent)) {
     const total = rows[0]?.totalAmount ?? 0;
-    return `${rangeInfo} araliginda islem goren toplam tutar: ${formatNumber(total)}.`;
+    const amountLabels = {
+      totalInvoiceAmount: "toplam fatura tutari",
+      totalInvoicePayments: "faturalardan yapilan toplam tahsilat",
+      totalPurchaseOrderAmount: "toplam satinalma siparisi tutari",
+    };
+    const label = amountLabels[intent] || "islem goren toplam tutar";
+    return `${rangeInfo} araliginda ${label}: ${formatNumber(total)}.`;
   }
 
   // 3. Bakiye İşlemleri (Özel)
@@ -666,11 +684,14 @@ function summarizeRows(intent, rows, filters = {}) {
   ];
   if (groupIntents.includes(intent)) {
     const top = rows.slice(0, 5);
+    const isInvoiceStatus = intent === "invoicesByStatus";
     const bullets = top.map((r) => {
-      const name = r.groupName || r.regionName || r.statusName || "Bilinmeyen Dağılım";
-      return `- ${name}: ${formatNumber(r.total)} kayit`;
+      const name = r.groupName || r.regionName || r.statusName || "Bilinmeyen Dagilim";
+      const unit = isInvoiceStatus ? "fatura" : "kayit";
+      return `- ${name}: ${formatNumber(r.total)} ${unit}`;
     }).join("\n");
-    return `${rangeInfo} dagilim ozeti:\n${bullets}`;
+    const title = isInvoiceStatus ? "fatura durum dagilimi" : "dagilim ozeti";
+    return `${rangeInfo} ${title}:\n${bullets}`;
   }
 
   // 5. Trend (Zaman Serisi) İşlemleri
@@ -1345,17 +1366,17 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         intent,
         data: dualScope
           ? {
-              operational: dualScope.operational.rows,
-              company: dualScope.company.rows,
-            }
+            operational: dualScope.operational.rows,
+            company: dualScope.company.rows,
+          }
           : multiTeamScope
             ? {
-                teams: multiTeamScope.teams.map((team) => ({
-                  teamName: team.teamName,
-                  rows: team.rows,
-                })),
-                combined: multiTeamScope.combined.rows,
-              }
+              teams: multiTeamScope.teams.map((team) => ({
+                teamName: team.teamName,
+                rows: team.rows,
+              })),
+              combined: multiTeamScope.combined.rows,
+            }
             : singleTeamScope
               ? { teamName: singleTeamScope.teamName, rows: singleTeamScope.rows }
               : rows,

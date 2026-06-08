@@ -173,7 +173,12 @@
         "fatura adedi nedir",
         "sistemdeki fatura sayısı",
         "toplam fatura adedi",
-        "kaç adet faturamız var"
+        "kaç adet faturamız var",
+        "toplam fatura sayısı",
+        "fatura sayısı",
+        "kaç fatura var",
+        "kesilen fatura sayısı",
+        "fatura adeti"
       ],
       "negative_keywords": [
         "siparis",
@@ -183,7 +188,19 @@
         "bakiye",
         "ödeme",
         "odeme",
-        "detay"
+        "detay",
+        "tahsil",
+        "tahsilat",
+        "ödenmeyen",
+        "odenmeyen",
+        "ödenmiş",
+        "odenmis",
+        "ödenmemiş",
+        "odenmemis",
+        "dagilim",
+        "dağılım",
+        "durum",
+        "trend"
       ],
       "priority": 10,
       "metric_id": "invoice_count_total"
@@ -199,14 +216,21 @@
         "ciro",
         "hacim",
         "toplam",
-        "deger"
+        "deger",
+        "toplami",
+        "toplamı"
       ],
       "aliases": [
         "toplam fatura tutarı nedir",
         "kesilen faturaların toplam değeri",
         "faturalaşmış ciro ne kadar",
         "toplam fatura hacmi",
-        "ne kadarlık fatura kestik"
+        "ne kadarlık fatura kestik",
+        "fatura toplamı",
+        "kesilen fatura toplamı",
+        "fatura toplam tutarı",
+        "kesilen faturaların toplam tutarı",
+        "toplam kesilen fatura tutarı"
       ],
       "negative_keywords": [
         "siparis",
@@ -216,7 +240,17 @@
         "odenmemis",
         "tahsilat",
         "sayisi",
-        "adet"
+        "adet",
+        "tahsil",
+        "tahsil edilen",
+        "ödeme",
+        "odeme",
+        "ödenmeyen",
+        "odenmeyen",
+        "dagilim",
+        "dağılım",
+        "durum",
+        "trend"
       ],
       "priority": 25,
       "metric_id": "invoice_amount_total"
@@ -232,14 +266,25 @@
         "kalan",
         "alacak",
         "borc",
-        "borç"
+        "borç",
+        "odenmeyen",
+        "ödenmeyen",
+        "acik",
+        "açık",
+        "kapanmamis",
+        "kapanmamış"
       ],
       "aliases": [
         "ödenmemiş fatura bakiyesi ne kadar",
         "toplam alacak tutarımız nedir",
         "kalan fatura borçları",
         "müşterilerin fatura bakiyeleri",
-        "ne kadar alacağımız kaldı"
+        "ne kadar alacağımız kaldı",
+        "ödenmeyen faturalar toplamı",
+        "ödenmeyen fatura toplamı",
+        "açık fatura bakiyesi",
+        "ödenmeyen faturaların toplam bakiyesi",
+        "kapanmamış fatura bakiyesi"
       ],
       "negative_keywords": [
         "siparis",
@@ -247,7 +292,13 @@
         "tahsilat",
         "ödendi",
         "odendi",
-        "trend"
+        "trend",
+        "tahsil",
+        "ödeme trendi",
+        "odeme trendi",
+        "dagilim",
+        "dağılım",
+        "durum"
       ],
       "priority": 35,
       "metric_id": "invoice_balance_total"
@@ -262,21 +313,38 @@
         "odendi",
         "iptal",
         "dagilim",
-        "odenecek"
+        "odenecek",
+        "ödenmiş",
+        "odenmis",
+        "ödenmemiş",
+        "odenmemis",
+        "ödenmeyen",
+        "odenmeyen",
+        "dağılım",
+        "status"
       ],
       "aliases": [
         "fatura durum dağılımı",
         "ödenen ve iptal edilen faturalar",
         "statülerine göre faturalar",
         "hangi durumda kaç fatura var",
-        "fatura statü özeti"
+        "fatura statü özeti",
+        "ödenmiş ödenmemiş fatura dağılımı",
+        "fatura ödeme durum dağılımı",
+        "ödenen ödenmeyen fatura dağılımı",
+        "fatura durumları",
+        "fatura statüleri"
       ],
       "negative_keywords": [
         "siparis",
         "sipariş",
         "bakiye",
         "tutar",
-        "trend"
+        "trend",
+        "toplam tutar",
+        "toplamı",
+        "toplami",
+        "tahsilat trendi"
       ],
       "priority": 20,
       "metric_id": "invoice_by_status"
@@ -348,14 +416,23 @@
         "nakit",
         "tutar",
         "giren",
-        "alinan"
+        "alinan",
+        "tahsil",
+        "tahsil edilen",
+        "yapilan",
+        "yapılan"
       ],
       "aliases": [
         "faturalardan yapılan toplam tahsilat",
         "fatura ödemeleri toplamı",
         "gelen nakit ödeme tutarı",
         "faturalar için ne kadar tahsilat yapıldı",
-        "fatura ödeme girişi"
+        "fatura ödeme girişi",
+        "faturalardan tahsil edilen tutar",
+        "fatura tahsilat toplamı",
+        "fatura tahsilatı ne kadar",
+        "fatura ödeme tutarı",
+        "faturadan tahsil edilen toplam tutar"
       ],
       "negative_keywords": [
         "siparis",
@@ -363,7 +440,13 @@
         "bakiye",
         "borç",
         "ödenmemiş",
-        "trend"
+        "trend",
+        "ödenmeyen",
+        "odenmeyen",
+        "odenmemis",
+        "dagilim",
+        "dağılım",
+        "durum"
       ],
       "priority": 25,
       "metric_id": "invoice_payment_amount_total"
@@ -379,20 +462,32 @@
         "gunluk",
         "aylik",
         "zaman",
-        "grafik"
+        "grafik",
+        "fatura",
+        "tahsil"
       ],
       "aliases": [
         "günlük tahsilat trendi",
         "aylık ödeme grafiği",
         "tahsilatların zamana göre gidişatı",
-        "fatura ödeme trend analizi"
+        "fatura ödeme trend analizi",
+        "fatura ödeme trendi",
+        "fatura tahsilat trendi",
+        "günlük fatura ödeme trendi",
+        "günlük fatura tahsilat trendi",
+        "aylık fatura tahsilat trendi",
+        "günlük fatura tahsilat grafiği"
       ],
       "negative_keywords": [
         "siparis",
         "sipariş",
         "fatura kesim",
         "durum",
-        "bakiye"
+        "bakiye",
+        "durum dağılımı",
+        "durum dagilimi",
+        "ödenmiş ödenmemiş",
+        "odenmis odenmemis"
       ],
       "priority": 30,
       "metric_id": "invoice_payment_daily_trend"

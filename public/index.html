@@ -393,7 +393,7 @@
       padding-top: 2px;
     }
 
-    .scope-teams-menu .scope-menu-group + .scope-menu-group {
+    .scope-teams-menu .scope-menu-group+.scope-menu-group {
       border-top: 1px solid #e8eef8;
       margin-top: 4px;
       padding-top: 2px;
@@ -887,40 +887,29 @@
   align-items:center;
   justify-content:center;
 ">
-  <div style="
+    <div style="
     width:360px;
     background:white;
     padding:24px;
     border-radius:12px;
     box-shadow:0 8px 24px rgba(0,0,0,0.12);
   ">
-    <h2 style="margin-top:0;">Giriş Yap</h2>
+      <h2 style="margin-top:0;">Giriş Yap</h2>
 
-    <input
-      id="loginEmail"
-      type="email"
-      placeholder="Email"
-      value="mehmetkordon09@gmail.com"
-      style="margin-bottom:12px;"
-    />
+      <input id="loginEmail" type="email" placeholder="Email" value="mehmetkordon09@gmail.com"
+        style="margin-bottom:12px;" />
 
-    <input
-      id="loginPassword"
-      type="password"
-      placeholder="Şifre"
-      value="1463"
-      style="margin-bottom:12px;"
-    />
+      <input id="loginPassword" type="password" placeholder="Şifre" value="1463" style="margin-bottom:12px;" />
 
-    <button id="loginBtn">Giriş Yap</button>
+      <button id="loginBtn">Giriş Yap</button>
 
-    <div id="loginError" style="
+      <div id="loginError" style="
       color:red;
       margin-top:10px;
       font-size:13px;
     "></div>
+    </div>
   </div>
-</div>
 
   <!-- Kullanıcı paneli: Giriş sonrası gösterilir -->
   <!-- Kullanıcı paneli: Giriş sonrası gösterilir (taşındı) -->
@@ -1017,11 +1006,14 @@
       </div>
       <hr />
       <!-- Removed: Form Alani / Field ID (not used) -->
-      <div id="userPanel" style="margin-top:12px; background:#fff; padding:10px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:none; font-size:13px;">
+      <div id="userPanel"
+        style="margin-top:12px; background:#fff; padding:10px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:none; font-size:13px;">
         <div style="margin-bottom:6px; color:#333;">
           <strong id="userPanelName">Kullanıcı</strong>
         </div>
-        <button id="logoutBtn" style="width:100%; padding:8px; background:#d32f2f; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">Çıkış Yap</button>
+        <button id="logoutBtn"
+          style="width:100%; padding:8px; background:#d32f2f; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">Çıkış
+          Yap</button>
       </div>
       <p class="muted">Grafikler secilen tarih araligina gore ceker.</p>
     </section>
@@ -1066,20 +1058,16 @@
           <div id="scopeToggleGroup" class="scope-toggle-group hidden">
             <div class="scope-teams-wrap">
               <button type="button" id="scopeTeamsBtn" class="scope-toggle-btn">Takimlar</button>
-              <button
-                type="button"
-                id="scopeTeamsMenuBtn"
-                class="scope-toggle-btn scope-menu-btn"
-                title="Yonetilen takimlari sec"
-                aria-label="Yonetilen takimlari sec"
-              >
+              <button type="button" id="scopeTeamsMenuBtn" class="scope-toggle-btn scope-menu-btn"
+                title="Yonetilen takimlari sec" aria-label="Yonetilen takimlari sec">
                 ▼
               </button>
               <div id="scopeTeamsMenu" class="scope-teams-menu hidden"></div>
             </div>
             <button type="button" id="scopeCompanyBtn" class="scope-toggle-btn">Sirketler</button>
           </div>
-          <button type="button" id="helpOpenBtn" class="help-open-btn" title="Ornek sorular" aria-label="Ornek sorular">?</button>
+          <button type="button" id="helpOpenBtn" class="help-open-btn" title="Ornek sorular"
+            aria-label="Ornek sorular">?</button>
         </div>
       </div>
       <div class="chat-log" id="chatLog">
@@ -1140,149 +1128,149 @@
 
   <script>
     const loginOverlay = document.getElementById("loginOverlay");
-const loginBtn = document.getElementById("loginBtn");
-const loginError = document.getElementById("loginError");
-const userPanel = document.getElementById("userPanel");
-const userPanelName = document.getElementById("userPanelName");
-const logoutBtn = document.getElementById("logoutBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginError = document.getElementById("loginError");
+    const userPanel = document.getElementById("userPanel");
+    const userPanelName = document.getElementById("userPanelName");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-function getToken() {
-  return localStorage.getItem("token");
-}
-
-function hideLogin() {
-  loginOverlay.style.display = "none";
-}
-
-function showUserPanel() {
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  if (user && user.name) {
-    userPanelName.textContent = user.name;
-  } else if (user && user.email) {
-    userPanelName.textContent = user.email;
-  }
-  userPanel.style.display = "block";
-}
-
-async function logout() {
-  try {
-    const token = getToken();
-    if (token) {
-      await fetch("/auth/logout", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }).catch(() => {});
+    function getToken() {
+      return localStorage.getItem("token");
     }
-  } catch (err) {
-    console.error("Logout hatasi:", err);
-  }
-  
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  userPanel.style.display = "none";
-  loginOverlay.style.display = "flex";
-  document.getElementById("loginEmail").value = "";
-  document.getElementById("loginPassword").value = "";
-  loginError.innerText = "";
-  // Clear chat UI and state to avoid leaking previous user's conversation
-  try {
-    const chatLogEl = document.getElementById("chatLog");
-    if (chatLogEl) chatLogEl.innerHTML = "";
-  } catch (e) {}
 
-  try {
-    // clear last result and question input
-    if (typeof lastChatResult !== "undefined") lastChatResult = null;
-    const q = document.getElementById("question");
-    if (q) q.value = "";
-  } catch (e) {}
+    function hideLogin() {
+      loginOverlay.style.display = "none";
+    }
 
-  try {
-    // clear sql / preview panels
-    const sp = document.getElementById("sqlPreview");
-    const sb = document.getElementById("sqlBind");
-    const ss = document.getElementById("sqlScope");
-    if (sp) sp.textContent = "-- Sorgu burada gorunecek";
-    if (sb) sb.textContent = "";
-    if (ss) ss.textContent = "";
-  } catch (e) {}
-
-  try {
-    // reset charts/kpi area if helper exists
-    if (typeof resetChartArea === "function") {
-      resetChartArea(true);
-    } else {
-      const ctx = document.getElementById("mainChart");
-      if (ctx && window.Chart && Chart.getChart(ctx)) {
-        Chart.getChart(ctx).destroy();
+    function showUserPanel() {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      if (user && user.name) {
+        userPanelName.textContent = user.name;
+      } else if (user && user.email) {
+        userPanelName.textContent = user.email;
       }
-      const kpi = document.getElementById("kpiArea");
-      if (kpi) kpi.innerHTML = "";
-    }
-  } catch (e) {}
-
-  if (typeof addMessage === "function") {
-    addMessage("Çıkış yapıldı. Lütfen yeniden giriş yapın.", "bot");
-  }
-}
-
-async function login() {
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
-
-  loginError.innerText = "";
-
-  try {
-    const response = await fetch("/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      loginError.innerText = data.error || "Login başarısız";
-      return;
+      userPanel.style.display = "block";
     }
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-
-    const who = data.user
-      ? `${data.user.name || data.user.email} (#${data.user.id})`
-      : data.user?.email || "";
-    if (who && typeof addMessage === "function") {
-      let hint = `Giris: ${who}. Admin panelde ayni UserId icin intent atayin.`;
-      if (data.user?.admin) {
-        hint += " Admin+takim lideri isen ozet sorularda takim ve sirket sonucu birlikte gelir.";
+    async function logout() {
+      try {
+        const token = getToken();
+        if (token) {
+          await fetch("/auth/logout", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).catch(() => { });
+        }
+      } catch (err) {
+        console.error("Logout hatasi:", err);
       }
-      addMessage(hint, "bot");
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      userPanel.style.display = "none";
+      loginOverlay.style.display = "flex";
+      document.getElementById("loginEmail").value = "";
+      document.getElementById("loginPassword").value = "";
+      loginError.innerText = "";
+      // Clear chat UI and state to avoid leaking previous user's conversation
+      try {
+        const chatLogEl = document.getElementById("chatLog");
+        if (chatLogEl) chatLogEl.innerHTML = "";
+      } catch (e) { }
+
+      try {
+        // clear last result and question input
+        if (typeof lastChatResult !== "undefined") lastChatResult = null;
+        const q = document.getElementById("question");
+        if (q) q.value = "";
+      } catch (e) { }
+
+      try {
+        // clear sql / preview panels
+        const sp = document.getElementById("sqlPreview");
+        const sb = document.getElementById("sqlBind");
+        const ss = document.getElementById("sqlScope");
+        if (sp) sp.textContent = "-- Sorgu burada gorunecek";
+        if (sb) sb.textContent = "";
+        if (ss) ss.textContent = "";
+      } catch (e) { }
+
+      try {
+        // reset charts/kpi area if helper exists
+        if (typeof resetChartArea === "function") {
+          resetChartArea(true);
+        } else {
+          const ctx = document.getElementById("mainChart");
+          if (ctx && window.Chart && Chart.getChart(ctx)) {
+            Chart.getChart(ctx).destroy();
+          }
+          const kpi = document.getElementById("kpiArea");
+          if (kpi) kpi.innerHTML = "";
+        }
+      } catch (e) { }
+
+      if (typeof addMessage === "function") {
+        addMessage("Çıkış yapıldı. Lütfen yeniden giriş yapın.", "bot");
+      }
     }
 
-    hideLogin();
-    showUserPanel();
-    if (typeof loadUserHelpAccess === "function") {
-      loadUserHelpAccess().catch(() => {});
-    }
-    if (typeof initScopeToggleButtons === "function") {
-      initScopeToggleButtons().catch(() => {});
-    }
-    if (typeof appendHierarchyLoginHint === "function") {
-      appendHierarchyLoginHint().catch(() => {});
-    }
+    async function login() {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
 
-  } catch (err) {
-    loginError.innerText = err.message;
-  }
-}
+      loginError.innerText = "";
+
+      try {
+        const response = await fetch("/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          loginError.innerText = data.error || "Login başarısız";
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        const who = data.user
+          ? `${data.user.name || data.user.email} (#${data.user.id})`
+          : data.user?.email || "";
+        if (who && typeof addMessage === "function") {
+          let hint = `Giris: ${who}. Admin panelde ayni UserId icin intent atayin.`;
+          if (data.user?.admin) {
+            hint += " Admin+takim lideri isen ozet sorularda takim ve sirket sonucu birlikte gelir.";
+          }
+          addMessage(hint, "bot");
+        }
+
+        hideLogin();
+        showUserPanel();
+        if (typeof loadUserHelpAccess === "function") {
+          loadUserHelpAccess().catch(() => { });
+        }
+        if (typeof initScopeToggleButtons === "function") {
+          initScopeToggleButtons().catch(() => { });
+        }
+        if (typeof appendHierarchyLoginHint === "function") {
+          appendHierarchyLoginHint().catch(() => { });
+        }
+
+      } catch (err) {
+        loginError.innerText = err.message;
+      }
+    }
     const chartTitle = document.getElementById("chartTitle");
     const refreshBtn = document.getElementById("refreshBtn");
     const chartArea = document.getElementById("chartArea");
@@ -2260,6 +2248,18 @@ async function login() {
       return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
     }
 
+    function isCardDistributionIntent(normalizedIntent) {
+      return new Set([
+        "visitsbystate",
+        "visitsbytype",
+        "usersbyteam",
+        "purchaseordersbystatus",
+        "invoicesbystatus",
+      ]).has(normalizedIntent);
+    }
+
+
+
     function formatTeamScopeValue(normalizedIntent, scopeRows, valueCandidates) {
       if (normalizedIntent === "visitsbycompletionstatus") {
         const tam = scopeRows.find((row) => row.visitState === "Tamamlanan");
@@ -2267,12 +2267,28 @@ async function login() {
         return `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`;
       }
 
+      if (isCardDistributionIntent(normalizedIntent) && scopeRows.length) {
+        return scopeRows
+          .slice(0, 4)
+          .map((row) => {
+            const label =
+              row.visitState ||
+              row.visitType ||
+              row.stateName ||
+              row.statusName ||
+              row.groupName ||
+              "Diger";
+            return `${label}: ${formatDisplayNumber(row.total ?? 0)}`;
+          })
+          .join(" | ");
+      }
+
       if (scopeRows.length > 1) {
         return scopeRows
           .slice(0, 4)
           .map((row) => {
             const label =
-              row.visitState || row.visitType || row.stateName || row.statusName || "Diger";
+              row.visitState || row.visitType || row.stateName || row.statusName || row.groupName || "Diger";
             return `${label}: ${formatDisplayNumber(row.total ?? 0)}`;
           })
           .join(" | ");
@@ -2513,6 +2529,9 @@ async function login() {
         totalinvoices: "Kesilen Fatura Adedi",
         totalinvoicecount: "Kesilen Fatura Adedi",
         invoicecount: "Kesilen Fatura Adedi",
+        totalinvoiceamount: "Toplam Fatura Tutarı",
+        totalinvoicebalance: "Ödenmemiş Fatura Bakiyesi",
+        totalinvoicepayments: "Fatura Tahsilat Toplamı",
         usertotalcount: "Toplam Kullanıcı Sayısı",
         visitcountrealized: "Gerçekleşen Ziyaret Sayısı",
         activecampaigns: "Aktif Kampanya Sayısı",
@@ -2523,6 +2542,7 @@ async function login() {
         visitsbytype: "Ziyaret Tipi Dağılımı",
         visitsbystate: "Duruma Göre Ziyaretler",
         visitsbycompletionstatus: "Ziyaret Durumu (Tamamlanan / Bekleyen)",
+        invoicesbystatus: "Fatura Durum Dağılımı",
         clientsbygroup: "Gruplara Göre Firma Dağılımı",
         clientsbystate: "Duruma Göre Firma Dağılımı",
         clientsbycountry: "Ülkelere Göre Firma Dağılımı",
@@ -2576,6 +2596,7 @@ async function login() {
         "value",
         "amount",
         "totalAmount",
+        "totalBalance",
       ];
 
       const numericKeys = Object.keys(firstRow).filter((key) => {
@@ -2611,6 +2632,7 @@ async function login() {
         const distributionIntents = new Set([
           "visitsbystate",
           "visitsbycompletionstatus",
+          "invoicesbystatus",
           "visitsbytype",
         ]);
         const isDistribution = distributionIntents.has(normalizedIntent);
@@ -2650,6 +2672,7 @@ async function login() {
         "visitsbystate",
         "visitsbycompletionstatus",
         "visitsbytype",
+        "invoicesbystatus",
         "usersbyteam",
         "purchaseordersbystatus",
       ]);
@@ -2662,7 +2685,7 @@ async function login() {
         const scopeRows = data.singleTeamScope.rows || [];
         const members = data.singleTeamScope.members || [];
         const isDistribution =
-          distributionIntents.has(normalizedIntent) && scopeRows.length > 1;
+          distributionIntents.has(normalizedIntent) && scopeRows.length > 0;
         const title =
           chartTitleMap[normalizedIntent] ||
           kpiTitleMap[normalizedIntent] ||
@@ -3276,9 +3299,9 @@ async function login() {
     if (getToken()) {
       hideLogin();
       showUserPanel();
-      loadUserHelpAccess().catch(() => {});
-      initScopeToggleButtons().catch(() => {});
-      appendHierarchyLoginHint().catch(() => {});
+      loadUserHelpAccess().catch(() => { });
+      initScopeToggleButtons().catch(() => { });
+      appendHierarchyLoginHint().catch(() => { });
     }
   </script>
 </body>
