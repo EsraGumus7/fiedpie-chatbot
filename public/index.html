@@ -965,6 +965,49 @@
             <span class="chart-sub">Visit tipi</span>
           </span>
         </button>
+        <!-- Yeni farkli grafikler (frontend only) -->
+        <button class="chart-btn" data-chart="stateDoughnut">
+          <span class="chart-card">
+            <span class="chart-icon">◐</span>
+            <span class="chart-name">Doughnut</span>
+            <span class="chart-sub">Duruma gore (Doughnut)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="stateHbar">
+          <span class="chart-card">
+            <span class="chart-icon">▤</span>
+            <span class="chart-name">H-Bar</span>
+            <span class="chart-sub">Duruma gore (Yatay Bar)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="fieldPolar">
+          <span class="chart-card">
+            <span class="chart-icon">◎</span>
+            <span class="chart-name">Polar</span>
+            <span class="chart-sub">Alan dagilimi (Polar)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="typeRadar">
+          <span class="chart-card">
+            <span class="chart-icon">⟡</span>
+            <span class="chart-name">Radar</span>
+            <span class="chart-sub">Tip dagilimi (Radar)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="fieldDoughnut">
+          <span class="chart-card">
+            <span class="chart-icon">◔</span>
+            <span class="chart-name">Field-Doughnut</span>
+            <span class="chart-sub">Alan dagilimi (Doughnut)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="visitPolar">
+          <span class="chart-card">
+            <span class="chart-icon">✶</span>
+            <span class="chart-name">Trend-Polar</span>
+            <span class="chart-sub">Gunluk trend (Polar)</span>
+          </span>
+        </button>
       </div>
       <hr />
       <label for="fieldName">Form Alani</label>
@@ -1239,7 +1282,21 @@ async function login() {
     let selectedChart = "stateBar";
     let chartInstance = null;
     let chartLoadSeq = 0;
-    let allowedCharts = new Set(["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"]);
+    // include new frontend-only chart keys so UI shows them; endpoints unchanged
+    let allowedCharts = new Set([
+      "stateBar",
+      "statePie",
+      "fieldBar",
+      "kpiCards",
+      "visitTrend",
+      "typeBar",
+      "stateDoughnut",
+      "stateHbar",
+      "fieldPolar",
+      "typeRadar",
+      "fieldDoughnut",
+      "visitPolar",
+    ]);
     let lastChatResult = null;
     let scopeToolbarConfig = null;
     let scopeSelection = {
@@ -1997,12 +2054,12 @@ async function login() {
       }
       const isLine = type === "line";
       chartInstance = new Chart(ctx, {
-        type,
+        type: (type === "hbar") ? "bar" : type,
         data: {
-          labels,
+          labels: labels,
           datasets: [
             {
-              label,
+              label: label,
               data: values,
               backgroundColor: isLine
                 ? "rgba(29, 78, 216, 0.18)"
@@ -2014,7 +2071,13 @@ async function login() {
             },
           ],
         },
-        options: { responsive: true, maintainAspectRatio: false },
+        options: (function(){
+          const base = { responsive: true, maintainAspectRatio: false };
+          if (type === "hbar") {
+            base.indexAxis = "y";
+          }
+          return base;
+        })(),
       });
     }
 
@@ -2035,6 +2098,12 @@ async function login() {
         typeBar: "Ziyaret Tipi Dagilimi (Bar)",
         fieldBar: "Dynamic Field Dagilimi (Bar)",
         kpiCards: "KPI Ozet Kartlari",
+        stateDoughnut: "Duruma Gore (Doughnut)",
+        stateHbar: "Duruma Gore (Yatay Bar)",
+        fieldPolar: "Alan Dagilimi (Polar)",
+        typeRadar: "Tip Dagilimi (Radar)",
+        fieldDoughnut: "Alan Dagilimi (Doughnut)",
+        visitPolar: "Gunluk Trend (Polar)",
       };
       chartTitle.textContent = titles[chartKey] || "Grafik";
     }
@@ -2748,6 +2817,61 @@ async function login() {
         const labels = data.rows.map((x) => x.visitType);
         const values = data.rows.map((x) => x.total);
         createChart("bar", labels, values, "Visit Type Dagilimi");
+        return;
+      }
+
+      // Yeni frontend-only grafik tipleri: backend endpoint'leri ayni kullaniliyor
+      if (selectedChart === "stateDoughnut") {
+        const data = await fetchJson(`/api/visit/by-state?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.visitState);
+        const values = data.rows.map((x) => x.total);
+        createChart("doughnut", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+
+      if (selectedChart === "stateHbar") {
+        const data = await fetchJson(`/api/visit/by-state?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.visitState);
+        const values = data.rows.map((x) => x.total);
+        createChart("hbar", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+
+      if (selectedChart === "fieldPolar") {
+        const data = await fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.fieldName);
+        const values = data.rows.map((x) => x.responseCount);
+        createChart("polarArea", labels, values, "Field Yanit Sayisi");
+        return;
+      }
+
+      if (selectedChart === "fieldDoughnut") {
+        const data = await fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.fieldName);
+        const values = data.rows.map((x) => x.responseCount);
+        createChart("doughnut", labels, values, "Field Yanit Sayisi");
+        return;
+      }
+
+      if (selectedChart === "typeRadar") {
+        const data = await fetchJson(`/api/visit/by-type?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.visitType);
+        const values = data.rows.map((x) => x.total);
+        createChart("radar", labels, values, "Visit Type Dagilimi");
+        return;
+      }
+
+      if (selectedChart === "visitPolar") {
+        const data = await fetchJson(`/api/visit/trend?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => String(x.visitDate).slice(0, 10));
+        const values = data.rows.map((x) => x.total);
+        createChart("polarArea", labels, values, "Gunluk Gerceklesen Ziyaret");
         return;
       }
 
