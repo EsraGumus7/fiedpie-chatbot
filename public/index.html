@@ -273,22 +273,29 @@
     }
 
     .assistant-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .assistant-header h2 {
-      margin: 0;
+      margin: 0 0 6px 0;
+      font-size: 20px;
+      line-height: 1.1;
+      color: #1e293b;
+    }
+
+    .assistant-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
     .assistant-header-actions {
       display: flex;
       align-items: center;
       gap: 8px;
-      flex-shrink: 0;
+      flex-wrap: nowrap;
     }
 
     .scope-toggle-group {
@@ -408,6 +415,14 @@
       line-height: 1;
       cursor: pointer;
       box-shadow: none;
+    }
+
+    /* prevent layout shift when label length changes */
+    .scope-toggle-btn {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .scope-toggle-btn:last-child {
@@ -981,10 +996,7 @@
         </button>
       </div>
       <hr />
-      <label for="fieldName">Form Alani</label>
-      <input id="fieldName" type="text" placeholder="Orn: Raf" />
-      <label for="fieldId" style="margin-top:8px;display:block;">Field ID (opsiyonel)</label>
-      <input id="fieldId" type="number" placeholder="Orn: 64547" />
+      <!-- Removed: Form Alani / Field ID (not used) -->
       <div id="userPanel" style="margin-top:12px; background:#fff; padding:10px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:none; font-size:13px;">
         <div style="margin-bottom:6px; color:#333;">
           <strong id="userPanelName">Kullanıcı</strong>
@@ -1028,6 +1040,8 @@
     <section class="panel">
       <div class="assistant-header">
         <h2>Asistan</h2>
+      </div>
+      <div class="assistant-header-row">
         <div class="assistant-header-actions">
           <div id="scopeToggleGroup" class="scope-toggle-group hidden">
             <div class="scope-teams-wrap">
@@ -1258,8 +1272,7 @@ async function login() {
     const chatLog = document.getElementById("chatLog");
     const startDateEl = document.getElementById("startDate");
     const endDateEl = document.getElementById("endDate");
-    const fieldNameEl = document.getElementById("fieldName");
-    const fieldIdEl = document.getElementById("fieldId");
+    // fieldName/fieldId inputs removed — no DOM elements for them anymore
     const questionEl = document.getElementById("question");
     const sqlPanel = document.getElementById("sqlPanel");
     const helpOpenBtn = document.getElementById("helpOpenBtn");
@@ -1979,12 +1992,7 @@ async function login() {
       if (filters.endDate) {
         endDateEl.value = String(filters.endDate).slice(0, 10);
       }
-      if (filters.fieldName) {
-        fieldNameEl.value = filters.fieldName;
-      }
-      if (filters.fieldId) {
-        fieldIdEl.value = filters.fieldId;
-      }
+      // fieldName/fieldId removed; nothing to apply to inputs
     }
 
     function getAllowedChartsForIntent(intent) {
@@ -2022,8 +2030,7 @@ async function login() {
       return {
         startDate: startDateEl.value || null,
         endDate: endDateEl.value || null,
-        fieldName: fieldNameEl.value || null,
-        fieldId: fieldIdEl.value || null,
+        // fieldName/fieldId removed from filters
       };
     }
 
@@ -2780,8 +2787,6 @@ async function login() {
       const params = new URLSearchParams();
       if (filters.startDate) params.set("startDate", filters.startDate);
       if (filters.endDate) params.set("endDate", filters.endDate);
-      if (filters.fieldName) params.set("fieldName", filters.fieldName);
-      if (filters.fieldId) params.set("fieldId", filters.fieldId);
 
       if (selectedChart === "kpiCards") {
         resetChartArea(true);
