@@ -1066,17 +1066,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
     const scopePreference = scopePlan.scopePreference;
 
     let userContextForQuery = userContext;
-    if (
-      userContext &&
-      !runDualScope &&
-      !runMultiTeamScope &&
-      !runSingleTeamScope &&
-      !runCompanyTeamScope &&
-      userContext.isHybridScopeUser &&
-      scopePlan.source !== "toolbar"
-    ) {
-      userContextForQuery = buildScopedUserContext(userContext, scopePreference);
-    } else if (scopePlan.mode === "company" && userContext?.companyCapable) {
+    if (scopePlan.mode === "company" && userContext?.companyCapable) {
       userContextForQuery = buildScopedUserContext(userContext, "company");
     }
 
@@ -1262,7 +1252,9 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
             ? resolveSubscriptionTeams(userContext).length
               ? resolveSubscriptionTeams(userContext)
               : resolveScopeTeams(userContext)
-            : resolveManagedTeams(userContext);
+            : userContext.companyCapable && toolbarConfig?.operationalTeams?.length
+              ? toolbarConfig.operationalTeams
+              : resolveManagedTeams(userContext);
       const teamResults = await mapTeamsWithConcurrency(breakdownTeams, async (team) => {
         const teamContext = await buildSingleTeamScopedContext(
           userContext,

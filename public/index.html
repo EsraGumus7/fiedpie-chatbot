@@ -379,6 +379,26 @@
       padding: 6px 4px;
     }
 
+    .scope-teams-menu .scope-menu-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #6b7c99;
+      padding: 8px 4px 4px;
+      margin: 0;
+    }
+
+    .scope-teams-menu .scope-menu-group-title:first-of-type {
+      padding-top: 2px;
+    }
+
+    .scope-teams-menu .scope-menu-group + .scope-menu-group {
+      border-top: 1px solid #e8eef8;
+      margin-top: 4px;
+      padding-top: 2px;
+    }
+
     .scope-toggle-btn.scope-menu-btn {
       padding: 8px 10px;
       min-width: 32px;
@@ -1341,6 +1361,35 @@ async function login() {
       return config?.operationalTeams || [];
     }
 
+    function getTeamMenuGroups(config = scopeToolbarConfig) {
+      return config?.teamMenuGroups || null;
+    }
+
+    function renderTeamMenuCheckbox(team) {
+      const allChecked = scopeSelection.teamScope === "all";
+      const checked =
+        allChecked ||
+        (scopeSelection.teamIds || []).map(Number).includes(Number(team.teamId));
+      return `
+        <label>
+          <input type="checkbox" name="scopeManagedTeam" value="${team.teamId}" ${checked ? "checked" : ""} />
+          <span>${escapeHtml(team.teamName || `Takim ${team.teamId}`)}</span>
+        </label>
+      `;
+    }
+
+    function renderTeamMenuGroup(title, teams = []) {
+      if (!teams.length) {
+        return "";
+      }
+      return `
+        <div class="scope-menu-group">
+          <div class="scope-menu-group-title">${escapeHtml(title)}</div>
+          ${teams.map((team) => renderTeamMenuCheckbox(team)).join("")}
+        </div>
+      `;
+    }
+
     function closeTeamsMenu() {
       if (!scopeTeamsMenu) {
         return;
@@ -1377,6 +1426,7 @@ async function login() {
       }
 
       const teams = getManagedTeamsList();
+      const menuGroups = getTeamMenuGroups();
       if (!teams.length) {
         scopeTeamsMenu.innerHTML =
           '<div class="scope-menu-empty">Yonetilen takim bulunamadi.</div>';
@@ -1386,26 +1436,25 @@ async function login() {
       const parts = [];
       if (teams.length > 1) {
         const allChecked = scopeSelection.teamScope === "all";
+        const allLabel = scopeToolbarConfig?.isCompanyScopeUser
+          ? "Tum takimlar"
+          : "Tum takimlarim";
         parts.push(`
           <label class="scope-menu-all">
             <input type="checkbox" name="scopeManagedTeam" value="all" ${allChecked ? "checked" : ""} />
-            <span>Tum takimlarim</span>
+            <span>${allLabel}</span>
           </label>
         `);
       }
 
-      teams.forEach((team) => {
-        const allChecked = scopeSelection.teamScope === "all";
-        const checked =
-          allChecked ||
-          (scopeSelection.teamIds || []).map(Number).includes(Number(team.teamId));
-        parts.push(`
-          <label>
-            <input type="checkbox" name="scopeManagedTeam" value="${team.teamId}" ${checked ? "checked" : ""} />
-            <span>${escapeHtml(team.teamName || `Takim ${team.teamId}`)}</span>
-          </label>
-        `);
-      });
+      if (menuGroups?.showGrouped) {
+        parts.push(renderTeamMenuGroup("Yonettiginiz takimlar", menuGroups.managedTeams || []));
+        parts.push(renderTeamMenuGroup("Diger takimlar", menuGroups.otherTeams || []));
+      } else {
+        teams.forEach((team) => {
+          parts.push(renderTeamMenuCheckbox(team));
+        });
+      }
 
       scopeTeamsMenu.innerHTML = parts.join("");
     }

@@ -45,18 +45,14 @@ async function testPlanUnit() {
     "Jon icin subscriptionTeams yuklenmeli"
   );
 
-  const outOfScope = resolveScopePlan(
+  const subscriptionTeamQuery = resolveScopePlan(
     jonCtx,
     "intern-test-team-1 ziyaret sayisi",
     "visitCountRealized"
   );
   assert(
-    outOfScope.mode === "denied",
-    `Out-of-scope: expected denied, got ${outOfScope.mode}`
-  );
-  assert(
-    outOfScope.denyReason === "team_out_of_operational_scope",
-    "Out-of-scope denyReason"
+    subscriptionTeamQuery.mode === "single_team",
+    `Hibrit admin subscription takimi: expected single_team, got ${subscriptionTeamQuery.mode}`
   );
 
   const distributionDual = resolveScopePlan(

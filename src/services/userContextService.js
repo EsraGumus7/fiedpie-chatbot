@@ -247,14 +247,17 @@ async function buildUserContext(userId) {
     companyLevel: hierarchy.companyLevel,
     companyAllowedUserIds: hierarchy.companyAllowedUserIds,
     companyScopeLabel: hierarchy.companyScopeLabel,
-    isHybridScopeUser: hierarchy.isHybridScopeUser,
+    isHybridScopeUser: false,
+    isCompanyScopeUser: !!hierarchy.isCompanyScopeUser,
     defaultScopeMode: hierarchy.defaultScopeMode,
     assignedClientIds: clientIds,
     effectiveClientIds: clientIds,
     clientTagIds: [],
     managedTeamIds: hierarchy.managedTeamIds,
     managedTeams: teams
-      .filter((team) => managedTeamIds.includes(Number(team.teamId)))
+      .filter((team) =>
+        managedTeamIds.some((id) => Number(id) === Number(team.teamId))
+      )
       .map((team) => ({
         teamId: Number(team.teamId),
         teamName: team.teamName || `Takim ${team.teamId}`,

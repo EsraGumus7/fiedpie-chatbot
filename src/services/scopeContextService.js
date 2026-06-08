@@ -248,13 +248,10 @@ function resolveManagedTeams(userContext = {}) {
   }));
 }
 
-/** L4 saf sirket admini icin subscription takimlari; L2/L3 icin yonetilen takimlar. */
+/** L4 admin: subscription takimlari; L2/L3: yonetilen takimlar. */
 function resolveScopeTeams(userContext = {}) {
-  if (userContext.isPureCompanyScopeUser) {
-    return (userContext.subscriptionTeams || []).map((team) => ({
-      teamId: Number(team.teamId),
-      teamName: team.teamName || `Takim ${team.teamId}`,
-    }));
+  if (userContext.companyCapable) {
+    return resolveSubscriptionTeams(userContext);
   }
 
   return resolveManagedTeams(userContext);
@@ -268,10 +265,7 @@ function resolveSubscriptionTeams(userContext = {}) {
 }
 
 function canUseCompanySubscriptionBreakdown(userContext = {}) {
-  return !!(
-    userContext.companyCapable &&
-    (userContext.isPureCompanyScopeUser || userContext.isHybridScopeUser)
-  );
+  return !!userContext.companyCapable;
 }
 
 function buildSubscriptionMultiTeamPlan(plan, teams = []) {
@@ -304,16 +298,14 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
     : "dual";
   const managedTeams = userContext ? resolveManagedTeams(userContext) : [];
   const scopeTeams = userContext ? resolveScopeTeams(userContext) : [];
-  const subscriptionTeams = userContext?.isHybridScopeUser
+  const subscriptionTeams = userContext?.companyCapable
     ? resolveSubscriptionTeams(userContext)
-    : userContext?.isPureCompanyScopeUser
-      ? scopeTeams
-      : [];
+    : [];
   const teamMatch = userContext
     ? detectTeamFromQuestion(question, scopeTeams)
     : null;
   const subscriptionTeamMatch =
-    userContext?.isHybridScopeUser && subscriptionTeams.length
+    userContext?.companyCapable && subscriptionTeams.length
       ? detectTeamFromQuestion(question, subscriptionTeams)
       : null;
 
@@ -338,11 +330,7 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
     };
   }
 
-  if (
-    scopePreference === "company" &&
-    !userContext.companyCapable &&
-    !userContext.isHybridScopeUser
-  ) {
+  if (scopePreference === "company" && !userContext.companyCapable) {
     return {
       ...plan,
       mode: "denied",
@@ -365,7 +353,7 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
   }
 
   if (
-    userContext.isHybridScopeUser &&
+    userContext.companyCapable &&
     subscriptionTeamMatch?.teamId &&
     !subscriptionTeamMatch?.ambiguous &&
     scopePreference !== "company"
@@ -374,9 +362,10 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
     if (!managedIds.has(Number(subscriptionTeamMatch.teamId))) {
       return {
         ...plan,
-        mode: "denied",
-        display: "message",
-        denyReason: "team_out_of_operational_scope",
+        mode: "single_team",
+        display: "team_detail",
+        includeMemberBreakdown: true,
+        teamIds: [subscriptionTeamMatch.teamId],
         teamMatch: subscriptionTeamMatch,
       };
     }
@@ -411,25 +400,8 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
   }
 
   if (
-    isHybridDualScopeIntent(intent) &&
-    userContext.isHybridScopeUser &&
-    scopePreference === "dual" &&
-    !teamMatch?.teamId &&
-    !subscriptionTeamMatch?.teamId &&
-    !detectTeamBreakdownFromQuestion(question)
-  ) {
-    return {
-      ...plan,
-      mode: "dual",
-      display: "dual",
-      teamIds: managedTeams.map((team) => team.teamId),
-    };
-  }
-
-  if (
     isMultiTeamBreakdownIntent(intent) &&
-    !userContext.isHybridScopeUser &&
-    !userContext.isPureCompanyScopeUser &&
+    !userContext.companyCapable &&
     managedTeams.length > 1 &&
     scopePreference !== "company" &&
     !teamMatch?.teamId
@@ -450,10 +422,10 @@ function resolveScopePlan(userContext = null, question = "", intent = "") {
     };
   }
 
-  if (userContext.isHybridScopeUser) {
+  if (userContext.companyCapable && scopePreference !== "company") {
     return {
       ...plan,
-      mode: scopePreference === "company" ? "company" : "operational",
+      mode: "company",
       display: "single",
     };
   }

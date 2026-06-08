@@ -36,7 +36,8 @@ function resolveOperationalLevel(user = {}, managedTeamIds = []) {
 }
 
 function resolveHierarchyLevel(user, roles = [], managedTeamIds = []) {
-  if (isCompanyCapable(user, roles) && unique(managedTeamIds).length === 0) {
+  // L4 admin: sirket yetkisi varsa her zaman COMPANY (yonettigi takim olsa bile).
+  if (isCompanyCapable(user, roles)) {
     return HIERARCHY_LEVEL.COMPANY;
   }
 
@@ -136,13 +137,17 @@ async function getSubscriptionTeams(subscriptionId, dbQuery = queryDb) {
   }));
 }
 
+function isCompanyScopeUser({ companyCapable = false } = {}) {
+  return !!companyCapable;
+}
+
+/** Saf L4: admin ama hic takim yonetmiyor (geriye uyumluluk). */
 function isPureCompanyScopeUser({
   companyCapable = false,
   managedTeamIds = [],
-  isHybridScopeUser = false,
   hierarchyLevel = HIERARCHY_LEVEL.SELF,
 } = {}) {
-  if (!companyCapable || isHybridScopeUser) {
+  if (!companyCapable) {
     return false;
   }
   if ((managedTeamIds || []).length > 0) {
@@ -151,16 +156,9 @@ function isPureCompanyScopeUser({
   return Number(hierarchyLevel) === HIERARCHY_LEVEL.COMPANY;
 }
 
-/** Saf L4 veya hibrit admin icin subscription takim listesi (scope eslestirme / breakdown). */
-function shouldLoadSubscriptionTeams({
-  companyCapable = false,
-  isHybridScopeUser = false,
-  isPureCompany = false,
-} = {}) {
-  if (!companyCapable) {
-    return false;
-  }
-  return !!isPureCompany || !!isHybridScopeUser;
+/** L4 admin icin subscription takim listesi. */
+function shouldLoadSubscriptionTeams({ companyCapable = false } = {}) {
+  return !!companyCapable;
 }
 
 async function buildAllowedUserIds({
@@ -208,23 +206,12 @@ function resolveManagedTeamLabel(teams = [], managedTeamIds = []) {
 }
 
 function pickEffectiveScope({
-  isHybridScopeUser,
-  defaultScopeMode,
+  companyCapable = false,
   operationalLevel,
   operationalAllowedUserIds,
   companyAllowedUserIds,
 }) {
-  if (isHybridScopeUser && defaultScopeMode === "operational") {
-    return {
-      hierarchyLevel: operationalLevel,
-      hierarchyLabel: getHierarchyLabel(operationalLevel),
-      hierarchyBypassUserFilter: false,
-      allowedUserIds: operationalAllowedUserIds,
-      activeScopeMode: "operational",
-    };
-  }
-
-  if (companyAllowedUserIds?.length) {
+  if (companyCapable && companyAllowedUserIds?.length) {
     return {
       hierarchyLevel: HIERARCHY_LEVEL.COMPANY,
       hierarchyLabel: "COMPANY",
@@ -266,24 +253,11 @@ async function resolveUserHierarchy({
     ? await getSubscriptionUserIds(user.SubscriptionId, dbQuery)
     : [];
 
-  const isHybridScopeUser =
-    companyCapable &&
-    managedIds.length > 0 &&
-    !user.ManagerOfAllTeams &&
-    operationalLevel < HIERARCHY_LEVEL.COMPANY;
-
-  const defaultScopeMode = isHybridScopeUser
-    ? "operational"
-    : companyCapable && managedIds.length === 0
-      ? "company"
-      : "operational";
-
   const operationalScopeLabel = resolveManagedTeamLabel(teams, managedIds);
   const companyScopeLabel = user.subscriptionCompanyName || "Sirket geneli";
 
   const effective = pickEffectiveScope({
-    isHybridScopeUser,
-    defaultScopeMode,
+    companyCapable,
     operationalLevel,
     operationalAllowedUserIds,
     companyAllowedUserIds,
@@ -292,15 +266,10 @@ async function resolveUserHierarchy({
   const pureCompanyScopeUser = isPureCompanyScopeUser({
     companyCapable,
     managedTeamIds: managedIds,
-    isHybridScopeUser,
     hierarchyLevel: effective.hierarchyLevel,
   });
 
-  const loadSubscriptionTeams = shouldLoadSubscriptionTeams({
-    companyCapable,
-    isHybridScopeUser,
-    isPureCompany: pureCompanyScopeUser,
-  });
+  const loadSubscriptionTeams = shouldLoadSubscriptionTeams({ companyCapable });
 
   const subscriptionTeams = loadSubscriptionTeams
     ? await getSubscriptionTeams(user.SubscriptionId, dbQuery)
@@ -323,8 +292,9 @@ async function resolveUserHierarchy({
     companyAllowedUserIds,
     companyScopeLabel,
 
-    isHybridScopeUser,
-    defaultScopeMode,
+    isCompanyScopeUser: companyCapable,
+    isHybridScopeUser: false,
+    defaultScopeMode: companyCapable ? "company" : "operational",
     managedTeamIds: managedIds,
     subscriptionTeams,
     isPureCompanyScopeUser: pureCompanyScopeUser,
@@ -334,6 +304,7 @@ async function resolveUserHierarchy({
 module.exports = {
   HIERARCHY_LEVEL,
   isCompanyCapable,
+  isCompanyScopeUser,
   isPureCompanyScopeUser,
   resolveOperationalLevel,
   resolveHierarchyLevel,

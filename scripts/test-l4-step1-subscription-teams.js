@@ -71,21 +71,13 @@ async function main() {
   console.log("L4 Adim 1: subscriptionTeams yukleme testi\n");
 
   assert(
-    shouldLoadSubscriptionTeams({
-      companyCapable: true,
-      isHybridScopeUser: false,
-      isPureCompany: true,
-    }),
-    "shouldLoadSubscriptionTeams: saf L4 true olmali"
+    shouldLoadSubscriptionTeams({ companyCapable: true }),
+    "shouldLoadSubscriptionTeams: L4 admin true olmali"
   );
 
   assert(
-    shouldLoadSubscriptionTeams({
-      companyCapable: true,
-      isHybridScopeUser: true,
-      isPureCompany: false,
-    }),
-    "shouldLoadSubscriptionTeams: hibrit admin true olmali"
+    !shouldLoadSubscriptionTeams({ companyCapable: false }),
+    "shouldLoadSubscriptionTeams: L2/L3 false olmali"
   );
 
   await checkUser("L4 saf admin (Mireille)", 12942, {
@@ -94,15 +86,9 @@ async function main() {
     scopeTeamSource: "subscription",
   });
 
-  await checkUser("L3 cok takim (Amer)", 12497, {
+  await checkUser("L3 supervisor (Amer)", 12497, {
     isPureCompanyScopeUser: false,
     maxSubscriptionTeams: 0,
-    scopeTeamSource: "managed",
-  });
-
-  await checkUser("L2 hibrit (Jon)", 14078, {
-    isPureCompanyScopeUser: false,
-    minSubscriptionTeams: 1,
     scopeTeamSource: "managed",
   });
 

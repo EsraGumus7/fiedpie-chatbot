@@ -16,8 +16,20 @@ function uniqueTeamIds(teamIds = []) {
   );
 }
 
-function resolveToolbarTeams(userContext = {}) {
-  if (userContext.isPureCompanyScopeUser || userContext.isHybridScopeUser) {
+function isL4Admin(userContext = {}) {
+  return !!userContext.companyCapable;
+}
+
+function resolveToolbarLevel(userContext = {}) {
+  if (isL4Admin(userContext)) {
+    return 4;
+  }
+  return Number(userContext.operationalLevel ?? userContext.hierarchyLevel ?? 1);
+}
+
+/** L4: subscription takimlari; L2/L3: yonetilen takimlar. */
+function resolveOperationalTeams(userContext = {}) {
+  if (isL4Admin(userContext)) {
     const subscriptionTeams = resolveSubscriptionTeams(userContext);
     if (subscriptionTeams.length) {
       return subscriptionTeams;
@@ -27,30 +39,44 @@ function resolveToolbarTeams(userContext = {}) {
   return resolveManagedTeams(userContext);
 }
 
-function resolveOperationalTeams(userContext = {}) {
-  const managedTeams = resolveManagedTeams(userContext);
-  if (managedTeams.length) {
-    return managedTeams;
-  }
-
-  return resolveToolbarTeams(userContext);
-}
-
 function resolveCompanyTeams(userContext = {}) {
-  if (!userContext.companyCapable) {
+  if (!isL4Admin(userContext)) {
     return [];
   }
 
-  const subscriptionTeams = resolveSubscriptionTeams(userContext);
-  if (subscriptionTeams.length) {
-    return subscriptionTeams;
+  return resolveSubscriptionTeams(userContext);
+}
+
+/** L4 admin + takim lideri: dropdown icin yonetilen / diger takim gruplari. */
+function resolveTeamMenuGroups(userContext = {}) {
+  const managedTeams = resolveManagedTeams(userContext);
+
+  if (!isL4Admin(userContext) || !managedTeams.length) {
+    return {
+      showGrouped: false,
+      managedTeams: [],
+      otherTeams: [],
+    };
   }
 
-  return resolveOperationalTeams(userContext);
+  const managedIds = new Set(managedTeams.map((team) => Number(team.teamId)));
+  const otherTeams = resolveSubscriptionTeams(userContext).filter(
+    (team) => !managedIds.has(Number(team.teamId))
+  );
+
+  return {
+    showGrouped: otherTeams.length > 0,
+    managedTeams,
+    otherTeams,
+  };
 }
 
 function findTeamMeta(teams = [], teamId) {
   return (teams || []).find((team) => Number(team.teamId) === Number(teamId)) || null;
+}
+
+function resolveAllTeamsScopeSource(userContext = {}) {
+  return isL4Admin(userContext) ? "subscription" : "managed";
 }
 
 function resolveBreakdownTeamList(userContext = {}, toolbarConfig = {}, teamIds = []) {
@@ -67,10 +93,12 @@ function resolveBreakdownTeamList(userContext = {}, toolbarConfig = {}, teamIds 
     return pool.filter((team) => idSet.has(Number(team.teamId)));
   }
 
-  if (userContext.isPureCompanyScopeUser) {
+  if (isL4Admin(userContext)) {
     return toolbarConfig.companyTeams?.length
       ? toolbarConfig.companyTeams
-      : toolbarConfig.teams || [];
+      : toolbarConfig.operationalTeams?.length
+        ? toolbarConfig.operationalTeams
+        : toolbarConfig.teams || [];
   }
 
   return toolbarConfig.operationalTeams?.length
@@ -95,7 +123,7 @@ function buildDefaultScopeSelection(userContext = {}, toolbarConfig = {}) {
     return { mode: "company", teamScope: "all", teamIds: [] };
   }
 
-  // Saf L2/L3: sirket kilitli — varsayilan ilk yonetilen takim
+  // L2/L3: sirket kilitli — varsayilan ilk yonetilen takim
   if (operationalTeams.length >= 1) {
     return {
       mode: "teams",
@@ -108,26 +136,14 @@ function buildDefaultScopeSelection(userContext = {}, toolbarConfig = {}) {
 }
 
 function buildScopeToolbarConfig(userContext = {}) {
-  const level = Number(userContext.operationalLevel ?? userContext.hierarchyLevel ?? 1);
-  const companyCapable = !!userContext.companyCapable;
+  const level = resolveToolbarLevel(userContext);
   const operationalTeams = resolveOperationalTeams(userContext);
   const companyTeams = resolveCompanyTeams(userContext);
-  const teams = companyCapable && companyTeams.length ? companyTeams : operationalTeams;
-  const managedCount = operationalTeams.length;
-  const allowMultiTeamSelect =
-    level >= 3 ||
-    userContext.isPureCompanyScopeUser ||
-    operationalTeams.length > 1 ||
-    (companyCapable && companyTeams.length > 1);
+  const teams = isL4Admin(userContext) && companyTeams.length ? companyTeams : operationalTeams;
+  const managedTeamCount = (userContext.managedTeamIds || []).length;
 
-  const teamsUsable =
-    level > 1 &&
-    (operationalTeams.length > 0 ||
-      (companyCapable &&
-        companyTeams.length > 0 &&
-        (userContext.isPureCompanyScopeUser || userContext.isHybridScopeUser)));
-
-  const companyUsable = level > 1 && companyCapable;
+  const teamsUsable = level > 1 && operationalTeams.length > 0;
+  const companyUsable = isL4Admin(userContext);
 
   const teamsButton = {
     visible: true,
@@ -141,26 +157,32 @@ function buildScopeToolbarConfig(userContext = {}) {
   };
 
   const allowDualScopeSelect = teamsUsable && companyUsable;
+  const allowMultiTeamSelect =
+    level >= 3 || operationalTeams.length > 1 || (isL4Admin(userContext) && companyTeams.length > 1);
 
   let badgeLabel = "Kendim";
-  if (level >= 4 || userContext.isPureCompanyScopeUser) {
+  if (level >= 4) {
     badgeLabel = "Sirket geneli";
-  } else if (managedCount > 1) {
-    badgeLabel = `${managedCount} takim`;
-  } else if (managedCount === 1) {
+  } else if (managedTeamCount > 1 || operationalTeams.length > 1) {
+    badgeLabel = `${operationalTeams.length} takim`;
+  } else if (operationalTeams.length === 1) {
     badgeLabel = operationalTeams[0]?.teamName || userContext.operationalScopeLabel || "Takim";
   }
 
+  const teamMenuGroups = resolveTeamMenuGroups(userContext);
+
   const toolbarConfig = {
     operationalLevel: level,
-    isHybridScopeUser: !!userContext.isHybridScopeUser,
+    isHybridScopeUser: false,
     isPureCompanyScopeUser: !!userContext.isPureCompanyScopeUser,
-    companyCapable,
+    isCompanyScopeUser: isL4Admin(userContext),
+    companyCapable: isL4Admin(userContext),
     teamsButton,
     companyButton,
     teams,
     operationalTeams,
     companyTeams,
+    teamMenuGroups,
     allowMultiTeamSelect,
     allowDualScopeSelect,
     allowSelectAllTeams: operationalTeams.length > 1,
@@ -402,7 +424,10 @@ function resolveScopePlanFromSelection(userContext = null, rawSelection = {}, in
       mode: "company_team_breakdown",
       display: "company_team_breakdown",
       scopePreference: "company",
-      scopeSource: selection.teamScope === "all" ? "managed" : "selected",
+      scopeSource:
+        selection.teamScope === "all"
+          ? resolveAllTeamsScopeSource(userContext)
+          : "selected",
       teamIds: breakdownTeams.map((team) => team.teamId),
       includeMemberBreakdown: breakdownTeams.length === 1,
       useCompanyScopeForCombinedTotal: selection.teamScope === "all",
@@ -458,9 +483,9 @@ function resolveScopePlanFromSelection(userContext = null, rawSelection = {}, in
       ...basePlan,
       mode: "multi_team",
       display: "breakdown",
-      scopeSource: userContext.isPureCompanyScopeUser ? "subscription" : "managed",
+      scopeSource: resolveAllTeamsScopeSource(userContext),
       teamIds: breakdownTeams.map((team) => team.teamId),
-      combinedLabel: userContext.isPureCompanyScopeUser
+      combinedLabel: isL4Admin(userContext)
         ? formatCompanyDisplayLabel(userContext.companyScopeLabel || "Sirket geneli")
         : "Toplam",
     };
@@ -482,7 +507,6 @@ module.exports = {
   buildScopeToolbarConfig,
   normalizeScopeSelection,
   resolveScopePlanFromSelection,
-  resolveToolbarTeams,
   resolveOperationalTeams,
   resolveCompanyTeams,
   resolveBreakdownTeamList,
