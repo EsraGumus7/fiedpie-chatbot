@@ -288,6 +288,68 @@ function buildVisitScopeExistsClause(visitIdExpr, userContext = {}, bind = {}, b
   return lines.join("\n");
 }
 
+function buildClientInvoiceScopeExistsClause(
+  clientInvoiceIdExpr,
+  userContext = {},
+  bind = {},
+  bindPrefix = "scopeClientInvoice"
+) {
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.ClientInvoice ci_scope",
+    "  INNER JOIN dbo.Client c_scope",
+    "    ON c_scope.Id = ci_scope.ClientId",
+    "   AND c_scope.Deleted = 0",
+    `  WHERE ci_scope.Id = ${clientInvoiceIdExpr}`,
+    "    AND ci_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, `${bindPrefix}Sub`, bind);
+    lines.push(`    AND c_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, `${bindPrefix}User`, bind);
+    if (userIn.sql) {
+      lines.push(`    AND ci_scope.UserId IN (${userIn.sql})`);
+    }
+  }
+
+  lines.push(")");
+  return lines.join("\n");
+}
+
+function buildInvoiceScopeExistsClause(
+  invoiceRef,
+  userContext = {},
+  bind = {},
+  bindPrefix = "scopeInvoice"
+) {
+  const visitScopeClause = buildVisitScopeExistsClause(
+    `${invoiceRef}.VisitId`,
+    userContext,
+    bind,
+    `${bindPrefix}Visit`
+  );
+
+  const clientInvoiceScopeClause = buildClientInvoiceScopeExistsClause(
+    `${invoiceRef}.ClientInvoiceId`,
+    userContext,
+    bind,
+    `${bindPrefix}ClientInvoice`
+  );
+
+  return `(
+${visitScopeClause}
+OR
+${clientInvoiceScopeClause}
+)`;
+}
+
 function buildVisitLinkedTableScopeClauses(
   userContext = {},
   query = "",
@@ -310,6 +372,32 @@ function buildVisitLinkedTableScopeClauses(
     userContext,
     bind,
     "scopeVisit"
+  );
+
+  return { clauses: [clause], bind, skipped: null, notes: [] };
+}
+
+function buildInvoiceTableScopeClauses(
+  userContext = {},
+  query = "",
+  tableName = "dbo.Invoice"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, tableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(tableName, alias);
+  const clause = buildInvoiceScopeExistsClause(
+    ref,
+    userContext,
+    bind,
+    "scopeInvoice"
   );
 
   return { clauses: [clause], bind, skipped: null, notes: [] };
@@ -378,32 +466,23 @@ function buildInvoiceChildScopeClauses(
 
   const bind = {};
   const ref = tableRef(childTableName, alias);
-  const subscriptionIds = getSubscriptionIds(userContext);
+  const invoiceScopeClause = buildInvoiceScopeExistsClause(
+    "i_scope",
+    userContext,
+    bind,
+    "scopeInv"
+  );
+
   const lines = [
     "EXISTS (",
     "  SELECT 1",
     "  FROM dbo.Invoice i_scope",
-    "  INNER JOIN dbo.Visit v_scope",
-    "    ON v_scope.Id = i_scope.VisitId",
-    "   AND v_scope.Deleted = 0",
     `  WHERE i_scope.Id = ${ref}.${foreignKeyColumn}`,
     "    AND i_scope.Deleted = 0",
+    `    AND ${invoiceScopeClause.replace(/\n/g, "\n    ")}`,
+    ")",
   ];
 
-  if (subscriptionIds.length) {
-    const subIn = buildInList(subscriptionIds, "scopeInvSub", bind);
-    lines.push(`    AND v_scope.SubscriptionId IN (${subIn.sql})`);
-  }
-
-  if (!canBypassUserScope(userContext)) {
-    const userIds = getAllowedUserIds(userContext);
-    const userIn = buildInList(userIds, "scopeInvUser", bind);
-    if (userIn.sql) {
-      lines.push(`    AND v_scope.UserId IN (${userIn.sql})`);
-    }
-  }
-
-  lines.push(")");
   return { clauses: [lines.join("\n")], bind, skipped: null, notes: [] };
 }
 
@@ -540,7 +619,7 @@ function buildClientLinkedTableScopeClauses(
 
 const TABLE_SCOPE_ROUTES = [
   { table: "dbo.PurchaseOrder", builder: (ctx, q) => buildVisitLinkedTableScopeClauses(ctx, q, "dbo.PurchaseOrder") },
-  { table: "dbo.Invoice", builder: (ctx, q) => buildVisitLinkedTableScopeClauses(ctx, q, "dbo.Invoice") },
+  { table: "dbo.Invoice", builder: (ctx, q) => buildInvoiceTableScopeClauses(ctx, q, "dbo.Invoice") },
   {
     table: "dbo.PurchaseOrderDetail",
     builder: (ctx, q) => buildPurchaseOrderChildScopeClauses(ctx, q, "dbo.PurchaseOrderDetail"),
@@ -702,4 +781,8 @@ module.exports = {
   canBypassAllScope,
   shouldBypassHierarchyUserFilter,
   detectVisitAlias,
+  buildClientInvoiceScopeExistsClause,
+  buildInvoiceScopeExistsClause,
+  buildInvoiceTableScopeClauses,
+  buildInvoiceChildScopeClauses,
 };
