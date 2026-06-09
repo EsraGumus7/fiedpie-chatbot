@@ -2095,6 +2095,167 @@
         valueKey: "responseCount",
       },
     };
+    Object.assign(INTENT_CHART_CONFIG, {
+      // SALES / FINANCE - KPI intents
+      totalpurchaseorders: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalpurchaseorderamount: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalpurchaseorderdetails: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoices: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoiceamount: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoicebalance: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoicedetails: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoicepayments: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalpayments: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      activecampaigns: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcampaigns: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcampaignproducts: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalclientproductprices: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcosts: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcommissions: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totaltrackedorders: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalbippromotions: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totaldistributorcommercials: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totaliyzicotransactions: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+
+      // SALES / FINANCE - distribution intents
+      purchaseordersbystatus: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+      invoicesbystatus: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+      paymentsbystate: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+      costsbycategory: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["categoryName", "groupName", "name"],
+        valueKey: "total",
+      },
+      iyzicotransactionsbystatus: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+
+      // SALES / FINANCE - trend intents
+      purchaseordertrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["createDate", "visitDate", "paymentDate"],
+        valueKey: "total",
+        datasetLabel: "Günlük Sipariş Sayısı",
+      },
+      invoicetrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["createDate", "visitDate", "paymentDate"],
+        valueKey: "total",
+        datasetLabel: "Günlük Fatura Sayısı",
+      },
+      invoicepaymenttrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["paymentDate", "createDate", "visitDate"],
+        valueKey: "total",
+        datasetLabel: "Günlük Tahsilat Sayısı",
+      },
+    });
 
     function getIntentChartConfig(intent) {
       const normalized = String(intent || "").trim().toLowerCase();
@@ -2178,9 +2339,23 @@
 
       if (chartConfig.mode === "trend") {
         resetChartArea(false);
-        const labels = rows.map((row) => String(row.visitDate || "").slice(0, 10));
-        const values = rows.map((row) => Number(row.total || 0));
-        createChart("line", labels, values, "Gunluk Gerceklesen Ziyaret");
+        const labelKeys = chartConfig.labelKeys?.length
+          ? chartConfig.labelKeys
+          : ["visitDate", "createDate", "paymentDate"];
+
+        const labels = rows.map((row) => {
+          const key = labelKeys.find(
+            (candidate) =>
+              row[candidate] !== undefined &&
+              row[candidate] !== null &&
+              row[candidate] !== ""
+          );
+          return String(key ? row[key] : "Bilinmeyen").slice(0, 10);
+        });
+
+        const valueKey = chartConfig.valueKey || "total";
+        const values = rows.map((row) => Number(row[valueKey] ?? row.total ?? 0));
+        createChart("line", labels, values, chartConfig.datasetLabel || "Günlük Kayıt Sayısı");
         return;
       }
 

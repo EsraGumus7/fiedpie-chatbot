@@ -248,11 +248,89 @@ function summarizeVisitTrendRows(rows = [], filters = {}) {
   )} ziyaret). Gunluk: ${dayLines}.`;
 }
 
+function isTrendIntent(intent = "") {
+  return [
+    "visitTrend",
+    "purchaseOrderTrend",
+    "invoiceTrend",
+    "invoicePaymentTrend",
+    "clientTrend",
+    "distributorTrend",
+    "consumerTrend",
+    "dataChangeTrend",
+  ].includes(String(intent || "").trim());
+}
+
+function getTrendUnitLabel(intent = "") {
+  const labels = {
+    visitTrend: "gerceklesen ziyaret",
+    purchaseOrderTrend: "siparis",
+    invoiceTrend: "fatura",
+    invoicePaymentTrend: "tahsilat",
+    clientTrend: "firma kaydi",
+    distributorTrend: "distributor kaydi",
+    consumerTrend: "consumer kaydi",
+    dataChangeTrend: "veri degisikligi",
+  };
+
+  return labels[intent] || "kayit/islem";
+}
+
+function pickTrendDateValue(row = {}) {
+  return (
+    row.visitDate ||
+    row.createDate ||
+    row.paymentDate ||
+    row.date ||
+    row.day ||
+    row.trendDate ||
+    ""
+  );
+}
+
+function summarizeGenericTrendRows(intent, rows = [], filters = {}) {
+  if (!rows.length) {
+    return "Secilen filtrede trend verisi bulunamadi.";
+  }
+
+  const rangeInfo = buildRangeLabel(filters);
+  const unitLabel = getTrendUnitLabel(intent);
+  const total = rows.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const avg = rows.length ? (total / rows.length).toFixed(2) : "0";
+
+  const maxRow = rows.reduce((max, item) =>
+    Number(item.total || 0) > Number(max.total || 0) ? item : max
+  );
+
+  const maxDate = String(pickTrendDateValue(maxRow)).slice(0, 10) || "-";
+  const dayLines = rows
+    .slice(-5)
+    .map((row) => {
+      const day = String(pickTrendDateValue(row)).slice(0, 10) || "-";
+      return `${day}: ${formatNumber(row.total ?? 0)}`;
+    })
+    .join(", ");
+
+  return `${rangeInfo} araliginda ${rows.length} gun veri var. Toplam ${formatNumber(
+    total
+  )} ${unitLabel}, gunluk ortalama ${avg}. En yuksek gun ${maxDate} (${formatNumber(
+    maxRow.total
+  )}). Gunluk: ${dayLines}.`;
+}
+
+function summarizeTrendRows(intent, rows = [], filters = {}) {
+  if (intent === "visitTrend") {
+    return summarizeVisitTrendRows(rows, filters);
+  }
+
+  return summarizeGenericTrendRows(intent, rows, filters);
+}
+
 function extractPrimaryMetricValue(intent, rows = []) {
   if (!rows.length) return null;
   const first = rows[0] || {};
 
-  if (intent === "visitTrend") {
+  if (isTrendIntent(intent)) {
     return rows.reduce((sum, item) => sum + Number(item.total || 0), 0);
   }
 
@@ -290,6 +368,8 @@ function getScopedMetricLabel(intent, filters = {}) {
     totalInvoiceAmount: "fatura tutari",
     totalInvoiceBalance: "odenmemis fatura bakiyesi",
     totalInvoicePayments: "fatura tahsilat tutari",
+    totalPurchaseOrderAmount: "siparis tutari",
+    totalPurchaseOrderDetails: "siparis kalemi",
   };
 
   return labels[intent] || "kayit";
@@ -318,6 +398,41 @@ function summarizeDistributionBullets(intent, rows = []) {
       .map((row) => {
         const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
         return `- ${status}: ${formatNumber(row.total)} fatura`;
+      })
+      .join("\n");
+  }
+  if (intent === "purchaseOrdersByStatus") {
+    return rows
+      .map((row) => {
+        const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
+        return `- ${status}: ${formatNumber(row.total)} siparis`;
+      })
+      .join("\n");
+  }
+
+  if (intent === "paymentsByState") {
+    return rows
+      .map((row) => {
+        const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
+        return `- ${status}: ${formatNumber(row.total)} odeme`;
+      })
+      .join("\n");
+  }
+
+  if (intent === "costsByCategory") {
+    return rows
+      .map((row) => {
+        const category = row.categoryName || row.groupName || row.name || "Bilinmeyen Kategori";
+        return `- ${category}: ${formatNumber(row.total)} maliyet`;
+      })
+      .join("\n");
+  }
+
+  if (intent === "iyzicoTransactionsByStatus") {
+    return rows
+      .map((row) => {
+        const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
+        return `- ${status}: ${formatNumber(row.total)} islem`;
       })
       .join("\n");
   }
@@ -522,20 +637,23 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     return lines.join("\n");
   }
 
-  if (intent === "visitTrend") {
+  if (isTrendIntent(intent)) {
     const lines = (multiTeamScope.teams || []).map((team) => {
       const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
-      return `${title}:\n${summarizeVisitTrendRows(team.rows || [], filters)}`;
+      return `${title}:\n${summarizeTrendRows(intent, team.rows || [], filters)}`;
     });
+
     const combinedRows = multiTeamScope.combined?.rows || [];
     if (combinedRows.length) {
       lines.push(
-        `${combinedLabel}:\n${summarizeVisitTrendRows(combinedRows, filters)}`
+        `${combinedLabel}:\n${summarizeTrendRows(intent, combinedRows, filters)}`
       );
     }
+
     if ((multiTeamScope.teams || []).length > 1) {
       appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
     }
+
     return lines.join("\n\n");
   }
 
@@ -590,6 +708,10 @@ function isDistributionIntent(intent = "") {
     "visitsByCompletionStatus",
     "visitsByType",
     "invoicesByStatus",
+    "purchaseOrdersByStatus",
+    "paymentsByState",
+    "costsByCategory",
+    "iyzicoTransactionsByStatus",
   ].includes(String(intent || "").trim());
 }
 
