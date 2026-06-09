@@ -27,6 +27,21 @@ function buildConfigFieldNamePatterns(fieldName = "") {
   return Array.from(new Set(patterns.filter(Boolean)));
 }
 
+// FieldPie UI "Admin" rolu Role.Name uzerinden gelir; User.Admin bayragi ayri bir sistem alani.
+const USER_ADMIN_ROLE_JOIN = `
+  LEFT JOIN (
+    SELECT DISTINCT ur.UserId
+    FROM dbo.UserRole ur
+    INNER JOIN dbo.Role r
+      ON r.Id = ur.RoleId
+     AND r.Deleted = 0
+    WHERE ur.Deleted = 0
+      AND LOWER(LTRIM(RTRIM(r.Name))) = N'admin'
+  ) adminRole ON adminRole.UserId = u.Id
+`;
+
+const USER_IS_ADMIN_EXPR = `(u.Admin = 1 OR adminRole.UserId IS NOT NULL)`;
+
 const TEMPLATES = {
   visitCountRealized: ({ startDate, endDate, visitRealized = 1 }) => ({
     query: `
@@ -211,12 +226,13 @@ const TEMPLATES = {
         SUM(CASE WHEN u.Deleted = 0 AND u.Blocked = 0 AND u.DeleteRequest = 0 THEN 1 ELSE 0 END) AS activeUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.Blocked = 1 THEN 1 ELSE 0 END) AS blockedUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.DeleteRequest = 1 THEN 1 ELSE 0 END) AS deleteRequestUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.Admin = 1 THEN 1 ELSE 0 END) AS adminUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND ${USER_IS_ADMIN_EXPR} THEN 1 ELSE 0 END) AS adminUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
         SUM(CASE WHEN u.Deleted = 0 AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
       FROM dbo.[User] u
+      ${USER_ADMIN_ROLE_JOIN}
       WHERE (@startDate IS NULL OR u.CreateTime >= @startDate)
         AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
     `,
@@ -226,12 +242,13 @@ const TEMPLATES = {
   userAdminSummary: ({ startDate, endDate }) => ({
     query: `
       SELECT
-        SUM(CASE WHEN u.Deleted = 0 AND u.Admin = 1 THEN 1 ELSE 0 END) AS adminUsers,
+        SUM(CASE WHEN u.Deleted = 0 AND ${USER_IS_ADMIN_EXPR} THEN 1 ELSE 0 END) AS adminUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
         SUM(CASE WHEN u.Deleted = 0 AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
         SUM(CASE WHEN u.Deleted = 0 AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
       FROM dbo.[User] u
+      ${USER_ADMIN_ROLE_JOIN}
       WHERE (@startDate IS NULL OR u.CreateTime >= @startDate)
         AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
     `,

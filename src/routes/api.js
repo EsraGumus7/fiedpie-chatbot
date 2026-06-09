@@ -279,6 +279,10 @@ function extractPrimaryMetricValue(intent, rows = []) {
     return first.totalAmount ?? null;
   }
 
+  if (intent === "userRecentLogins") {
+    return rows.length;
+  }
+
   return first.total ?? first.totalUsers ?? first.responseCount ?? null;
 }
 function getScopedMetricLabel(intent, filters = {}) {
@@ -293,6 +297,69 @@ function getScopedMetricLabel(intent, filters = {}) {
   };
 
   return labels[intent] || "kayit";
+}
+
+const USER_DISTRIBUTION_INTENTS = new Set([
+  "usersByRole",
+  "usersByTeam",
+  "usersByBrand",
+  "usersByClient",
+  "userLoginSuccessSummary",
+  "userSavedViewSummary",
+  "userStepSummary",
+  "userVisitSummary",
+]);
+
+function formatScopedDistributionParts(intent, rows = [], limit = 4) {
+  return (rows || [])
+    .slice(0, limit)
+    .map((row) => {
+      if (intent === "usersByRole") {
+        return `${row.roleName}: ${formatNumber(row.totalUsers)} kullanici`;
+      }
+      if (intent === "usersByTeam") {
+        return `${row.teamName}: ${formatNumber(row.totalUsers)} kullanici`;
+      }
+      if (intent === "usersByBrand") {
+        return `${row.brandName}: ${formatNumber(row.totalUsers)} kullanici`;
+      }
+      if (intent === "usersByClient") {
+        return `${row.clientName}: ${formatNumber(row.totalUsers)} kullanici`;
+      }
+      if (intent === "userLoginSuccessSummary") {
+        const status = row.loginStatus || "Bilinmeyen";
+        const app = row.app || "App";
+        return `${status} / ${app}: ${formatNumber(row.totalLogins)} login`;
+      }
+      if (intent === "userSavedViewSummary") {
+        return `${row.moduleName}: ${formatNumber(row.savedViewCount)} gorunum`;
+      }
+      if (intent === "userStepSummary") {
+        return `${row.userName}: ${formatNumber(row.totalSteps)} adim`;
+      }
+      if (intent === "userVisitSummary") {
+        return `${row.userName}: ${formatNumber(row.totalVisits)} ziyaret`;
+      }
+      if (intent === "visitsByCompletionStatus" || intent === "visitsByState") {
+        return `${row.visitState}: ${formatNumber(row.total)} ziyaret`;
+      }
+      if (intent === "visitsByType") {
+        return `${row.visitType}: ${formatNumber(row.total)} ziyaret`;
+      }
+      if (intent === "invoicesByStatus") {
+        const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
+        return `${status}: ${formatNumber(row.total)} fatura`;
+      }
+      const label =
+        row.visitState ||
+        row.visitType ||
+        row.statusName ||
+        row.stateName ||
+        row.groupName ||
+        "Diger";
+      return `${label}: ${formatNumber(row.total ?? row.totalUsers ?? 0)}`;
+    })
+    .join(", ");
 }
 
 function summarizeDistributionBullets(intent, rows = []) {
@@ -318,6 +385,16 @@ function summarizeDistributionBullets(intent, rows = []) {
       .map((row) => {
         const status = row.statusName || row.stateName || row.groupName || "Bilinmeyen Durum";
         return `- ${status}: ${formatNumber(row.total)} fatura`;
+      })
+      .join("\n");
+  }
+
+  if (USER_DISTRIBUTION_INTENTS.has(intent)) {
+    return rows
+      .slice(0, 5)
+      .map((row) => {
+        const part = formatScopedDistributionParts(intent, [row], 1);
+        return `- ${part}`;
       })
       .join("\n");
   }
@@ -485,14 +562,7 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
         return `${title} (${rangeInfo}): Tamamlanan ${formatNumber(tam)}, Bekleyen ${formatNumber(bek)}`;
       }
 
-      const parts = rows
-        .slice(0, 4)
-        .map((row) => {
-          const label =
-            row.visitState || row.visitType || row.statusName || row.stateName || row.groupName || "Diger";
-          return `${label} ${formatNumber(row.total ?? 0)}`;
-        })
-        .join(", ");
+      const parts = formatScopedDistributionParts(intent, rows);
       return `${title} (${rangeInfo}): ${parts || "veri yok"}`;
     });
 
@@ -504,14 +574,7 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
         `${combinedLabel} (${rangeInfo}): Tamamlanan ${formatNumber(tam)}, Bekleyen ${formatNumber(bek)}`
       );
     } else if (combinedRows.length) {
-      const parts = combinedRows
-        .slice(0, 4)
-        .map((row) => {
-          const label =
-            row.visitState || row.visitType || row.statusName || row.stateName || row.groupName || "Diger";
-          return `${label} ${formatNumber(row.total ?? 0)}`;
-        })
-        .join(", ");
+      const parts = formatScopedDistributionParts(intent, combinedRows);
       lines.push(`${combinedLabel} (${rangeInfo}): ${parts}`);
     }
 
@@ -585,12 +648,14 @@ function applyIntentRowNormalization(intent, rows = []) {
 }
 
 function isDistributionIntent(intent = "") {
+  const normalized = String(intent || "").trim();
   return [
     "visitsByState",
     "visitsByCompletionStatus",
     "visitsByType",
     "invoicesByStatus",
-  ].includes(String(intent || "").trim());
+    ...USER_DISTRIBUTION_INTENTS,
+  ].includes(normalized);
 }
 
 function renderScopeAnswer(intent, params, scopePayload = {}) {

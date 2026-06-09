@@ -2094,7 +2094,152 @@
         labelKeys: ["fieldId", "fieldName"],
         valueKey: "responseCount",
       },
+      usertotalcount: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      userstatussummary: {
+        chart: "kpiCards",
+        mode: "summary",
+        allowed: ["kpiCards", "statePie", "stateBar"],
+      },
+      useradminsummary: {
+        chart: "kpiCards",
+        mode: "summary",
+        allowed: ["kpiCards", "stateBar", "statePie"],
+      },
+      usersbyrole: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["roleName"],
+        valueKey: "totalUsers",
+      },
+      usersbyteam: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["teamName"],
+        valueKey: "totalUsers",
+      },
+      usersbybrand: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["brandName"],
+        valueKey: "totalUsers",
+      },
+      usersbyclient: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["clientName"],
+        valueKey: "totalUsers",
+      },
+      userrecentlogins: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      userloginsuccesssummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "kpiCards"],
+        labelKeys: ["loginStatus"],
+        valueKey: "totalLogins",
+      },
+      userdevicesummary: {
+        chart: "kpiCards",
+        mode: "summary",
+        allowed: ["kpiCards", "statePie", "stateBar"],
+      },
+      usersavedviewsummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "kpiCards"],
+        labelKeys: ["moduleName"],
+        valueKey: "savedViewCount",
+      },
+      userstepsummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "stateHBar", "kpiCards"],
+        labelKeys: ["userName"],
+        valueKey: "totalSteps",
+      },
+      uservisitsummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "stateHBar", "kpiCards"],
+        labelKeys: ["userName"],
+        valueKey: "totalVisits",
+      },
     };
+
+    function getUserSummaryFields(normalizedIntent) {
+      const map = {
+        userstatussummary: [
+          { key: "activeUsers", label: "Aktif" },
+          { key: "blockedUsers", label: "Bloke" },
+          { key: "deleteRequestUsers", label: "Silme Talebi" },
+        ],
+        useradminsummary: [
+          { key: "adminUsers", label: "Admin" },
+          { key: "apiUsers", label: "API User" },
+          { key: "clientUsers", label: "Client User" },
+          { key: "contractorUsers", label: "Contractor" },
+          { key: "managerOfAllTeamsUsers", label: "Tum Takim Yoneticisi" },
+        ],
+        userdevicesummary: [
+          { key: "usersWithDevice", label: "Cihazli Kullanici" },
+          { key: "activeDeviceRecords", label: "Aktif Cihaz" },
+          { key: "terminatedDeviceRecords", label: "Sonlandirilmis" },
+          { key: "criticalOnlyDeviceRecords", label: "Kritik Only" },
+        ],
+      };
+      return map[normalizedIntent] || [];
+    }
+
+    function isUserSummaryIntent(normalizedIntent) {
+      return getUserSummaryFields(normalizedIntent).length > 0;
+    }
+
+    function formatUserSummaryRow(row = {}, normalizedIntent) {
+      const fields = getUserSummaryFields(normalizedIntent);
+      if (!fields.length) {
+        return "-";
+      }
+
+      const parts = fields.map(
+        (field) => `${field.label}: ${formatDisplayNumber(row[field.key] ?? 0)}`
+      );
+
+      if (normalizedIntent === "userstatussummary" && row.totalUsers != null) {
+        return `Toplam: ${formatDisplayNumber(row.totalUsers)} | ${parts.join(" | ")}`;
+      }
+
+      if (normalizedIntent === "userdevicesummary" && row.totalDeviceRecords != null) {
+        return `Toplam kayit: ${formatDisplayNumber(row.totalDeviceRecords)} | ${parts.join(" | ")}`;
+      }
+
+      return parts.join(" | ");
+    }
+
+    function expandSummaryRowsForChart(normalizedIntent, rows = []) {
+      const row = rows[0] || {};
+      return getUserSummaryFields(normalizedIntent).map((field) => ({
+        label: field.label,
+        total: Number(row[field.key] ?? 0),
+      }));
+    }
+
+    function isKpiBreakdownChart(chartConfig = {}) {
+      return (
+        chartConfig.mode === "kpi" ||
+        (chartConfig.mode === "summary" && chartConfig.chart === "kpiCards")
+      );
+    }
 
     function getIntentChartConfig(intent) {
       const normalized = String(intent || "").trim().toLowerCase();
@@ -2165,6 +2310,7 @@
     }
 
     function renderPrimaryChartForIntent(data, chartConfig, title) {
+      const normalizedIntent = String(data.intent || "").trim().toLowerCase();
       const rows = resolveChartRows(data);
       applyChartAvailability(chartConfig.allowed);
       applySelectedChart(chartConfig.chart);
@@ -2173,6 +2319,48 @@
       if (!rows.length) {
         resetChartArea(true);
         renderKpiCards([{ title: title || data.intent || "Sorgu", value: "Veri bulunamadi." }]);
+        return;
+      }
+
+      if (chartConfig.mode === "summary") {
+        const row = rows[0] || {};
+        const summaryFields = getUserSummaryFields(normalizedIntent);
+
+        if (chartConfig.chart === "kpiCards") {
+          const cards = [];
+          if (normalizedIntent === "userstatussummary" && row.totalUsers != null) {
+            cards.push({
+              title: "Toplam",
+              value: formatDisplayNumber(row.totalUsers),
+            });
+          }
+          if (normalizedIntent === "userdevicesummary" && row.totalDeviceRecords != null) {
+            cards.push({
+              title: "Toplam Cihaz Kaydi",
+              value: formatDisplayNumber(row.totalDeviceRecords),
+            });
+          }
+          summaryFields.forEach((field) => {
+            cards.push({
+              title: field.label,
+              value: formatDisplayNumber(row[field.key] ?? 0),
+            });
+          });
+          resetChartArea(true);
+          renderKpiCards(
+            cards.length
+              ? cards
+              : [{ title: title || data.intent || "Ozet", value: "-" }]
+          );
+          return;
+        }
+
+        const distRows = expandSummaryRowsForChart(normalizedIntent, rows);
+        const chartType = chartTypeForKey(chartConfig.chart);
+        const labels = distRows.map((item) => item.label);
+        const values = distRows.map((item) => item.total);
+        resetChartArea(false);
+        createChart(chartType, labels, values, "Kullanici Ozeti");
         return;
       }
 
@@ -2406,9 +2594,22 @@
       kpiArea.appendChild(notice);
     }
 
-    function pickScopeRowValue(scopeRows, valueCandidates) {
+    function isListRowCountIntent(normalizedIntent) {
+      return normalizedIntent === "userrecentlogins";
+    }
+
+    function formatListRowCountValue(scopeRows = []) {
+      const count = (scopeRows || []).length;
+      return count ? `${formatDisplayNumber(count)} kayit` : "0 kayit";
+    }
+
+    function pickScopeRowValue(scopeRows, valueCandidates, normalizedIntent = "") {
       if (!scopeRows.length) {
         return "-";
+      }
+
+      if (isListRowCountIntent(normalizedIntent)) {
+        return formatListRowCountValue(scopeRows);
       }
 
       const first = scopeRows[0] || {};
@@ -2423,10 +2624,43 @@
       return new Set([
         "visitsbystate",
         "visitsbytype",
+        "usersbyrole",
         "usersbyteam",
+        "usersbybrand",
+        "usersbyclient",
         "purchaseordersbystatus",
         "invoicesbystatus",
       ]).has(normalizedIntent);
+    }
+
+    function pickDistributionLabel(row = {}) {
+      return (
+        row.clientName ||
+        row.roleName ||
+        row.teamName ||
+        row.brandName ||
+        row.visitState ||
+        row.visitType ||
+        row.moduleName ||
+        row.userName ||
+        row.loginStatus ||
+        row.stateName ||
+        row.statusName ||
+        row.groupName ||
+        "Diger"
+      );
+    }
+
+    function pickDistributionValue(row = {}) {
+      const value =
+        row.total ??
+        row.totalUsers ??
+        row.savedViewCount ??
+        row.totalSteps ??
+        row.totalVisits ??
+        row.totalLogins ??
+        row.responseCount;
+      return formatDisplayNumber(value ?? 0);
     }
 
 
@@ -2455,6 +2689,14 @@
         return formatVisitTrendValue(scopeRows);
       }
 
+      if (isListRowCountIntent(normalizedIntent)) {
+        return formatListRowCountValue(scopeRows);
+      }
+
+      if (isUserSummaryIntent(normalizedIntent) && scopeRows.length) {
+        return formatUserSummaryRow(scopeRows[0] || {}, normalizedIntent);
+      }
+
       if (normalizedIntent === "visitsbycompletionstatus") {
         const tam = scopeRows.find((row) => row.visitState === "Tamamlanan");
         const bek = scopeRows.find((row) => row.visitState === "Bekleyen");
@@ -2464,31 +2706,18 @@
       if (isCardDistributionIntent(normalizedIntent) && scopeRows.length) {
         return scopeRows
           .slice(0, 4)
-          .map((row) => {
-            const label =
-              row.visitState ||
-              row.visitType ||
-              row.stateName ||
-              row.statusName ||
-              row.groupName ||
-              "Diger";
-            return `${label}: ${formatDisplayNumber(row.total ?? 0)}`;
-          })
+          .map((row) => `${pickDistributionLabel(row)}: ${pickDistributionValue(row)}`)
           .join(" | ");
       }
 
       if (scopeRows.length > 1) {
         return scopeRows
           .slice(0, 4)
-          .map((row) => {
-            const label =
-              row.visitState || row.visitType || row.stateName || row.statusName || row.groupName || "Diger";
-            return `${label}: ${formatDisplayNumber(row.total ?? 0)}`;
-          })
+          .map((row) => `${pickDistributionLabel(row)}: ${pickDistributionValue(row)}`)
           .join(" | ");
       }
 
-      return pickScopeRowValue(scopeRows, valueCandidates);
+      return pickScopeRowValue(scopeRows, valueCandidates, normalizedIntent);
     }
 
     function renderTeamMemberBreakdown(data, { title, normalizedIntent, valueCandidates }) {
@@ -2533,6 +2762,14 @@
       const cards = [];
 
       const pushValueCard = (cardTitle, rows) => {
+        if (isUserSummaryIntent(normalizedIntent) && (rows || []).length) {
+          cards.push({
+            title: cardTitle,
+            value: formatUserSummaryRow((rows || [])[0] || {}, normalizedIntent),
+          });
+          return;
+        }
+
         if (normalizedIntent === "visitsbycompletionstatus") {
           const tam = (rows || []).find((row) => row.visitState === "Tamamlanan");
           const bek = (rows || []).find((row) => row.visitState === "Bekleyen");
@@ -2559,6 +2796,14 @@
           return;
         }
 
+        if (isListRowCountIntent(normalizedIntent)) {
+          cards.push({
+            title: cardTitle,
+            value: formatListRowCountValue(rows),
+          });
+          return;
+        }
+
         const first = (rows || [])[0] || {};
         const valueKeyLocal =
           valueCandidates.find((key) => first[key] !== undefined) ||
@@ -2577,7 +2822,9 @@
           variant: "team-breakdown",
           hidden: index >= displayLimit,
         };
-        if (normalizedIntent === "visitsbycompletionstatus") {
+        if (isUserSummaryIntent(normalizedIntent) && (team.rows || []).length) {
+          card.value = formatUserSummaryRow((team.rows || [])[0] || {}, normalizedIntent);
+        } else if (normalizedIntent === "visitsbycompletionstatus") {
           const rows = team.rows || [];
           const tam = rows.find((row) => row.visitState === "Tamamlanan");
           const bek = rows.find((row) => row.visitState === "Bekleyen");
@@ -2586,6 +2833,8 @@
           card.value = formatVisitTrendValue(team.rows || []);
         } else if (isCardDistributionIntent(normalizedIntent) && (team.rows || []).length) {
           card.value = formatTeamScopeValue(normalizedIntent, team.rows || [], valueCandidates);
+        } else if (isListRowCountIntent(normalizedIntent)) {
+          card.value = formatListRowCountValue(team.rows || []);
         } else {
           const first = (team.rows || [])[0] || {};
           const valueKeyLocal =
@@ -2670,6 +2919,8 @@
           const cardValue =
             normalizedIntent === "visittrend" && teamRows.length
               ? formatVisitTrendValue(teamRows)
+              : isUserSummaryIntent(normalizedIntent) && teamRows.length
+              ? formatUserSummaryRow(teamRows[0] || {}, normalizedIntent)
               : isCardDistributionIntent(normalizedIntent) && teamRows.length
               ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
               : (() => {
@@ -2689,7 +2940,9 @@
         const combinedValue =
           normalizedIntent === "visittrend" && combinedRows.length
             ? formatVisitTrendValue(combinedRows)
-            : isCardDistributionIntent(normalizedIntent) && combinedRows.length
+            : isUserSummaryIntent(normalizedIntent) && combinedRows.length
+          ? formatUserSummaryRow(combinedRows[0] || {}, normalizedIntent)
+          : isCardDistributionIntent(normalizedIntent) && combinedRows.length
           ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
           : (() => {
             const combinedFirst = combinedRows[0] || {};
@@ -2769,12 +3022,22 @@
         totalinvoicebalance: "Ödenmemiş Fatura Bakiyesi",
         totalinvoicepayments: "Fatura Tahsilat Toplamı",
         usertotalcount: "Toplam Kullanıcı Sayısı",
+        userstatussummary: "Kullanıcı Durum Özeti",
+        useradminsummary: "Yetki Özeti",
+        userdevicesummary: "Cihaz Özeti",
         visitcountrealized: "Gerçekleşen Ziyaret Sayısı",
         activecampaigns: "Aktif Kampanya Sayısı",
       };
 
       const chartTitleMap = {
         usersbyrole: "Rollere Göre Kullanıcı Dağılımı",
+        usersbyteam: "Takımlara Göre Kullanıcı Dağılımı",
+        usersbybrand: "Markalara Göre Kullanıcı Dağılımı",
+        usersbyclient: "Müşterilere Göre Kullanıcı Dağılımı",
+        userloginsuccesssummary: "Giriş Başarı Dağılımı",
+        usersavedviewsummary: "Kayıtlı Görünüm Özeti",
+        userstepsummary: "Kullanıcı Adım Özeti",
+        uservisitsummary: "Kullanıcı Ziyaret Özeti",
         visitsbytype: "Ziyaret Tipi Dağılımı",
         visitsbystate: "Duruma Göre Ziyaretler",
         visitsbycompletionstatus: "Ziyaret Durumu (Tamamlanan / Bekleyen)",
@@ -2808,6 +3071,12 @@
 
       const labelCandidates = [
         "roleName",
+        "teamName",
+        "brandName",
+        "clientName",
+        "moduleName",
+        "userName",
+        "loginStatus",
         "groupName",
         "statusName",
         "visitType",
@@ -2833,6 +3102,11 @@
         "amount",
         "totalAmount",
         "totalBalance",
+        "activeUsers",
+        "totalLogins",
+        "savedViewCount",
+        "totalSteps",
+        "totalVisits",
       ];
 
       const numericKeys = Object.keys(firstRow).filter((key) => {
@@ -2869,7 +3143,7 @@
           "Sorgu Sonucu";
         chartLoadSeq++;
 
-        if (chartConfig.mode !== "kpi") {
+        if (!isKpiBreakdownChart(chartConfig)) {
           renderPrimaryChartForIntent(data, chartConfig, title);
           return true;
         }
@@ -2891,11 +3165,15 @@
         renderKpiCards([
           {
             title: `${opCardTitle} — ${title}`,
-            value: pickScopeRowValue(opRows, valueCandidates),
+            value: isUserSummaryIntent(normalizedIntent)
+              ? formatUserSummaryRow(opRows[0] || {}, normalizedIntent)
+              : pickScopeRowValue(opRows, valueCandidates),
           },
           {
             title: `${coCardTitle} — ${title}`,
-            value: pickScopeRowValue(coRows, valueCandidates),
+            value: isUserSummaryIntent(normalizedIntent)
+              ? formatUserSummaryRow(coRows[0] || {}, normalizedIntent)
+              : pickScopeRowValue(coRows, valueCandidates),
           },
         ]);
 
@@ -2907,7 +3185,10 @@
         "visitsbycompletionstatus",
         "visitsbytype",
         "invoicesbystatus",
+        "usersbyrole",
         "usersbyteam",
+        "usersbybrand",
+        "usersbyclient",
         "purchaseordersbystatus",
       ]);
 
@@ -2987,7 +3268,7 @@
 
         chartLoadSeq++;
 
-        if (chartConfig.mode === "kpi") {
+        if (isKpiBreakdownChart(chartConfig)) {
           resetChartArea(true);
           applyChartAvailability(chartConfig.allowed);
           applySelectedChart(chartConfig.chart);
@@ -3014,7 +3295,7 @@
 
         chartLoadSeq++;
 
-        if (chartConfig.mode === "kpi") {
+        if (isKpiBreakdownChart(chartConfig)) {
           resetChartArea(true);
           applyChartAvailability(chartConfig.allowed);
           applySelectedChart(chartConfig.chart);

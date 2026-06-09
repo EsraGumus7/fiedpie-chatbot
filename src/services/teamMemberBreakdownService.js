@@ -171,6 +171,10 @@ function extractPrimaryMetricValue(intent, rows = []) {
     return first.totalAmount ?? null;
   }
 
+  if (intent === "userRecentLogins") {
+    return rows.length;
+  }
+
   return first.total ?? first.totalUsers ?? first.responseCount ?? null;
 }
 

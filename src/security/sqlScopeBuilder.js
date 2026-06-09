@@ -215,6 +215,54 @@ function buildClientScopeClauses(userContext = {}, query = "") {
   return { clauses, bind, skipped: null, notes: [] };
 }
 
+function buildUserLinkedTableScopeClauses(
+  userContext = {},
+  query = "",
+  tableName = "",
+  userIdColumn = "UserId",
+  bindPrefix = "scopeUserLink"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, tableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(tableName, alias);
+  const clauses = [];
+  const subscriptionIds = getSubscriptionIds(userContext);
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, `${bindPrefix}Sub`, bind);
+    clauses.push(`
+      EXISTS (
+        SELECT 1
+        FROM dbo.[User] u_scope
+        WHERE u_scope.Id = ${ref}.${userIdColumn}
+          AND u_scope.Deleted = 0
+          AND u_scope.SubscriptionId IN (${subIn.sql})
+      )`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, `${bindPrefix}User`, bind);
+    if (userIn.sql) {
+      clauses.push(`${ref}.${userIdColumn} IN (${userIn.sql})`);
+    }
+  }
+
+  return { clauses, bind, skipped: null, notes: [] };
+}
+
+function buildUserLoginScopeClauses(userContext = {}, query = "") {
+  return buildUserLinkedTableScopeClauses(userContext, query, "dbo.UserLogin", "UserId", "scopeUl");
+}
+
 function buildUserTableScopeClauses(userContext = {}, query = "") {
   if (canBypassAllScope(userContext)) {
     return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
@@ -613,6 +661,29 @@ const TABLE_SCOPE_ROUTES = [
     table: "dbo.Distributor",
     builder: (ctx, q) => buildSubscriptionScopedClauses(ctx, q, "dbo.Distributor"),
   },
+  {
+    table: "dbo.UserLogin",
+    builder: (ctx, q) => buildUserLoginScopeClauses(ctx, q),
+  },
+  {
+    table: "dbo.UserDevice",
+    builder: (ctx, q) => buildUserLinkedTableScopeClauses(ctx, q, "dbo.UserDevice", "UserId", "scopeUd"),
+  },
+  {
+    table: "dbo.UserSavedView",
+    builder: (ctx, q) => buildUserLinkedTableScopeClauses(ctx, q, "dbo.UserSavedView", "UserId", "scopeUsv"),
+  },
+  {
+    table: "dbo.UserStepHistory",
+    builder: (ctx, q) => buildUserLinkedTableScopeClauses(ctx, q, "dbo.UserStepHistory", "UserId", "scopeUsh"),
+  },
+];
+
+const USER_LINKED_SCOPE_TABLES = [
+  { table: "dbo.UserLogin", column: "UserId", prefix: "scopeUl" },
+  { table: "dbo.UserDevice", column: "UserId", prefix: "scopeUd" },
+  { table: "dbo.UserSavedView", column: "UserId", prefix: "scopeUsv" },
+  { table: "dbo.UserStepHistory", column: "UserId", prefix: "scopeUsh" },
 ];
 
 function escapeRegex(value = "") {
@@ -637,16 +708,34 @@ function appendClausesToQuery(query, clauses = []) {
 }
 
 function pickScopeBuilder(sourceTables = [], query = "") {
-  if (sourceTables.includes("dbo.Visit")) {
-    return (userContext) => buildVisitScopeClauses(userContext, detectVisitAlias(query));
+  const sql = String(query);
+
+  if (sourceTables.includes("dbo.Visit") && /FROM\s+dbo\.Visit\b/i.test(sql)) {
+    return (userContext) => buildVisitScopeClauses(userContext, detectVisitAlias(sql));
   }
 
-  if (sourceTables.includes("dbo.Client")) {
-    return (userContext) => buildClientScopeClauses(userContext, query);
+  for (const entry of USER_LINKED_SCOPE_TABLES) {
+    if (
+      sourceTables.includes(entry.table) &&
+      new RegExp(`FROM\\s+${escapeRegex(entry.table)}\\b`, "i").test(sql)
+    ) {
+      return (userContext) =>
+        buildUserLinkedTableScopeClauses(userContext, sql, entry.table, entry.column, entry.prefix);
+    }
+  }
+
+  // User-rooted queries (usersByClient, usersByRole, ...) must scope on dbo.[User],
+  // even when dbo.Client is also listed in metric source_tables.
+  if (sourceTables.includes("dbo.[User]") && /FROM\s+dbo\.\[User\]/i.test(sql)) {
+    return (userContext) => buildUserTableScopeClauses(userContext, sql);
+  }
+
+  if (sourceTables.includes("dbo.Client") && /FROM\s+dbo\.Client\b/i.test(sql)) {
+    return (userContext) => buildClientScopeClauses(userContext, sql);
   }
 
   if (sourceTables.includes("dbo.[User]")) {
-    return (userContext) => buildUserTableScopeClauses(userContext, query);
+    return (userContext) => buildUserTableScopeClauses(userContext, sql);
   }
 
   for (const route of TABLE_SCOPE_ROUTES) {
