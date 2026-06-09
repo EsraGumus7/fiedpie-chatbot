@@ -1,5 +1,5 @@
 const { listResolvedIntentCandidates } = require("../planner/metricRegistry");
-const { parseQuestion } = require("./intentParser");
+const { parseQuestion, extractDynamicFieldParams, getLastNDaysRange } = require("./intentParser");
 
 function normalizeText(text) {
     return String(text || "")
@@ -196,6 +196,28 @@ function buildBaseFilters(normalizedQuestion, filters = {}) {
     };
 }
 
+function enrichResolvedParams(intent, question, filters = {}, baseFilters = {}) {
+    const normalizedQuestion = normalizeText(question);
+
+    if (intent === "dynamicFieldSummary") {
+        return extractDynamicFieldParams(normalizedQuestion, filters, baseFilters);
+    }
+
+    if (intent === "dynamicTopFields") {
+        const dynamicRange =
+            baseFilters.startDate || baseFilters.endDate
+                ? baseFilters
+                : getLastNDaysRange(30);
+
+        return {
+            ...dynamicRange,
+            limit: filters.limit || baseFilters.limit || 20,
+        };
+    }
+
+    return baseFilters;
+}
+
 function resolveIntent(question, filters = {}) {
     const normalizedQuestion = normalizeText(question);
     const baseFilters = buildBaseFilters(normalizedQuestion, filters);
@@ -216,7 +238,12 @@ function resolveIntent(question, filters = {}) {
     if (exactCandidate) {
         return {
             intent: exactCandidate.intent,
-            params: baseFilters,
+            params: enrichResolvedParams(
+                exactCandidate.intent,
+                question,
+                filters,
+                baseFilters
+            ),
             confidence: 1,
             score: 999,
             source: "exactIntentMatch",
@@ -290,7 +317,7 @@ function resolveIntent(question, filters = {}) {
 
     return {
         intent: best.intent,
-        params: baseFilters,
+        params: enrichResolvedParams(best.intent, question, filters, baseFilters),
         confidence,
         score: best.score,
         source: "metricResolver",

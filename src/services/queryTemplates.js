@@ -11,6 +11,22 @@ function buildFieldTerms(fieldName = "") {
   ).filter(Boolean);
 }
 
+function buildConfigFieldNamePatterns(fieldName = "") {
+  const terms = buildFieldTerms(fieldName);
+  const normalized = String(fieldName || "")
+    .toLowerCase()
+    .replace(/ı/g, "i")
+    .trim();
+
+  const patterns = terms.map((term) => `%${term}%`);
+
+  if (normalized.includes("raf") && !normalized.includes("fotograf")) {
+    patterns.push("% raf %", "% raf%", "raf %");
+  }
+
+  return Array.from(new Set(patterns.filter(Boolean)));
+}
+
 const TEMPLATES = {
   visitCountRealized: ({ startDate, endDate, visitRealized = 1 }) => ({
     query: `
@@ -105,48 +121,55 @@ const TEMPLATES = {
     bind: { startDate, endDate },
   }),
 
-  dynamicFieldSummary: ({ fieldName, fieldId, startDate, endDate }) => ({
-    query: `
+  dynamicFieldSummary: ({ fieldName, fieldId, startDate, endDate }) => {
+    const namePatterns = buildConfigFieldNamePatterns(fieldName);
+    const bind = {
+      fieldId: fieldId ? Number(fieldId) : null,
+      startDate,
+      endDate,
+    };
+    const nameClauses = namePatterns.map((pattern, index) => {
+      const key = `fieldName${index}`;
+      bind[key] = pattern;
+      return `LOWER(cfg.Name) LIKE LOWER(@${key})`;
+    });
+
+    return {
+      query: `
       SELECT
-        CONCAT('Field-', CAST(f.DynamicDataConfigurationFieldId AS nvarchar(64))) AS fieldName,
+        COALESCE(
+          cfg.Name,
+          CONCAT('Field-', CAST(f.DynamicDataConfigurationFieldId AS nvarchar(64)))
+        ) AS fieldName,
         COUNT(1) AS responseCount,
         AVG(TRY_CAST(f.DecimalValue AS FLOAT)) AS avgNumericValue
       FROM dbo.DynamicData d
-      INNER JOIN dbo.DynamicDataField f ON f.DynamicDataId = d.Id
-      WHERE (
-        (
-          @fieldId IS NOT NULL
-          AND f.DynamicDataConfigurationFieldId = @fieldId
-        )
-        OR (
-          @fieldId IS NULL
-          AND (
-            f.StringValue LIKE @fieldName1
-            OR f.StringValue LIKE @fieldName2
-            OR f.StringValue LIKE @fieldName3
-            OR f.StringValue LIKE @fieldName4
-            OR CAST(f.DynamicDataConfigurationFieldId AS nvarchar(64)) LIKE @fieldName1
+      INNER JOIN dbo.DynamicDataField f
+        ON f.DynamicDataId = d.Id
+       AND f.Deleted = 0
+      LEFT JOIN dbo.DynamicDataConfigurationField cfg
+        ON cfg.Id = f.DynamicDataConfigurationFieldId
+       AND cfg.Deleted = 0
+      WHERE d.Deleted = 0
+        AND (
+          (@fieldId IS NOT NULL AND f.DynamicDataConfigurationFieldId = @fieldId)
+          OR (
+            @fieldId IS NULL
+            AND (${nameClauses.join(" OR ")})
           )
         )
-      )
         AND (@startDate IS NULL OR d.CreateTime >= @startDate)
         AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
-      GROUP BY CONCAT('Field-', CAST(f.DynamicDataConfigurationFieldId AS nvarchar(64)))
+      GROUP BY
+        COALESCE(
+          cfg.Name,
+          CONCAT('Field-', CAST(f.DynamicDataConfigurationFieldId AS nvarchar(64)))
+        )
       ORDER BY responseCount DESC;
     `,
-    bind: (() => {
-      const terms = buildFieldTerms(fieldName);
-      return {
-        fieldName1: `%${terms[0] || fieldName || "Raf"}%`,
-        fieldName2: `%${terms[1] || terms[0] || fieldName || "Raf"}%`,
-        fieldName3: `%${terms[2] || terms[0] || fieldName || "Raf"}%`,
-        fieldName4: `%${terms[3] || terms[0] || fieldName || "Raf"}%`,
-        fieldId: fieldId ? Number(fieldId) : null,
-        startDate,
-        endDate,
-      };
-    })(),
-  }),
+      bind,
+    };
+  },
 
   dynamicTopFields: ({ startDate, endDate, limit }) => ({
     query: `
@@ -158,8 +181,11 @@ const TEMPLATES = {
         SUM(CASE WHEN f.BoolValue IS NOT NULL THEN 1 ELSE 0 END) AS boolCount,
         SUM(CASE WHEN f.DateTimeValue IS NOT NULL THEN 1 ELSE 0 END) AS dateTimeCount
       FROM dbo.DynamicData d
-      INNER JOIN dbo.DynamicDataField f ON f.DynamicDataId = d.Id
-      WHERE (@startDate IS NULL OR d.CreateTime >= @startDate)
+      INNER JOIN dbo.DynamicDataField f
+        ON f.DynamicDataId = d.Id
+       AND f.Deleted = 0
+      WHERE d.Deleted = 0
+        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
         AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
       GROUP BY f.DynamicDataConfigurationFieldId
       ORDER BY responseCount DESC;

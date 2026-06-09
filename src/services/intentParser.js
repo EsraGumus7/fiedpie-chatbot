@@ -128,11 +128,29 @@ function scoreIntent(question, candidate) {
   return score;
 }
 
+function inferFieldTokenFromQuestion(normalizedQuestion = "") {
+  const tokens = [
+    { pattern: /\braf\b/, value: "Raf" },
+    { pattern: /\bstok\b/, value: "Stok" },
+    { pattern: /\bpromosyon\b/, value: "Promosyon" },
+    { pattern: /\bsiparis\b/, value: "Siparis" },
+  ];
+
+  for (const item of tokens) {
+    if (item.pattern.test(normalizedQuestion)) {
+      return item.value;
+    }
+  }
+
+  return null;
+}
+
 function extractDynamicFieldParams(normalizedQuestion, filters, baseFilters) {
   const match = normalizedQuestion.match(/["']([^"']+)["']/);
   const fieldIdMatch = normalizedQuestion.match(/field[-\s]?(\d{3,})/);
+  const inferredField = inferFieldTokenFromQuestion(normalizedQuestion);
 
-  const rawField = match?.[1] || filters.fieldName || "Raf";
+  const rawField = match?.[1] || filters.fieldName || inferredField || "Raf";
   const fieldName = resolveFieldName(rawField);
 
   const dynamicRange =
@@ -197,4 +215,7 @@ module.exports = {
   parseQuestion,
   resolveFieldName,
   normalizeText,
+  extractDynamicFieldParams,
+  getLastNDaysRange,
+  inferFieldTokenFromQuestion,
 };

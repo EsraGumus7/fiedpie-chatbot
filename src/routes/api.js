@@ -221,9 +221,40 @@ function formatDateTime(value) {
   }).format(date);
 }
 
+function summarizeVisitTrendRows(rows = [], filters = {}) {
+  if (!rows.length) {
+    return "Secilen filtrede trend verisi bulunamadi.";
+  }
+
+  const rangeInfo = buildRangeLabel(filters);
+  const total = rows.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const avg = rows.length ? (total / rows.length).toFixed(2) : "0";
+  const maxRow = rows.reduce((max, item) =>
+    Number(item.total || 0) > Number(max.total || 0) ? item : max
+  );
+  const maxDate = String(maxRow.visitDate || "").slice(0, 10);
+  const dayLines = rows
+    .slice(-5)
+    .map((row) => {
+      const day = String(row.visitDate || "").slice(0, 10);
+      return `${day}: ${formatNumber(row.total ?? 0)}`;
+    })
+    .join(", ");
+
+  return `${rangeInfo} araliginda ${rows.length} gun veri var. Toplam ${formatNumber(
+    total
+  )} gerceklesen ziyaret, gunluk ortalama ${avg}. En yuksek gun ${maxDate} (${formatNumber(
+    maxRow.total
+  )} ziyaret). Gunluk: ${dayLines}.`;
+}
+
 function extractPrimaryMetricValue(intent, rows = []) {
   if (!rows.length) return null;
   const first = rows[0] || {};
+
+  if (intent === "visitTrend") {
+    return rows.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  }
 
   if (intent === "avgVisitDuration") {
     const sec = first.avgDurationSec;
@@ -491,6 +522,23 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     return lines.join("\n");
   }
 
+  if (intent === "visitTrend") {
+    const lines = (multiTeamScope.teams || []).map((team) => {
+      const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
+      return `${title}:\n${summarizeVisitTrendRows(team.rows || [], filters)}`;
+    });
+    const combinedRows = multiTeamScope.combined?.rows || [];
+    if (combinedRows.length) {
+      lines.push(
+        `${combinedLabel}:\n${summarizeVisitTrendRows(combinedRows, filters)}`
+      );
+    }
+    if ((multiTeamScope.teams || []).length > 1) {
+      appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
+    }
+    return lines.join("\n\n");
+  }
+
   const metricLabel = getScopedMetricLabel(intent, filters);
 
   const lines = (multiTeamScope.teams || []).map((team) => {
@@ -728,17 +776,7 @@ function summarizeRows(intent, rows, filters = {}) {
   }
 
   if (intent === "visitTrend") {
-    const total = rows.reduce((sum, item) => sum + Number(item.total || 0), 0);
-    const avg = rows.length ? (total / rows.length).toFixed(2) : "0";
-    const maxRow = rows.reduce((max, item) =>
-      Number(item.total || 0) > Number(max.total || 0) ? item : max
-    );
-    const maxDate = String(maxRow.visitDate || "").slice(0, 10);
-    return `${rangeInfo} araliginda ${rows.length} gun veri var. Toplam ${formatNumber(
-      total
-    )} ziyaret, gunluk ortalama ${avg}. En yuksek gun ${maxDate} (${formatNumber(
-      maxRow.total
-    )} ziyaret).`;
+    return summarizeVisitTrendRows(rows, filters);
   }
 
   if (intent === "visitsByType") {

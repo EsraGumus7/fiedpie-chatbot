@@ -2032,18 +2032,203 @@
       // fieldName/fieldId removed; nothing to apply to inputs
     }
 
-    function getAllowedChartsForIntent(intent) {
+    const INTENT_CHART_CONFIG = {
+      visitcountrealized: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      avgvisitduration: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      visitsbycompletionstatus: {
+        chart: "statePie",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["visitState"],
+        valueKey: "total",
+      },
+      visitsbystate: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: [
+          "stateBar",
+          "statePie",
+          "stateDoughnut",
+          "statePolar",
+          "stateRadar",
+          "stateHBar",
+          "stateArea",
+          "stateStacked",
+        ],
+        labelKeys: ["visitState", "stateName"],
+        valueKey: "total",
+      },
+      visitsbytype: {
+        chart: "typeBar",
+        mode: "distribution",
+        allowed: ["typeBar", "statePie"],
+        labelKeys: ["visitType"],
+        valueKey: "total",
+      },
+      visittrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["visitDate"],
+        valueKey: "total",
+      },
+      dynamicfieldsummary: {
+        chart: "fieldBar",
+        mode: "distribution",
+        allowed: ["fieldBar"],
+        labelKeys: ["fieldName"],
+        valueKey: "responseCount",
+      },
+      dynamictopfields: {
+        chart: "fieldBar",
+        mode: "distribution",
+        allowed: ["fieldBar"],
+        labelKeys: ["fieldId", "fieldName"],
+        valueKey: "responseCount",
+      },
+    };
+
+    function getIntentChartConfig(intent) {
       const normalized = String(intent || "").trim().toLowerCase();
-      const map = {
-        visitcountrealized: ["kpiCards"],
-        avgvisitduration: ["kpiCards"],
-        visitsbystate: ["stateBar", "statePie"],
-        visitsbytype: ["typeBar", "statePie"],
-        visittrend: ["visitTrend"],
-        dynamicfieldsummary: ["fieldBar"],
-        dynamictopfields: ["fieldBar"],
-      };
-      return map[normalized] || ["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"];
+      return (
+        INTENT_CHART_CONFIG[normalized] || {
+          chart: "stateBar",
+          mode: "distribution",
+          allowed: ["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"],
+          labelKeys: ["visitState", "visitType", "groupName", "statusName", "name", "label"],
+          valueKey: "total",
+        }
+      );
+    }
+
+    function getAllowedChartsForIntent(intent) {
+      return getIntentChartConfig(intent).allowed;
+    }
+
+    function chartForIntent(intent) {
+      return getIntentChartConfig(intent).chart;
+    }
+
+    function pickRowLabelKey(row = {}, config = {}) {
+      for (const key of config.labelKeys || []) {
+        if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    function resolveChartRows(data = {}) {
+      const intent = String(data.intent || "").trim();
+      const pickers =
+        intent === "visitTrend"
+          ? [
+              () => data.multiTeamScope?.combined?.rows,
+              () => data.companyTeamScope?.company?.rows,
+              () => data.dualScope?.company?.rows,
+              () => data.singleTeamScope?.rows,
+              () => data.rows,
+            ]
+          : [
+              () => data.companyTeamScope?.company?.rows,
+              () => data.multiTeamScope?.combined?.rows,
+              () => data.dualScope?.company?.rows,
+              () => data.dualScope?.operational?.rows,
+              () => data.singleTeamScope?.rows,
+              () => data.rows,
+            ];
+
+      for (const pick of pickers) {
+        const rows = pick();
+        if (Array.isArray(rows) && rows.length) {
+          return rows;
+        }
+      }
+      return [];
+    }
+
+    function chartTypeForKey(chartKey) {
+      if (chartKey === "visitTrend" || chartKey === "stateArea") return "line";
+      if (chartKey === "statePie") return "pie";
+      if (chartKey === "stateDoughnut") return "doughnut";
+      if (chartKey === "statePolar") return "polarArea";
+      if (chartKey === "stateRadar") return "radar";
+      return "bar";
+    }
+
+    function renderPrimaryChartForIntent(data, chartConfig, title) {
+      const rows = resolveChartRows(data);
+      applyChartAvailability(chartConfig.allowed);
+      applySelectedChart(chartConfig.chart);
+      chartTitle.textContent = title || data.intent || "Grafik";
+
+      if (!rows.length) {
+        resetChartArea(true);
+        renderKpiCards([{ title: title || data.intent || "Sorgu", value: "Veri bulunamadi." }]);
+        return;
+      }
+
+      if (chartConfig.mode === "trend") {
+        resetChartArea(false);
+        const labels = rows.map((row) => String(row.visitDate || "").slice(0, 10));
+        const values = rows.map((row) => Number(row.total || 0));
+        createChart("line", labels, values, "Gunluk Gerceklesen Ziyaret");
+        return;
+      }
+
+      if (chartConfig.mode === "distribution") {
+        const labelKey =
+          pickRowLabelKey(rows[0], chartConfig) ||
+          Object.keys(rows[0]).find(
+            (key) =>
+              !["total", "responseCount", "avgNumericValue", "avgDurationSec"].includes(key) &&
+              Number.isNaN(Number(rows[0][key]))
+          );
+        const valueKey = chartConfig.valueKey || "total";
+        const chartType = chartTypeForKey(chartConfig.chart);
+        const labels = rows.map((row) => {
+          if (labelKey === "fieldId") {
+            return `Field-${row.fieldId ?? row[labelKey]}`;
+          }
+          return String(row[labelKey] ?? "Bilinmeyen");
+        });
+        const values = rows.map((row) =>
+          Number(row[valueKey] ?? row.total ?? row.responseCount ?? 0)
+        );
+        const extra =
+          chartConfig.chart === "stateHBar"
+            ? { options: { indexAxis: "y" } }
+            : chartConfig.chart === "stateStacked"
+              ? {
+                  options: {
+                    scales: {
+                      x: { stacked: true },
+                      y: { stacked: true },
+                    },
+                  },
+                }
+              : {};
+        resetChartArea(false);
+        createChart(chartType, labels, values, "Kayit Sayisi", extra);
+        return;
+      }
+
+      resetChartArea(true);
+      const first = rows[0] || {};
+      renderKpiCards([
+        {
+          title: title || data.intent || "Ozet",
+          value: formatDisplayNumber(first.total ?? first.responseCount ?? "-"),
+        },
+      ]);
     }
 
     function applyChartAvailability(allowedList) {
@@ -2169,20 +2354,6 @@
       chartTitle.textContent = titles[chartKey] || "Grafik";
     }
 
-    function chartForIntent(intent) {
-      const normalized = String(intent || "").trim().toLowerCase();
-      const map = {
-        visitcountrealized: "kpiCards",
-        avgvisitduration: "kpiCards",
-        visitsbystate: "stateBar",
-        visitsbytype: "typeBar",
-        visittrend: "visitTrend",
-        dynamicfieldsummary: "fieldBar",
-        dynamictopfields: "fieldBar",
-      };
-      return map[normalized] || null;
-    }
-
     function renderKpiCards(cards) {
       cards.forEach((card) => {
         const el = document.createElement("div");
@@ -2260,7 +2431,30 @@
 
 
 
+    function formatVisitTrendValue(rows = []) {
+      if (!rows.length) {
+        return "-";
+      }
+
+      const total = rows.reduce((sum, row) => sum + Number(row.total || 0), 0);
+      const avg = rows.length ? (total / rows.length).toFixed(1) : "0";
+      const maxRow = rows.reduce((max, row) =>
+        Number(row.total || 0) > Number(max.total || 0) ? row : max
+      );
+      const maxDate = String(maxRow.visitDate || "").slice(0, 10);
+      const dayParts = rows
+        .slice(-4)
+        .map((row) => `${String(row.visitDate || "").slice(0, 10)}: ${formatDisplayNumber(row.total ?? 0)}`)
+        .join(" | ");
+
+      return `Toplam ${formatDisplayNumber(total)} ziyaret, ${rows.length} gun, ort. ${avg}/gun, en yuksek ${maxDate} (${formatDisplayNumber(maxRow.total ?? 0)}). ${dayParts}`;
+    }
+
     function formatTeamScopeValue(normalizedIntent, scopeRows, valueCandidates) {
+      if (normalizedIntent === "visittrend" && scopeRows.length) {
+        return formatVisitTrendValue(scopeRows);
+      }
+
       if (normalizedIntent === "visitsbycompletionstatus") {
         const tam = scopeRows.find((row) => row.visitState === "Tamamlanan");
         const bek = scopeRows.find((row) => row.visitState === "Bekleyen");
@@ -2349,6 +2543,22 @@
           return;
         }
 
+        if (normalizedIntent === "visittrend" && (rows || []).length) {
+          cards.push({
+            title: cardTitle,
+            value: formatVisitTrendValue(rows),
+          });
+          return;
+        }
+
+        if (isCardDistributionIntent(normalizedIntent) && (rows || []).length) {
+          cards.push({
+            title: cardTitle,
+            value: formatTeamScopeValue(normalizedIntent, rows, valueCandidates),
+          });
+          return;
+        }
+
         const first = (rows || [])[0] || {};
         const valueKeyLocal =
           valueCandidates.find((key) => first[key] !== undefined) ||
@@ -2372,6 +2582,10 @@
           const tam = rows.find((row) => row.visitState === "Tamamlanan");
           const bek = rows.find((row) => row.visitState === "Bekleyen");
           card.value = `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`;
+        } else if (normalizedIntent === "visittrend" && (team.rows || []).length) {
+          card.value = formatVisitTrendValue(team.rows || []);
+        } else if (isCardDistributionIntent(normalizedIntent) && (team.rows || []).length) {
+          card.value = formatTeamScopeValue(normalizedIntent, team.rows || [], valueCandidates);
         } else {
           const first = (team.rows || [])[0] || {};
           const valueKeyLocal =
@@ -2452,26 +2666,43 @@
         });
       } else {
         teams.forEach((team, index) => {
-          const first = (team.rows || [])[0] || {};
-          const valueKeyLocal =
-            valueCandidates.find((key) => first[key] !== undefined) ||
-            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+          const teamRows = team.rows || [];
+          const cardValue =
+            normalizedIntent === "visittrend" && teamRows.length
+              ? formatVisitTrendValue(teamRows)
+              : isCardDistributionIntent(normalizedIntent) && teamRows.length
+              ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
+              : (() => {
+              const first = teamRows[0] || {};
+              const valueKeyLocal =
+                valueCandidates.find((key) => first[key] !== undefined) ||
+                Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+              return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+            })();
           cards.push({
             title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
-            value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+            value: cardValue,
             variant: "team-breakdown",
             hidden: index >= displayLimit,
           });
         });
-        const combinedFirst = combinedRows[0] || {};
-        const combinedValueKey =
-          valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
-          Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
+        const combinedValue =
+          normalizedIntent === "visittrend" && combinedRows.length
+            ? formatVisitTrendValue(combinedRows)
+            : isCardDistributionIntent(normalizedIntent) && combinedRows.length
+          ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
+          : (() => {
+            const combinedFirst = combinedRows[0] || {};
+            const combinedValueKey =
+              valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+              Object.keys(combinedFirst).find((key) => !Number.isNaN(Number(combinedFirst[key])));
+            return formatDisplayNumber(
+              combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+            );
+          })();
         cards.push({
           title: combinedTitle,
-          value: formatDisplayNumber(
-            combinedValueKey ? combinedFirst[combinedValueKey] : "-"
-          ),
+          value: combinedValue,
           variant: "team-total",
         });
       }
@@ -2501,7 +2732,7 @@
       return String(value);
     }
 
-    function renderChatResultVisualization(data, preferredChart = "stateBar") {
+    function renderChatResultVisualization(data, overrideChart = null) {
       renderSqlPanel(data);
 
       if (!data || data.needsClarification) {
@@ -2520,6 +2751,11 @@
       }
 
       const normalizedIntent = String(data.intent || "").trim().toLowerCase();
+      const baseChartConfig = getIntentChartConfig(data.intent);
+      const chartConfig =
+        overrideChart && baseChartConfig.allowed.includes(overrideChart)
+          ? { ...baseChartConfig, chart: overrideChart }
+          : baseChartConfig;
       const rows = Array.isArray(data.rows) ? data.rows : [];
       const firstRow = rows[0] || {};
 
@@ -2624,23 +2860,25 @@
         return true;
       }
 
-      // Hibrit kullanici: takim + sirket KPI
+      // Hibrit kullanici: takim + sirket
       if (scopeDisplay === "dual" || (data.dualScope?.operational && data.dualScope?.company)) {
-        const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+        chartLoadSeq++;
+
+        if (chartConfig.mode !== "kpi") {
+          renderPrimaryChartForIntent(data, chartConfig, title);
+          return true;
+        }
+
         const opRows = data.dualScope.operational.rows || [];
         const coRows = data.dualScope.company.rows || [];
-        const distributionIntents = new Set([
-          "visitsbystate",
-          "visitsbycompletionstatus",
-          "invoicesbystatus",
-          "visitsbytype",
-        ]);
-        const isDistribution = distributionIntents.has(normalizedIntent);
-
-        chartLoadSeq++;
         resetChartArea(true);
-        applyChartAvailability(["kpiCards"]);
-        applySelectedChart("kpiCards");
+        applyChartAvailability(chartConfig.allowed);
+        applySelectedChart(chartConfig.chart);
         chartTitle.textContent = title;
 
         const opCardTitle =
@@ -2653,15 +2891,11 @@
         renderKpiCards([
           {
             title: `${opCardTitle} — ${title}`,
-            value: isDistribution
-              ? formatTeamScopeValue(normalizedIntent, opRows, valueCandidates)
-              : pickScopeRowValue(opRows, valueCandidates),
+            value: pickScopeRowValue(opRows, valueCandidates),
           },
           {
             title: `${coCardTitle} — ${title}`,
-            value: isDistribution
-              ? formatTeamScopeValue(normalizedIntent, coRows, valueCandidates)
-              : pickScopeRowValue(coRows, valueCandidates),
+            value: pickScopeRowValue(coRows, valueCandidates),
           },
         ]);
 
@@ -2714,8 +2948,8 @@
 
           chartLoadSeq++;
           resetChartArea(true);
-          applyChartAvailability(["kpiCards"]);
-          applySelectedChart("kpiCards");
+          applyChartAvailability(chartConfig.allowed);
+          applySelectedChart(chartConfig.chart);
           chartTitle.textContent = title;
 
           const cardTitle =
@@ -2731,6 +2965,16 @@
 
           return true;
         }
+
+        chartLoadSeq++;
+        renderPrimaryChartForIntent(
+          data,
+          chartConfig,
+          data.singleTeamScope.displayLabel
+            ? `${data.singleTeamScope.displayLabel} — ${title}`
+            : title
+        );
+        return true;
       }
 
       // Sirket + secili takimlar
@@ -2742,15 +2986,21 @@
           "Sorgu Sonucu";
 
         chartLoadSeq++;
-        resetChartArea(true);
-        applyChartAvailability(["kpiCards"]);
-        applySelectedChart("kpiCards");
-        chartTitle.textContent = title;
-        renderCompanyTeamBreakdown(data, {
-          title,
-          normalizedIntent,
-          valueCandidates,
-        });
+
+        if (chartConfig.mode === "kpi") {
+          resetChartArea(true);
+          applyChartAvailability(chartConfig.allowed);
+          applySelectedChart(chartConfig.chart);
+          chartTitle.textContent = title;
+          renderCompanyTeamBreakdown(data, {
+            title,
+            normalizedIntent,
+            valueCandidates,
+          });
+          return true;
+        }
+
+        renderPrimaryChartForIntent(data, chartConfig, title);
         return true;
       }
 
@@ -2763,20 +3013,26 @@
           "Sorgu Sonucu";
 
         chartLoadSeq++;
-        resetChartArea(true);
-        applyChartAvailability(["kpiCards"]);
-        applySelectedChart("kpiCards");
-        chartTitle.textContent = title;
-        renderMultiTeamBreakdown(data, {
-          title,
-          normalizedIntent,
-          valueCandidates,
-        });
+
+        if (chartConfig.mode === "kpi") {
+          resetChartArea(true);
+          applyChartAvailability(chartConfig.allowed);
+          applySelectedChart(chartConfig.chart);
+          chartTitle.textContent = title;
+          renderMultiTeamBreakdown(data, {
+            title,
+            normalizedIntent,
+            valueCandidates,
+          });
+          return true;
+        }
+
+        renderPrimaryChartForIntent(data, chartConfig, title);
         return true;
       }
 
       // Tek satır + sayısal sonuç: KPI kartı
-      if (rows.length === 1 && valueKey) {
+      if (chartConfig.mode === "kpi" && rows.length === 1 && valueKey) {
         const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
         const value = firstRow[valueKey];
         const isCompanySingleKpi =
@@ -2787,8 +3043,8 @@
 
         chartLoadSeq++;
         resetChartArea(true);
-        applyChartAvailability(["kpiCards"]);
-        applySelectedChart("kpiCards");
+        applyChartAvailability(chartConfig.allowed);
+        applySelectedChart(chartConfig.chart);
         chartTitle.textContent = title;
 
         renderKpiCards([
@@ -2801,35 +3057,18 @@
         return true;
       }
 
-      // Çok satırlı sonuç: Bar/Pie grafik
-      if (rows.length > 1 && labelKey && valueKey) {
-        const baseTitle =
-          chartTitleMap[normalizedIntent] || data.intent || "Dağılım Grafiği";
-        const teamPrefix = data.singleTeamScope?.displayLabel || "";
-        const title = teamPrefix ? `${teamPrefix} — ${baseTitle}` : baseTitle;
-        const allowed = ["stateBar", "statePie"];
-        const chartKey = allowed.includes(preferredChart) ? preferredChart : "stateBar";
-        const chartType = chartKey === "statePie" ? "pie" : "bar";
-
+      if (chartConfig.mode === "trend" || chartConfig.mode === "distribution") {
         chartLoadSeq++;
-        applyChartAvailability(allowed);
-        applySelectedChart(chartKey);
-        chartTitle.textContent = chartKey === "statePie" ? `${title} (Pie)` : `${title} (Bar)`;
-
-        resetChartArea(false);
-
-        const labels = rows.map((row) => String(row[labelKey] ?? "Bilinmeyen"));
-        const values = rows.map((row) => Number(row[valueKey] || 0));
-
-        createChart(chartType, labels, values, "Kayıt Sayısı");
-
+        const baseTitle =
+          chartTitleMap[normalizedIntent] || data.intent || "Grafik";
+        renderPrimaryChartForIntent(data, chartConfig, baseTitle);
         return true;
       }
 
       chartLoadSeq++;
       resetChartArea(true);
-      applyChartAvailability(["kpiCards"]);
-      applySelectedChart("kpiCards");
+      applyChartAvailability(chartConfig.allowed);
+      applySelectedChart(chartConfig.chart);
       chartTitle.textContent = "Sorgu Sonucu";
 
       renderKpiCards([
