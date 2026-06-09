@@ -595,32 +595,34 @@ const TEMPLATES = {
     bind: { startDate, endDate }
   }),
 
-  distributorsByGroup: ({ startDate, endDate }) => ({
-    query: `
-      SELECT COALESCE(dg.Name, 'Bilinmeyen Grup') AS groupName, COUNT(1) AS total
-      FROM dbo.DistributorNetworkEntity d
-      LEFT JOIN dbo.DistributorGroup dg ON dg.Id = d.DistributorGroupId
-      WHERE d.Deleted = 0
-        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
-        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
-      GROUP BY COALESCE(dg.Name, 'Bilinmeyen Grup')
-      ORDER BY total DESC;
-    `,
-    bind: { startDate, endDate }
-  }),
-
+   distributorsByGroup: ({ startDate, endDate }) => ({
+  query: `
+    SELECT
+      COALESCE(CAST(d.GroupId AS NVARCHAR(50)), 'Bilinmeyen Grup') AS groupName,
+      COUNT(1) AS total
+    FROM dbo.DistributorNetworkEntity d
+    WHERE d.Deleted = 0
+      AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+      AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
+    GROUP BY d.GroupId
+    ORDER BY total DESC;
+  `,
+  bind: { startDate, endDate }
+}),
   distributorsByType: ({ startDate, endDate }) => ({
-    query: `
-      SELECT COALESCE(CAST(d.Type AS nvarchar(100)), 'Bilinmeyen Tip') AS groupName, COUNT(1) AS total
-      FROM dbo.DistributorNetworkEntity d
-      WHERE d.Deleted = 0
-        AND (@startDate IS NULL OR d.CreateTime >= @startDate)
-        AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
-      GROUP BY COALESCE(CAST(d.Type AS nvarchar(100)), 'Bilinmeyen Tip')
-      ORDER BY total DESC;
-    `,
-    bind: { startDate, endDate }
-  }),
+  query: `
+    SELECT
+      COALESCE(CAST(d.TypeId AS nvarchar(100)), 'Bilinmeyen Tip') AS groupName,
+      COUNT(1) AS total
+    FROM dbo.DistributorNetworkEntity d
+    WHERE d.Deleted = 0
+      AND (@startDate IS NULL OR d.CreateTime >= @startDate)
+      AND (@endDate IS NULL OR d.CreateTime < DATEADD(day, 1, @endDate))
+    GROUP BY d.TypeId
+    ORDER BY total DESC;
+  `,
+  bind: { startDate, endDate }
+}),
 
   distributorsByStatus: ({ startDate, endDate }) => ({
     query: `
