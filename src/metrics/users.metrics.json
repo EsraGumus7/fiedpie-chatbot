@@ -23,7 +23,7 @@
     {
       "metric_id": "user_admin_summary",
       "intent": "userAdminSummary",
-      "description_tr": "Admin, API user, client user ve contractor ozeti",
+      "description_tr": "Admin rolu veya Admin bayragi, API user, client user ve contractor ozeti",
       "source_tables": ["dbo.[User]"],
       "aggregation": "summary",
       "default_filters": [],

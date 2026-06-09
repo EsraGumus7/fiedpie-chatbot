@@ -97,9 +97,35 @@
         "yonetici",
         "manager",
         "yetki",
-        "kullanici"
+        "kullanici",
+        "sayisi",
+        "kac",
+        "kisi",
+        "ozet"
       ],
-      "priority": 20,
+      "aliases": [
+        "admin kullanici sayisi kac",
+        "kac admin kullanici var",
+        "api user sayisi kac",
+        "client user sayisi",
+        "contractor kullanici sayisi",
+        "tum takimlari yoneten kullanici sayisi"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "yetkide",
+        "pozisyon",
+        "takim",
+        "takım",
+        "team",
+        "aktif",
+        "bloke",
+        "silme",
+        "ziyaret",
+        "visit"
+      ],
+      "priority": 40,
       "metric_id": "user_admin_summary"
     },
     {
@@ -147,7 +173,9 @@
         "takim",
         "takım",
         "team",
-        "ekip"
+        "ekip",
+        "marka",
+        "brand"
       ],
       "priority": 35,
       "metric_id": "user_by_role"
@@ -193,12 +221,33 @@
       "description_tr": "Kullanicilarin markalara gore dagilimi sorulari",
       "keywords": [
         "marka",
+        "markalara",
         "brand",
         "dagilim",
+        "dagilimi",
         "kullanici",
         "personel"
       ],
-      "priority": 30,
+      "aliases": [
+        "markalara gore kullanici dagilimi",
+        "markaya gore kullanici dagilimi",
+        "brand bazinda kullanici sayisi",
+        "hangi markada kac kullanici var"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "yetki",
+        "pozisyon",
+        "takim",
+        "takım",
+        "team",
+        "musteri",
+        "musterilere",
+        "client",
+        "clientlara"
+      ],
+      "priority": 42,
       "metric_id": "user_by_brand"
     },
     {
@@ -207,13 +256,32 @@
       "keywords": [
         "client",
         "musteri",
+        "musterilere",
         "customer",
         "firma",
         "kurum",
         "dagilim",
+        "dagilimi",
         "kullanici"
       ],
-      "priority": 30,
+      "aliases": [
+        "musterilere gore kullanici dagilimi",
+        "clientlara gore kullanici dagilimi",
+        "musteri bazinda kullanici sayisi",
+        "hangi musteride kac kullanici var"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "marka",
+        "brand",
+        "takim",
+        "takım",
+        "team",
+        "aktif musteri",
+        "pasif musteri"
+      ],
+      "priority": 44,
       "metric_id": "user_by_client"
     },
     {
@@ -277,9 +345,29 @@
         "app version",
         "uygulama",
         "versiyon",
-        "kullanici"
+        "kullanici",
+        "ozet",
+        "ozeti"
       ],
-      "priority": 25,
+      "aliases": [
+        "kullanici cihaz ozeti",
+        "cihaz kayit ozeti",
+        "kullanici cihaz kayitlari",
+        "device ozeti",
+        "uygulama versiyon ozeti"
+      ],
+      "negative_keywords": [
+        "aktif",
+        "bloke",
+        "silme",
+        "adim",
+        "step",
+        "ziyaret",
+        "gorunum",
+        "login",
+        "giris"
+      ],
+      "priority": 38,
       "metric_id": "user_device_summary"
     },
     {
@@ -293,9 +381,28 @@
         "filtre",
         "filter",
         "modul",
-        "kullanici"
+        "kullanici",
+        "ozet",
+        "ozeti"
       ],
-      "priority": 25,
+      "aliases": [
+        "kayitli gorunum ozeti",
+        "saved view ozeti",
+        "kayitli filtre ozeti",
+        "modul bazinda kayitli gorunumler",
+        "kullanici kayitli gorunum ozeti"
+      ],
+      "negative_keywords": [
+        "ziyaret",
+        "visit",
+        "cihaz",
+        "adim",
+        "login",
+        "giris",
+        "aktif",
+        "bloke"
+      ],
+      "priority": 38,
       "metric_id": "user_saved_view_summary"
     },
     {
@@ -307,9 +414,30 @@
         "hareket",
         "saha",
         "kullanici",
-        "personel"
+        "personel",
+        "ozet",
+        "ozeti",
+        "gecmis"
       ],
-      "priority": 25,
+      "aliases": [
+        "kullanici adim ozeti",
+        "adim gecmisi ozeti",
+        "kullanici hareket ozeti",
+        "step history ozeti",
+        "personel adim ozeti"
+      ],
+      "negative_keywords": [
+        "aktif",
+        "bloke",
+        "silme",
+        "cihaz",
+        "device",
+        "ziyaret",
+        "gorunum",
+        "login",
+        "giris"
+      ],
+      "priority": 38,
       "metric_id": "user_step_summary"
     },
     {
@@ -321,16 +449,30 @@
         "gerceklesen",
         "atanmis",
         "kullanici",
-        "personel"
+        "personel",
+        "ozet",
+        "ozeti"
+      ],
+      "aliases": [
+        "kullanici ziyaret ozeti",
+        "kullanici bazli ziyaret ozeti",
+        "personel ziyaret ozeti",
+        "kullanicilarin ziyaret ozeti",
+        "atanmis ve gerceklesen ziyaret ozeti"
       ],
       "negative_keywords": [
         "bekleyen ziyaret",
         "kac bekleyen",
         "kaç bekleyen",
         "bugun bekleyen",
-        "bugün bekleyen"
+        "bugün bekleyen",
+        "admin",
+        "cihaz",
+        "adim",
+        "login",
+        "giris"
       ],
-      "priority": 30,
+      "priority": 42,
       "metric_id": "user_visit_summary"
     }
   ]
