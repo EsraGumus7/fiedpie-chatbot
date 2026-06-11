@@ -31,6 +31,8 @@ const {
   resolveBreakdownTeamList,
   buildScopeToolbarConfig,
 } = require("../services/scopeSelectionService");
+const { getTeamUserIds } = require("../services/hierarchyService");
+const salesMetricDefinitions = require("../metrics/sales.metrics.json");
 const {
   parseQuestionFilters,
   resolveVisitIntentOverride,
@@ -54,6 +56,58 @@ const COMPANY_TEAM_TOTAL_OVERLAP_NOTICE =
 
 const MULTI_TEAM_TOTAL_OVERLAP_NOTICE =
   "Not: Takim kartlari ortak uyeler nedeniyle ayni ziyareti birden fazla takimda gosterebilir. Toplam satirinda tekrarlanan ziyaretler 1 kez sayilmistir.";
+
+const SALES_INTENTS = new Set(
+  (salesMetricDefinitions.metrics || [])
+    .map((metric) => metric.intent)
+    .filter(Boolean)
+);
+
+function shouldUseSalesTeamMembersOnly(intent, userContext = {}) {
+  return SALES_INTENTS.has(intent) && !!userContext.companyCapable;
+}
+
+async function buildIntentSingleTeamScopedContext(intent, userContext, teamId) {
+  const context = await buildSingleTeamScopedContext(userContext, teamId);
+
+  if (!shouldUseSalesTeamMembersOnly(intent, userContext)) {
+    return context;
+  }
+
+  const numericTeamId = Number(teamId);
+  const teamUserIds = await getTeamUserIds([numericTeamId]);
+
+  return {
+    ...context,
+    allowedUserIds: teamUserIds.length ? teamUserIds : [-1],
+  };
+}
+
+async function buildIntentSelectedTeamsCombinedContext(
+  intent,
+  userContext,
+  teamIds = []
+) {
+  const context = await buildSelectedTeamsCombinedContext(userContext, teamIds);
+
+  if (!shouldUseSalesTeamMembersOnly(intent, userContext)) {
+    return context;
+  }
+
+  const numericTeamIds = Array.from(
+    new Set(
+      (teamIds || [])
+        .map((teamId) => Number(teamId))
+        .filter((teamId) => Number.isFinite(teamId) && teamId > 0)
+    )
+  );
+  const teamUserIds = await getTeamUserIds(numericTeamIds);
+
+  return {
+    ...context,
+    allowedUserIds: teamUserIds.length ? teamUserIds : [-1],
+  };
+}
 
 function appendTeamTotalOverlapNote(lines, notice) {
   if (!notice) {
@@ -1345,7 +1399,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         metric,
       });
       const teamResults = await mapTeamsWithConcurrency(breakdownTeams, async (team) => {
-        const teamContext = await buildSingleTeamScopedContext(userContext, team.teamId);
+        const teamContext = await buildIntentSingleTeamScopedContext(intent, userContext, team.teamId);
         const teamResult = await executeIntent(intent, params, {
           userContext: teamContext,
           metric,
@@ -1367,7 +1421,8 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         selectedCombinedRows = applyIntentRowNormalization(intent, companyResult.recordset);
         selectedAllowedUserIdsCount = companyContext.allowedUserIds?.length || 0;
       } else {
-        const selectedContext = await buildSelectedTeamsCombinedContext(
+        const selectedContext = await buildIntentSelectedTeamsCombinedContext(
+          intent,
           userContext,
           breakdownTeams.map((team) => team.teamId)
         );
@@ -1385,7 +1440,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       let memberBreakdown = null;
       if (scopePlan.includeMemberBreakdown && breakdownTeams.length === 1) {
         const singleTeam = breakdownTeams[0];
-        const teamContext = await buildSingleTeamScopedContext(userContext, singleTeam.teamId);
+        const teamContext = await buildIntentSingleTeamScopedContext(intent, userContext, singleTeam.teamId);
         memberBreakdown = await executeTeamMemberBreakdown({
           intent,
           params,
@@ -1453,7 +1508,8 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       };
       result = operationalResult;
     } else if (runSingleTeamScope && scopePlan.teamMatch?.teamId) {
-      const teamContext = await buildSingleTeamScopedContext(
+      const teamContext = await buildIntentSingleTeamScopedContext(
+        intent,
         userContext,
         scopePlan.teamMatch.teamId
       );
@@ -1503,7 +1559,8 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
               ? toolbarConfig.operationalTeams
               : resolveManagedTeams(userContext);
       const teamResults = await mapTeamsWithConcurrency(breakdownTeams, async (team) => {
-        const teamContext = await buildSingleTeamScopedContext(
+        const teamContext = await buildIntentSingleTeamScopedContext(
+          intent,
           userContext,
           team.teamId
         );
@@ -1527,7 +1584,8 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         scopePlan.scopeSource === "selected" ||
         scopePlan.scopeSource === "managed"
       ) {
-        combinedContext = await buildSelectedTeamsCombinedContext(
+        combinedContext = await buildIntentSelectedTeamsCombinedContext(
+          intent,
           userContext,
           breakdownTeams.map((team) => team.teamId)
         );

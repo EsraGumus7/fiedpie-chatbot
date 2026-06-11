@@ -336,6 +336,92 @@ function buildVisitScopeExistsClause(visitIdExpr, userContext = {}, bind = {}, b
   return lines.join("\n");
 }
 
+function buildClientPurchaseOrderScopeExistsClause(
+  clientPurchaseOrderIdExpr,
+  userContext = {},
+  bind = {},
+  bindPrefix = "scopeClientPurchaseOrder"
+) {
+  const subscriptionIds = getSubscriptionIds(userContext);
+  const lines = [
+    "EXISTS (",
+    "  SELECT 1",
+    "  FROM dbo.ClientPurchaseOrder cpo_scope",
+    `  WHERE cpo_scope.Id = ${clientPurchaseOrderIdExpr}`,
+    "    AND cpo_scope.Deleted = 0",
+  ];
+
+  if (subscriptionIds.length) {
+    const subIn = buildInList(subscriptionIds, `${bindPrefix}Sub`, bind);
+    lines.push(`    AND cpo_scope.SubscriptionId IN (${subIn.sql})`);
+  }
+
+  if (!canBypassUserScope(userContext)) {
+    const userIds = getAllowedUserIds(userContext);
+    const userIn = buildInList(userIds, `${bindPrefix}User`, bind);
+    if (userIn.sql) {
+      lines.push(`    AND cpo_scope.UserId IN (${userIn.sql})`);
+    }
+  }
+
+  lines.push(")");
+  return lines.join("\n");
+}
+
+function buildPurchaseOrderScopeExistsClause(
+  purchaseOrderRef,
+  userContext = {},
+  bind = {},
+  bindPrefix = "scopePurchaseOrder"
+) {
+  const visitScopeClause = buildVisitScopeExistsClause(
+    `${purchaseOrderRef}.VisitId`,
+    userContext,
+    bind,
+    `${bindPrefix}Visit`
+  );
+
+  const clientPurchaseOrderScopeClause =
+    buildClientPurchaseOrderScopeExistsClause(
+      `${purchaseOrderRef}.ClientPurchaseOrderId`,
+      userContext,
+      bind,
+      `${bindPrefix}Client`
+    );
+
+  return `(
+${visitScopeClause}
+OR
+${clientPurchaseOrderScopeClause}
+)`;
+}
+
+function buildPurchaseOrderTableScopeClauses(
+  userContext = {},
+  query = "",
+  tableName = "dbo.PurchaseOrder"
+) {
+  if (canBypassAllScope(userContext)) {
+    return { clauses: [], bind: {}, skipped: "super_admin", notes: [] };
+  }
+
+  const { found, alias } = detectFromTableAlias(query, tableName);
+  if (!found) {
+    return { clauses: [], bind: {}, skipped: null, notes: [] };
+  }
+
+  const bind = {};
+  const ref = tableRef(tableName, alias);
+  const clause = buildPurchaseOrderScopeExistsClause(
+    ref,
+    userContext,
+    bind,
+    "scopePurchaseOrder"
+  );
+
+  return { clauses: [clause], bind, skipped: null, notes: [] };
+}
+
 function buildClientInvoiceScopeExistsClause(
   clientInvoiceIdExpr,
   userContext = {},
@@ -468,32 +554,22 @@ function buildPurchaseOrderChildScopeClauses(
 
   const bind = {};
   const ref = tableRef(childTableName, alias);
-  const subscriptionIds = getSubscriptionIds(userContext);
+  const purchaseOrderScopeClause = buildPurchaseOrderScopeExistsClause(
+    "po_scope",
+    userContext,
+    bind,
+    "scopePo"
+  );
   const lines = [
     "EXISTS (",
     "  SELECT 1",
     "  FROM dbo.PurchaseOrder po_scope",
-    "  INNER JOIN dbo.Visit v_scope",
-    "    ON v_scope.Id = po_scope.VisitId",
-    "   AND v_scope.Deleted = 0",
     `  WHERE po_scope.Id = ${ref}.${foreignKeyColumn}`,
     "    AND po_scope.Deleted = 0",
+    `    AND ${purchaseOrderScopeClause.replace(/\n/g, "\n    ")}`,
+    ")",
   ];
 
-  if (subscriptionIds.length) {
-    const subIn = buildInList(subscriptionIds, "scopePoSub", bind);
-    lines.push(`    AND v_scope.SubscriptionId IN (${subIn.sql})`);
-  }
-
-  if (!canBypassUserScope(userContext)) {
-    const userIds = getAllowedUserIds(userContext);
-    const userIn = buildInList(userIds, "scopePoUser", bind);
-    if (userIn.sql) {
-      lines.push(`    AND v_scope.UserId IN (${userIn.sql})`);
-    }
-  }
-
-  lines.push(")");
   return { clauses: [lines.join("\n")], bind, skipped: null, notes: [] };
 }
 
@@ -666,7 +742,7 @@ function buildClientLinkedTableScopeClauses(
 }
 
 const TABLE_SCOPE_ROUTES = [
-  { table: "dbo.PurchaseOrder", builder: (ctx, q) => buildVisitLinkedTableScopeClauses(ctx, q, "dbo.PurchaseOrder") },
+  { table: "dbo.PurchaseOrder", builder: (ctx, q) => buildPurchaseOrderTableScopeClauses(ctx, q, "dbo.PurchaseOrder") },
   { table: "dbo.Invoice", builder: (ctx, q) => buildInvoiceTableScopeClauses(ctx, q, "dbo.Invoice") },
   {
     table: "dbo.PurchaseOrderDetail",
