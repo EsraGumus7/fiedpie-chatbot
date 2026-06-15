@@ -1,0 +1,479 @@
+{
+  "domain": "users",
+  "version": "1.0.0",
+  "intents": [
+    {
+      "intent": "userTotalCount",
+      "description_tr": "Toplam kullanici sayisi sorulari",
+      "keywords": [
+        "toplam",
+        "kullanici",
+        "user",
+        "personel",
+        "calisan",
+        "kisi",
+        "hesap",
+        "sayisi",
+        "kac",
+        "adet",
+        "kayitli",
+        "sistem",
+        "sistemde"
+      ],
+      "aliases": [
+        "toplam kac kullanici var",
+        "sistemde kac kisi var",
+        "kac calisan kayitli",
+        "personel sayisi nedir",
+        "toplam hesap sayisi kac",
+        "sistemde kac kullanici var",
+        "kac personel var"
+      ],
+      "negative_keywords": [
+        "musteri",
+        "firma",
+        "client",
+        "kurum",
+        "fatura",
+        "siparis",
+        "ziyaret",
+        "rol",
+        "role",
+        "yetki",
+        "yetkide",
+        "yetkilere",
+        "pozisyon",
+        "gorev"
+      ],
+      "priority": 15,
+      "metric_id": "user_total_count"
+    },
+    {
+      "intent": "userStatusSummary",
+      "description_tr": "Aktif, bloke ve silme talebi olan kullanici ozeti sorulari",
+      "keywords": [
+        "aktif",
+        "pasif",
+        "bloke",
+        "blocked",
+        "silme",
+        "delete",
+        "durum",
+        "status",
+        "ozet",
+        "kullanici",
+        "personel",
+        "calisan",
+        "kisi"
+      ],
+      "aliases": [
+        "aktif kullanici sayisi kac",
+        "aktif personel kac",
+        "kullanici durum ozeti",
+        "kullanicilarin durumunu goster",
+        "bloke kullanici sayisi",
+        "silme talebi olan kullanicilar"
+      ],
+      "negative_keywords": [
+        "musteri",
+        "firma",
+        "client",
+        "kurum",
+        "fatura",
+        "siparis",
+        "ziyaret"
+      ],
+      "priority": 25,
+      "metric_id": "user_status_summary"
+    },
+    {
+      "intent": "userAdminSummary",
+      "description_tr": "Admin, API user, client user, contractor ve tum takimlari yoneten kullanici ozeti sorulari",
+      "keywords": [
+        "admin",
+        "api user",
+        "client user",
+        "contractor",
+        "yonetici",
+        "manager",
+        "yetki",
+        "kullanici",
+        "sayisi",
+        "kac",
+        "kisi",
+        "ozet"
+      ],
+      "aliases": [
+        "admin kullanici sayisi kac",
+        "kac admin kullanici var",
+        "api user sayisi kac",
+        "client user sayisi",
+        "contractor kullanici sayisi",
+        "tum takimlari yoneten kullanici sayisi"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "yetkide",
+        "pozisyon",
+        "takim",
+        "takım",
+        "team",
+        "aktif",
+        "bloke",
+        "silme",
+        "ziyaret",
+        "visit"
+      ],
+      "priority": 40,
+      "metric_id": "user_admin_summary"
+    },
+    {
+      "intent": "usersByRole",
+      "description_tr": "Kullanicilarin rollere gore dagilimi sorulari",
+      "keywords": [
+        "rol",
+        "role",
+        "yetki",
+        "yetkide",
+        "yetkilere",
+        "pozisyon",
+        "gorev",
+        "gorevde",
+        "profil",
+        "gore",
+        "dagilim",
+        "dagilimi",
+        "kullanici",
+        "personel",
+        "calisan",
+        "kisi",
+        "hangi",
+        "kac"
+      ],
+      "aliases": [
+        "hangi rolde kac kisi var",
+        "hangi yetkide kac kisi var",
+        "yetkilere gore dagilimi goster",
+        "yetkilere gore kullanici dagilimi",
+        "pozisyonlara gore kisi sayisi",
+        "goreve gore personel dagilimi",
+        "kullanici rolleri nasil dagilmis",
+        "role gore kullanici sayisi",
+        "hangi pozisyonda kac kisi var"
+      ],
+      "negative_keywords": [
+        "musteri",
+        "firma",
+        "client",
+        "kurum",
+        "fatura",
+        "siparis",
+        "ziyaret",
+        "takim",
+        "takım",
+        "team",
+        "ekip",
+        "marka",
+        "brand"
+      ],
+      "priority": 35,
+      "metric_id": "user_by_role"
+    },
+    {
+      "intent": "usersByTeam",
+      "description_tr": "Kullanicilarin takimlara gore dagilimi ve manager/member sayilari sorulari",
+      "keywords": [
+        "takim",
+        "takım",
+        "team",
+        "ekip",
+        "manager",
+        "member",
+        "uye",
+        "yonetici",
+        "dagilim",
+        "dagilimi",
+        "kullanici"
+      ],
+      "aliases": [
+        "takimlara gore kullanici dagilimi",
+        "takımlara göre kullanıcı dağılımı",
+        "ekiplere gore kullanici dagilimi",
+        "hangi takimda kac kullanici var",
+        "team bazinda kullanici sayisi"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "yetki",
+        "pozisyon",
+        "musteri",
+        "firma",
+        "fatura",
+        "ziyaret"
+      ],
+      "priority": 38,
+      "metric_id": "user_by_team"
+    },
+    {
+      "intent": "usersByBrand",
+      "description_tr": "Kullanicilarin markalara gore dagilimi sorulari",
+      "keywords": [
+        "marka",
+        "markalara",
+        "brand",
+        "dagilim",
+        "dagilimi",
+        "kullanici",
+        "personel"
+      ],
+      "aliases": [
+        "markalara gore kullanici dagilimi",
+        "markaya gore kullanici dagilimi",
+        "brand bazinda kullanici sayisi",
+        "hangi markada kac kullanici var"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "yetki",
+        "pozisyon",
+        "takim",
+        "takım",
+        "team",
+        "musteri",
+        "musterilere",
+        "client",
+        "clientlara"
+      ],
+      "priority": 42,
+      "metric_id": "user_by_brand"
+    },
+    {
+      "intent": "usersByClient",
+      "description_tr": "Kullanicilarin client/musterilere gore dagilimi sorulari",
+      "keywords": [
+        "client",
+        "musteri",
+        "musterilere",
+        "customer",
+        "firma",
+        "kurum",
+        "dagilim",
+        "dagilimi",
+        "kullanici"
+      ],
+      "aliases": [
+        "musterilere gore kullanici dagilimi",
+        "clientlara gore kullanici dagilimi",
+        "musteri bazinda kullanici sayisi",
+        "hangi musteride kac kullanici var"
+      ],
+      "negative_keywords": [
+        "rol",
+        "role",
+        "marka",
+        "brand",
+        "takim",
+        "takım",
+        "team",
+        "aktif musteri",
+        "pasif musteri"
+      ],
+      "priority": 44,
+      "metric_id": "user_by_client"
+    },
+    {
+      "intent": "userRecentLogins",
+      "description_tr": "Son kullanici giris kayitlari sorulari",
+      "keywords": [
+        "son",
+        "giris",
+        "girisler",
+        "login",
+        "recent",
+        "kayit",
+        "kayitlari",
+        "gecmis",
+        "kimler",
+        "girmis",
+        "yapmis",
+        "kullanici"
+      ],
+      "aliases": [
+        "son login kayitlari neler",
+        "en son kimler giris yapmis",
+        "son giris yapan kullanicilari goster",
+        "en son giris yapanlar kimler",
+        "son kullanici girisleri",
+        "giris gecmisini goster",
+        "en son kimler login olmus"
+      ],
+      "negative_keywords": [
+        "musteri",
+        "firma",
+        "client",
+        "kurum",
+        "fatura",
+        "siparis"
+      ],
+      "priority": 35,
+      "metric_id": "user_recent_logins"
+    },
+    {
+      "intent": "userLoginSuccessSummary",
+      "description_tr": "Basarili ve basarisiz login dagilimi sorulari",
+      "keywords": [
+        "login",
+        "giris",
+        "basari",
+        "basarisiz",
+        "success",
+        "fail",
+        "dagilim"
+      ],
+      "priority": 30,
+      "metric_id": "user_login_success_summary"
+    },
+    {
+      "intent": "userDeviceSummary",
+      "description_tr": "Kullanici cihaz kayit ozeti sorulari",
+      "keywords": [
+        "cihaz",
+        "device",
+        "app version",
+        "uygulama",
+        "versiyon",
+        "kullanici",
+        "ozet",
+        "ozeti"
+      ],
+      "aliases": [
+        "kullanici cihaz ozeti",
+        "cihaz kayit ozeti",
+        "kullanici cihaz kayitlari",
+        "device ozeti",
+        "uygulama versiyon ozeti"
+      ],
+      "negative_keywords": [
+        "aktif",
+        "bloke",
+        "silme",
+        "adim",
+        "step",
+        "ziyaret",
+        "gorunum",
+        "login",
+        "giris"
+      ],
+      "priority": 38,
+      "metric_id": "user_device_summary"
+    },
+    {
+      "intent": "userSavedViewSummary",
+      "description_tr": "Kullanici kayitli gorunum ve filtre ozeti sorulari",
+      "keywords": [
+        "kayitli",
+        "gorunum",
+        "saved view",
+        "view",
+        "filtre",
+        "filter",
+        "modul",
+        "kullanici",
+        "ozet",
+        "ozeti"
+      ],
+      "aliases": [
+        "kayitli gorunum ozeti",
+        "saved view ozeti",
+        "kayitli filtre ozeti",
+        "modul bazinda kayitli gorunumler",
+        "kullanici kayitli gorunum ozeti"
+      ],
+      "negative_keywords": [
+        "ziyaret",
+        "visit",
+        "cihaz",
+        "adim",
+        "login",
+        "giris",
+        "aktif",
+        "bloke"
+      ],
+      "priority": 38,
+      "metric_id": "user_saved_view_summary"
+    },
+    {
+      "intent": "userStepSummary",
+      "description_tr": "Kullanici adim/hareket gecmisi ozeti sorulari",
+      "keywords": [
+        "adim",
+        "step",
+        "hareket",
+        "saha",
+        "kullanici",
+        "personel",
+        "ozet",
+        "ozeti",
+        "gecmis"
+      ],
+      "aliases": [
+        "kullanici adim ozeti",
+        "adim gecmisi ozeti",
+        "kullanici hareket ozeti",
+        "step history ozeti",
+        "personel adim ozeti"
+      ],
+      "negative_keywords": [
+        "aktif",
+        "bloke",
+        "silme",
+        "cihaz",
+        "device",
+        "ziyaret",
+        "gorunum",
+        "login",
+        "giris"
+      ],
+      "priority": 38,
+      "metric_id": "user_step_summary"
+    },
+    {
+      "intent": "userVisitSummary",
+      "description_tr": "Kullanici bazli atanmis/gerceklesmis ziyaret ozeti sorulari",
+      "keywords": [
+        "ziyaret",
+        "visit",
+        "gerceklesen",
+        "atanmis",
+        "kullanici",
+        "personel",
+        "ozet",
+        "ozeti"
+      ],
+      "aliases": [
+        "kullanici ziyaret ozeti",
+        "kullanici bazli ziyaret ozeti",
+        "personel ziyaret ozeti",
+        "kullanicilarin ziyaret ozeti",
+        "atanmis ve gerceklesen ziyaret ozeti"
+      ],
+      "negative_keywords": [
+        "bekleyen ziyaret",
+        "kac bekleyen",
+        "kaç bekleyen",
+        "bugun bekleyen",
+        "bugün bekleyen",
+        "admin",
+        "cihaz",
+        "adim",
+        "login",
+        "giris"
+      ],
+      "priority": 42,
+      "metric_id": "user_visit_summary"
+    }
+  ]
+}

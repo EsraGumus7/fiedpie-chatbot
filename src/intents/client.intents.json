@@ -1,0 +1,249 @@
+{
+  "domain": "musteri_bilgileri",
+  "version": "2.0.2",
+  "intents": [
+    {
+      "intent": "clientCountActive",
+      "description_tr": "Aktif / Mevcut müşteri sayısı",
+      "keywords": ["aktif", "calisan", "musteri", "sayisi", "kac", "firma", "kurum", "portfoy", "mevcut"],
+      "aliases": ["aktif müşteri sayısı kaç", "sistemde kaç tane aktif müşteri var", "çalışan firma sayısı nedir"],
+      "negative_keywords": ["pasif", "arşiv", "distribütör", "bayi", "tuketici", "fatura", "siparis"],
+      "priority": 15,
+      "metric_id": "client_count_active"
+    },
+    {
+      "intent": "clientCountTotal",
+      "description_tr": "Toplam müşteri / kurum sayısı",
+      "keywords": ["toplam", "musteri", "sayisi", "adet", "kac", "firma", "kurum", "kayitli", "data"],
+      "aliases": ["sistemde toplam kaç müşteri var", "toplam firma sayısı nedir", "veritabanında kayıtlı kaç kurum var"],
+      "negative_keywords": ["aktif", "pasif", "arşiv", "distribütör", "bayi", "tuketici", "fatura", "personel"],
+      "priority": 10,
+      "metric_id": "client_count_total"
+    },
+    {
+      "intent": "clientCountPassive",
+      "description_tr": "Pasif / Durdurulmuş müşteri sayısı",
+      "keywords": ["pasif", "durdurulmus", "musteri", "sayisi", "kac", "firma", "kurum", "calismayan", "bekleyen"],
+      "aliases": ["pasif müşteri sayısı kaç", "çalışmayı durduran müşteri adedi", "kaç tane pasif firmamız var"],
+      "negative_keywords": ["aktif", "toplam", "arşiv", "distribütör", "bayi", "tuketici", "fatura"],
+      "priority": 15,
+      "metric_id": "client_count_passive"
+    },
+    {
+      "intent": "clientCountArchived",
+      "description_tr": "Arşivlenmiş müşteri sayısı",
+      "keywords": ["arsiv", "arşiv", "arsivlenmis", "musteri", "sayisi", "kac", "firma", "kapanan", "eski"],
+      "aliases": ["arşivlenmiş müşteri sayısı nedir", "kaç müşteri arşivde bulunuyor", "arşive alınan firma sayısı"],
+      "negative_keywords": ["aktif", "pasif", "toplam", "distribütör", "bayi", "tuketici"],
+      "priority": 15,
+      "metric_id": "client_count_archived"
+    },
+    {
+      "intent": "clientsByGroup",
+      "description_tr": "Gruplara göre müşteri dağılımı",
+      "keywords": ["grup", "kategori", "dagilim", "musteri", "gruplara", "hangi", "kac", "sinif"],
+      "aliases": ["müşterilerin gruplara göre dağılımı", "kategori bazında firma sayısı", "hangi grupta kaç müşteri var"],
+      "negative_keywords": ["durum", "ulke", "program", "statu", "distribütör", "tuketici"],
+      "priority": 20,
+      "metric_id": "client_by_group"
+    },
+    {
+      "intent": "clientsByState",
+      "description_tr": "Durum / Seviyeye göre müşteri dağılımı",
+      "keywords": ["durum", "statu", "seviye", "dagilim", "musteri", "state", "gore", "asama"],
+      "aliases": ["duruma göre müşteri dağılımı", "seviyelere göre müşteri sayısı", "müşteri durum özeti"],
+      "negative_keywords": ["grup", "ulke", "program", "distribütör", "tuketici"],
+      "priority": 20,
+      "metric_id": "client_by_state"
+    },
+    {
+      "intent": "clientsByCountry",
+      "description_tr": "Ülkeye göre müşteri dağılımı",
+      "keywords": ["ulke", "ülke", "lokasyon", "dagilim", "musteri", "hangi", "ulkede", "nerede"],
+      "aliases": ["ülkelere göre müşteri dağılımı", "hangi ülkede kaç firmamız var", "lokasyon bazında müşteri sayısı"],
+      "negative_keywords": ["grup", "durum", "program", "distribütör", "tuketici"],
+      "priority": 20,
+      "metric_id": "client_by_country"
+    },
+    {
+      "intent": "clientsByProgramType",
+      "description_tr": "Program tipine göre müşteri dağılımı",
+      "keywords": ["program", "tip", "tur", "dagilim", "musteri", "programlara", "gore", "model"],
+      "aliases": ["program tipine göre müşteri dağılımı", "hangi programda kaç kurum var", "müşteri tür dağılımını göster"],
+      "negative_keywords": ["ulke", "grup", "durum", "distribütör", "tuketici"],
+      "priority": 20,
+      "metric_id": "client_by_program_type"
+    },
+    {
+      "intent": "totalClientDealAmount",
+      "description_tr": "Toplam Müşteri Anlaşma / Deal Tutarı",
+      "keywords": ["anlasma", "tutar", "ciro", "para", "deal", "amount", "toplam", "musteri", "hacim", "sozlesme"],
+      "aliases": ["toplam müşteri anlaşma tutarı ne kadar", "müşteri sözleşmelerinden gelen ciro", "anlaşmaların toplam finansal değeri"],
+      "negative_keywords": ["sayisi", "dagilim", "fatura", "sipariş", "tahsilat", "tuketici"],
+      "priority": 50,
+      "metric_id": "client_deal_amount_total"
+    },
+    {
+      "intent": "clientTrend",
+      "description_tr": "Müşteri kazanım trendi",
+      "keywords": ["trend", "gunluk", "aylik", "kazanim", "gidisat", "zaman", "grafik", "musteri", "artis", "buyume"],
+      "aliases": ["müşteri kazanım trendi nasıl", "aylık müşteri artış grafiği", "müşteri kazanım durumu trendi"],
+      "negative_keywords": ["dagilim", "grup", "ulke", "durum", "distribütör", "tuketici"],
+      "priority": 30,
+      "metric_id": "client_daily_trend"
+    },
+    {
+      "intent": "totalDistributors",
+      "description_tr": "Toplam distribütör / bayi sayısı",
+      "keywords": ["toplam", "distributor", "distribütör", "bayi", "sayisi", "kac", "adet", "acente", "sube"],
+      "aliases": ["toplam kaç distribütör var", "sistemdeki bayi sayısı kaçtır", "kaç adet acentemiz kayıtlı"],
+      "negative_keywords": ["musteri", "tuketici", "trend", "personel", "fatura"],
+      "priority": 10,
+      "metric_id": "distributor_count_total"
+    },
+    {
+      "intent": "distributorsByRegion",
+      "description_tr": "Bölgelere göre distribütör dağılımı",
+      "keywords": ["bolge", "bölge", "dagilim", "distributor", "distribütör", "bayi", "hangi", "bolgede", "cografi"],
+      "aliases": ["bölgelere göre distribütör dağılımı", "hangi coğrafi bölgede kaç bayi var", "bölge bazlı şube sayısı"],
+      "negative_keywords": ["grup", "tip", "durum", "ulke", "musteri", "tuketici"],
+      "priority": 20,
+      "metric_id": "distributor_by_region"
+    },
+    {
+      "intent": "distributorsByGroup",
+      "description_tr": "Gruplara göre distribütör dağılımı",
+      "keywords": ["grup", "kategori", "dagilim", "distributor", "distribütör", "bayi", "gruplara", "sinif"],
+      "aliases": ["distribütörlerin gruplara göre dağılımı", "kategori bazında bayi sayısı", "hangi sınıfta kaç distribütör var"],
+      "negative_keywords": ["bolge", "tip", "durum", "ulke", "musteri", "tuketici"],
+      "priority": 20,
+      "metric_id": "distributor_by_group"
+    },
+    {
+      "intent": "distributorsByType",
+      "description_tr": "Tipe göre distribütör dağılımı",
+      "keywords": ["tip", "tur", "dagilim", "distributor", "distribütör", "bayi", "tiplere", "format"],
+      "aliases": ["tiplere göre distribütör dağılımı", "distribütör türleri ve sayıları", "hangi formatta kaç bayi var"],
+      "negative_keywords": ["bolge", "grup", "durum", "musteri", "tuketici"],
+      "priority": 20,
+      "metric_id": "distributor_by_type"
+    },
+    {
+      "intent": "distributorsByStatus",
+      "description_tr": "Durumlarına göre distribütör dağılımı",
+      "keywords": ["durum", "statu", "dagilim", "distributor", "distribütör", "bayi", "durumlara", "aktif", "pasif"],
+      "aliases": ["duruma göre distribütör dağılımı", "aktif ve pasif bayi sayısı", "hangi durumda kaç distribütör var"],
+      "negative_keywords": ["bolge", "grup", "tip", "musteri", "tuketici"],
+      "priority": 20,
+      "metric_id": "distributor_by_status"
+    },
+    {
+      "intent": "distributorsExperienceStores",
+      "description_tr": "Deneyim mağazası (Experience Store) olan distribütörler",
+      "keywords": ["deneyim", "magaza", "store", "distributor", "distribütör", "bayi", "experience", "olan", "konsept"],
+      "aliases": ["deneyim mağazası olan distribütörler hangileri", "hangi bayilerin experience store'u var", "deneyim alanına sahip bayiler"],
+      "negative_keywords": ["grup", "bolge", "durum", "trend", "musteri", "tuketici"],
+      "priority": 30,
+      "metric_id": "distributor_experience_stores"
+    },
+    {
+      "intent": "distributorTrend",
+      "description_tr": "Distribütör kazanım trendi",
+      "keywords": ["trend", "gunluk", "aylik", "eklenme", "distributor", "distribütör", "bayi", "zaman", "artis", "grafik"],
+      "aliases": ["distribütör eklenme trendi nasıl", "aylık bayi kazanımı grafiği", "yeni bayi açılış trendi"],
+      "negative_keywords": ["dagilim", "bolge", "grup", "musteri", "tuketici"],
+      "priority": 30,
+      "metric_id": "distributor_daily_trend"
+    },
+    {
+      "intent": "consumerCountTotal",
+      "description_tr": "Toplam Tüketici / Son Kullanıcı sayısı",
+      "keywords": ["toplam", "tuketici", "tüketici", "sayisi", "kac", "adet", "son kullanici", "kisi"],
+      "aliases": ["toplam tüketici sayısı nedir", "sistemde kaç tüketici var", "ne kadar kişiye ulaştık"],
+      "negative_keywords": ["musteri", "firma", "kurum", "distribütör", "bayi", "personel", "kullanici"],
+      "priority": 10,
+      "metric_id": "consumer_count_total"
+    },
+    {
+      "intent": "consumersBySegment",
+      "description_tr": "Tüketici Değer Segmenti dağılımı",
+      "keywords": ["segment", "deger", "dagilim", "tuketici", "tüketici", "value", "segmentlere", "siniflandirma"],
+      "aliases": ["tüketicilerin segmentlere göre dağılımı", "hangi segmentte kaç son kullanıcı var", "tüketicileri segmentlerine ayır"],
+      "negative_keywords": ["musteri", "firma", "distribütör", "bayi", "trend"],
+      "priority": 20,
+      "metric_id": "consumer_by_segment"
+    },
+    {
+      "intent": "consumerTrend",
+      "description_tr": "Tüketici kazanım trendi",
+      "keywords": ["trend", "gunluk", "aylik", "kazanim", "tuketici", "tüketici", "zaman", "grafik", "artis"],
+      "aliases": ["tüketici kazanım trendi", "aylık tüketici artış grafiği", "tüketici eklenme trendi"],
+      "negative_keywords": ["dagilim", "segment", "musteri", "distribütör", "bayi"],
+      "priority": 30,
+      "metric_id": "consumer_daily_trend"
+    },
+    {
+      "intent": "totalDataChanges",
+      "description_tr": "Toplam Veri Değişikliği (Data Change) talepleri",
+      "keywords": ["veri", "degisiklik", "talep", "change", "toplam", "sayisi", "istek", "onay"],
+      "aliases": ["toplam veri değişikliği talebi kaç", "sistemdeki data change istekleri", "kaç tane veri değiştirme talebi var"],
+      "negative_keywords": ["trend", "tip", "dagilim", "bilgi guncelleme", "dosya"],
+      "priority": 10,
+      "metric_id": "data_change_count_total"
+    },
+    {
+      "intent": "dataChangesByType",
+      "description_tr": "Tipe göre veri değişiklik talepleri",
+      "keywords": ["tip", "tur", "degisiklik", "veri", "dagilim", "talep", "tiplere", "kategori"],
+      "aliases": ["veri değişiklik taleplerinin tiplere göre dağılımı", "hangi tipte kaç veri değişikliği talebi var"],
+      "negative_keywords": ["trend", "toplam", "bilgi guncelleme"],
+      "priority": 20,
+      "metric_id": "data_change_by_type"
+    },
+    {
+      "intent": "dataChangeTrend",
+      "description_tr": "Veri değişikliği talebi trendi",
+      "keywords": ["trend", "gunluk", "aylik", "degisiklik", "veri", "talep", "zaman", "grafik"],
+      "aliases": ["veri değişikliği talebi trendi nasıl", "aylık data change artış grafiği", "değişiklik istekleri zaman gidişatı"],
+      "negative_keywords": ["tip", "toplam", "dagilim"],
+      "priority": 30,
+      "metric_id": "data_change_trend"
+    },
+    {
+      "intent": "totalClientInfoUpdates",
+      "description_tr": "Müşteri Bilgi Güncelleme (Info Update) sayıları",
+      "keywords": ["bilgi", "guncelleme", "update", "sayisi", "kac", "toplam", "musteri", "profil"],
+      "aliases": ["toplam müşteri bilgisi güncelleme sayısı", "kaç tane müşteri bilgisi güncellendi", "sistemdeki profil update sayısı"],
+      "negative_keywords": ["veri degisikligi", "data change", "talep", "istek", "dosya"],
+      "priority": 10,
+      "metric_id": "client_info_update_count"
+    },
+    {
+      "intent": "totalRniDevices",
+      "description_tr": "RNI Donanım Sayısı",
+      "keywords": ["rni", "donanim", "cihaz", "sayac", "radyo", "sayisi", "kac", "toplam", "modul", "okuyucu"],
+      "aliases": ["toplam rni cihazı sayısı nedir", "sistemdeki donanım ve modül sayısı kaç", "radyo sayaç sayısı toplamı"],
+      "negative_keywords": ["bilgi guncelleme", "veri degisikligi", "telefon", "tablet", "kullanici", "user", "personel"],
+      "priority": 60,
+      "metric_id": "rni_device_count"
+    },
+    {
+      "intent": "totalClientFiles",
+      "description_tr": "Müşteri Dosya Kayıtları",
+      "keywords": ["dosya", "evrak", "belge", "file", "yuklenmis", "sayisi", "kac", "musteri", "dokuman"],
+      "aliases": ["toplam müşteri dosyası sayısı kaç", "sisteme yüklenmiş evrak sayısı nedir", "sistemde kaç müşteri dokümanı var"],
+      "negative_keywords": ["bilgi guncelleme", "cihaz", "donanim", "veri", "degisiklik"],
+      "priority": 10,
+      "metric_id": "client_file_count"
+    },
+    {
+      "intent": "clientsByCity",
+      "description_tr": "Şehre göre müşteri dağılımı",
+      "keywords": [ "sehir","şehir","city",   "lokasyon","dagilim","dağılım","musteri","müşteri","client","hangi","sehirde","şehirde","nerede"],
+      "aliases": ["şehirlere göre müşteri dağılımı","hangi şehirde kaç firmamız var","hangi şehirde kaç müşteri var","hangi şehirde kaç client var","city bazında müşteri sayısı","şehir bazında firma dağılımı"],
+      "negative_keywords": ["ulke", "ülke","country", "grup","durum", "program", "distribütör", "tuketici" ],
+      "priority": 22,
+      "metric_id": "client_by_city"
+   }
+  ]
+}
