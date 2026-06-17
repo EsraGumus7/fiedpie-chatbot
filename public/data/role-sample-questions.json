@@ -24,17 +24,14 @@
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "aktif musteri sayisi kac" },
-            { "text": "toplam firma sayisi nedir" },
-            { "text": "pasif musteri sayisi kac" },
-            { "text": "musterilerin gruplara gore dagilimi" },
-            { "text": "duruma gore musteri dagilimi" },
-            { "text": "ulkelere gore musteri dagilimi" },
-            { "text": "şehirlere gore müşteri dağılımı" },
-            { "text": "musteri kazanim trendi nasil" },
-            { "text": "toplam kac distributor var" },
-            { "text": "toplam tuketici sayisi nedir" },
-            { "text": "toplam musteri dosyasi sayisi kac" }
+            { "text": "Aktif şirket sayısı" },
+            { "text": "Toplam şirket sayısı" },
+            { "text": "Pasif şirket sayısı" },
+            { "text": "Şirketlerin kategorilere göre dağılımı"},
+            { "text": "Duruma göre müşteri dağılımı" },
+            { "text": "Ülklere göre müşteri dağılımı" },
+            { "text": "Şehirlere göre müşteri dağılımı" },
+            { "text": "Müşteri kazanım trendi" }
           ]
         },
         {
@@ -83,11 +80,10 @@
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "aktif musteri sayisi kac" },
-            { "text": "toplam firma sayisi nedir" },
-            { "text": "musterilerin gruplara gore dagilimi" },
-            { "text": "duruma gore distributor dagilimi" },
-            { "text": "musteri kazanim trendi nasil" }
+            { "text": "Aktif şirket sayısı" },
+            { "text": "Toplam şirket sayısı" },
+            { "text": "Şirketlerin kategorilere göre dağılımı" },
+            { "text": "Müşteri kazanım trendi" }
           ]
         },
         {
@@ -135,10 +131,9 @@
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "aktif musteri sayisi kac" },
-            { "text": "musterilerin gruplara gore dagilimi" },
-            { "text": "toplam kac distributor var" },
-            { "text": "musteri kazanim trendi nasil" }
+            { "text": "Toplam şirket sayısı" },
+            { "text": "Şirketlerin kategorilere göre dağılımı" },
+            { "text": "Müşteri kazanım trendi" }
           ]
         },
         {
@@ -183,12 +178,11 @@
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "sirket aktif musteri sayisi" },
-            { "text": "toplam firma sayisi nedir" },
-            { "text": "musterilerin gruplara gore dagilimi" },
-            { "text": "ulkelere gore musteri dagilimi" },
-            { "text": "şehirlere gore müşteri dağılımı" },
-            { "text": "toplam kac distributor var" }
+            { "text": "Aktif şirket sayısı" },
+            { "text": "Toplam şirket sayısı" },
+            { "text": "Şirketlerin kategorilere göre dağılımı" },
+            { "text": "Ülkelere göre müşteri dağılımı" },
+            { "text": "Şehirlere göre müşteri dağılımı" }
           ]
         },
         {
