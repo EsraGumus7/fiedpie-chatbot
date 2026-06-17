@@ -257,6 +257,33 @@ function formatNumber(value) {
   return new Intl.NumberFormat("tr-TR").format(Number(value));
 }
 
+const MONEY_INTENTS = new Set([
+  "totalPurchaseOrderAmount",
+  "totalInvoiceAmount",
+  "totalInvoiceBalance",
+  "totalInvoicePayments",
+  "totalPayments",
+  "totalCosts",
+  "totalCommissions",
+]);
+
+function isMoneyIntent(intent = "") {
+  return MONEY_INTENTS.has(String(intent || "").trim());
+}
+
+function formatMoney(value, currencySymbol = "$") {
+  if (value == null || value === "" || Number.isNaN(Number(value))) return "-";
+
+  return `${currencySymbol}${new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value))}`;
+}
+
+function formatMetricValue(intent = "", value) {
+  return isMoneyIntent(intent) ? formatMoney(value) : formatNumber(value);
+}
+
 function formatDateTime(value) {
   if (!value) return "-";
 
@@ -607,8 +634,8 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
   }
 
   return [
-    `${opTitle} (${rangeInfo}): ${formatNumber(opValue ?? 0)} ${metricLabel}`,
-    `${coTitle} (${rangeInfo}): ${formatNumber(companyValue ?? 0)} ${metricLabel}`,
+    `${opTitle} (${rangeInfo}): ${formatMetricValue(intent, opValue ?? 0)} ${metricLabel}`,
+    `${coTitle} (${rangeInfo}): ${formatMetricValue(intent, companyValue ?? 0)} ${metricLabel}`,
   ].join("\n");
 }
 
@@ -622,7 +649,8 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
 
   const companyBody = isDistributionIntent(intent)
     ? summarizeDistributionBullets(intent, companyTeamScope.company?.rows || [])
-    : `${formatNumber(
+    : `${formatMetricValue(
+      intent,
       extractPrimaryMetricValue(intent, companyTeamScope.company?.rows || []) ?? 0
     )} ${metricLabel}`;
 
@@ -635,7 +663,7 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
       lines.push(summarizeDistributionBullets(intent, team.rows || []));
     } else {
       const value = extractPrimaryMetricValue(intent, team.rows || []);
-      lines.push(`${title} (${rangeInfo}): ${formatNumber(value ?? 0)} ${metricLabel}`);
+      lines.push(`${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`);
     }
     lines.push("");
   });
@@ -651,7 +679,7 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
     lines.push(summarizeDistributionBullets(intent, selectedRows));
   } else {
     const selectedValue = extractPrimaryMetricValue(intent, selectedRows);
-    lines.push(`${selectedLabel} (${rangeInfo}): ${formatNumber(selectedValue ?? 0)} ${metricLabel}`);
+    lines.push(`${selectedLabel} (${rangeInfo}): ${formatMetricValue(intent, selectedValue ?? 0)} ${metricLabel}`);
   }
 
   if ((companyTeamScope.teams || []).length > 1) {
@@ -683,7 +711,7 @@ function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
   }
 
   const metricLabel = getScopedMetricLabel(intent, filters);
-  const lines = [`${title} (${rangeInfo}): ${formatNumber(value ?? 0)} ${metricLabel}`];
+  const lines = [`${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`];
   appendMemberSummaryLines(lines, singleTeamScope, intent);
   return lines.join("\n");
 }
@@ -782,7 +810,7 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     if (intent === "avgVisitDuration") {
       return `${title} (${rangeInfo}): ${formatNumber(value ?? "-")}`;
     }
-    return `${title} (${rangeInfo}): ${formatNumber(value ?? 0)} ${metricLabel}`;
+    return `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`;
   });
 
   const combinedValue = extractPrimaryMetricValue(intent, multiTeamScope.combined?.rows || []);
@@ -790,7 +818,7 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     if (intent === "avgVisitDuration") {
       lines.push(`${combinedLabel} (${rangeInfo}): ${formatNumber(combinedValue ?? "-")}`);
     } else {
-      lines.push(`${combinedLabel} (${rangeInfo}): ${formatNumber(combinedValue ?? 0)} ${metricLabel}`);
+      lines.push(`${combinedLabel} (${rangeInfo}): ${formatMetricValue(intent, combinedValue ?? 0)} ${metricLabel}`);
     }
   }
 
@@ -942,13 +970,13 @@ function summarizeRows(intent, rows, filters = {}) {
       totalPurchaseOrderAmount: "toplam satinalma siparisi tutari",
     };
     const label = amountLabels[intent] || "islem goren toplam tutar";
-    return `${rangeInfo} araliginda ${label}: ${formatNumber(total)}.`;
+    return `${rangeInfo} araliginda ${label}: ${formatMoney(total)}.`;
   }
 
   // 3. Bakiye İşlemleri (Özel)
   if (intent === "totalInvoiceBalance") {
     const total = rows[0]?.totalBalance ?? 0;
-    return `${rangeInfo} itibariyla odenmemis toplam fatura bakiyesi: ${formatNumber(total)}.`;
+    return `${rangeInfo} itibariyla odenmemis toplam fatura bakiyesi: ${formatMoney(total)}.`;
   }
 
   // 4. Dağılım ve Gruplama (Group By) İşlemleri
@@ -958,7 +986,7 @@ function summarizeRows(intent, rows, filters = {}) {
     "clientsByCountry",
     "clientsByProgramType",
     "clientsByCity",
-    
+
     "distributorsByRegion",
     "distributorsByGroup",
     "distributorsByType",

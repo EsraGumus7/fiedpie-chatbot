@@ -178,6 +178,33 @@ function extractPrimaryMetricValue(intent, rows = []) {
   return first.total ?? first.totalUsers ?? first.responseCount ?? null;
 }
 
+const MONEY_INTENTS = new Set([
+  "totalPurchaseOrderAmount",
+  "totalInvoiceAmount",
+  "totalInvoiceBalance",
+  "totalInvoicePayments",
+  "totalPayments",
+  "totalCosts",
+  "totalCommissions",
+]);
+
+function isMoneyIntent(intent = "") {
+  return MONEY_INTENTS.has(String(intent || "").trim());
+}
+
+function formatMoney(value, currencySymbol = "$") {
+  if (value == null || value === "" || Number.isNaN(Number(value))) return "-";
+
+  return `${currencySymbol}${new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value))}`;
+}
+
+function formatMemberMetricValue(intent = "", value) {
+  return isMoneyIntent(intent) ? formatMoney(value) : value;
+}
+
 function formatMemberDisplayValue(intent, rows = []) {
   if (intent === "visitsByCompletionStatus") {
     const tam = rows.find((row) => row.visitState === "Tamamlanan")?.total ?? 0;
@@ -205,7 +232,7 @@ function formatMemberDisplayValue(intent, rows = []) {
     return "-";
   }
 
-  return value;
+  return formatMemberMetricValue(intent, value);
 }
 
 async function mapWithConcurrency(items = [], limit = MEMBER_QUERY_CONCURRENCY, mapper) {

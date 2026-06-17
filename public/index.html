@@ -1020,7 +1020,7 @@
 
     <section class="panel">
       <div class="center-header">
-         <h2 id="chartTitle">Duruma Gore Ziyaretler (Bar)</h2> 
+        <h2 id="chartTitle">Duruma Gore Ziyaretler (Bar)</h2>
         <button id="refreshBtn" class="secondary">Grafiği yenile</button>
       </div>
       <div class="row">
@@ -2792,7 +2792,10 @@
         valueCandidates.find((key) => first[key] !== undefined) ||
         Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
 
-      return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+      return formatDisplayMetricValue(
+        normalizedIntent,
+        valueKeyLocal ? first[valueKeyLocal] : "-"
+      );
     }
 
     function isCardDistributionIntent(normalizedIntent) {
@@ -2985,7 +2988,10 @@
           Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
         cards.push({
           title: cardTitle,
-          value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+          value: formatDisplayMetricValue(
+            normalizedIntent,
+            valueKeyLocal ? first[valueKeyLocal] : "-"
+          ),
         });
       };
 
@@ -3015,7 +3021,10 @@
           const valueKeyLocal =
             valueCandidates.find((key) => first[key] !== undefined) ||
             Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-          card.value = formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+          card.value = formatDisplayMetricValue(
+            normalizedIntent,
+            valueKeyLocal ? first[valueKeyLocal] : "-"
+          );
         }
         cards.push(card);
       });
@@ -3095,16 +3104,19 @@
             normalizedIntent === "visittrend" && teamRows.length
               ? formatVisitTrendValue(teamRows)
               : isUserSummaryIntent(normalizedIntent) && teamRows.length
-              ? formatUserSummaryRow(teamRows[0] || {}, normalizedIntent)
-              : isCardDistributionIntent(normalizedIntent) && teamRows.length
-                ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
-                : (() => {
-                  const first = teamRows[0] || {};
-                  const valueKeyLocal =
-                    valueCandidates.find((key) => first[key] !== undefined) ||
-                    Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-                  return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
-                })();
+                ? formatUserSummaryRow(teamRows[0] || {}, normalizedIntent)
+                : isCardDistributionIntent(normalizedIntent) && teamRows.length
+                  ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
+                  : (() => {
+                    const first = teamRows[0] || {};
+                    const valueKeyLocal =
+                      valueCandidates.find((key) => first[key] !== undefined) ||
+                      Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+                    return formatDisplayMetricValue(
+                      normalizedIntent,
+                      valueKeyLocal ? first[valueKeyLocal] : "-"
+                    );
+                  })();
           cards.push({
             title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
             value: cardValue,
@@ -3120,16 +3132,17 @@
               : isCardDistributionIntent(normalizedIntent) && combinedRows.length
                 ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
                 : (() => {
-                    const combinedFirst = combinedRows[0] || {};
-                    const combinedValueKey =
-                      valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
-                      Object.keys(combinedFirst).find((key) =>
-                        !Number.isNaN(Number(combinedFirst[key]))
-                      );
-                    return formatDisplayNumber(
-                      combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                  const combinedFirst = combinedRows[0] || {};
+                  const combinedValueKey =
+                    valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+                    Object.keys(combinedFirst).find((key) =>
+                      !Number.isNaN(Number(combinedFirst[key]))
                     );
-                  })();
+                  return formatDisplayMetricValue(
+                    normalizedIntent,
+                    combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                  );
+                })();
 
         cards.push({
           title: combinedTitle,
@@ -3161,6 +3174,42 @@
       }
 
       return String(value);
+    }
+
+    const MONEY_INTENTS = new Set([
+      "totalpurchaseorderamount",
+      "totalinvoiceamount",
+      "totalinvoicebalance",
+      "totalinvoicepayments",
+      "totalpayments",
+      "totalcosts",
+      "totalcommissions",
+    ]);
+
+    function isMoneyIntent(normalizedIntent = "") {
+      return MONEY_INTENTS.has(String(normalizedIntent || "").trim().toLowerCase());
+    }
+
+    function formatDisplayMoney(value, currencySymbol = "$") {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      const numeric = Number(value);
+      if (!Number.isNaN(numeric)) {
+        return `${currencySymbol}${numeric.toLocaleString("tr-TR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
+      }
+
+      return String(value);
+    }
+
+    function formatDisplayMetricValue(normalizedIntent = "", value) {
+      return isMoneyIntent(normalizedIntent)
+        ? formatDisplayMoney(value)
+        : formatDisplayNumber(value);
     }
 
     function renderChatResultVisualization(data, overrideChart = null) {
@@ -3419,7 +3468,10 @@
           renderKpiCards([
             {
               title: `${cardTitle} — ${title}`,
-              value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+              value: formatDisplayMetricValue(
+                normalizedIntent,
+                valueKeyLocal ? first[valueKeyLocal] : "-"
+              ),
             },
           ]);
 
@@ -3510,7 +3562,7 @@
         renderKpiCards([
           {
             title: isCompanySingleKpi ? `Sirket geneli — ${title}` : title,
-            value: formatDisplayNumber(value),
+            value: formatDisplayMetricValue(normalizedIntent, value),
           },
         ]);
 
