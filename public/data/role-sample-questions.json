@@ -8,55 +8,102 @@
           "id": "visit",
           "label": "Ziyaret",
           "questions": [
-            { "text": "ziyaret sayisi" },
-            { "text": "bugun ziyaret sayisi" },
-            { "text": "ortalama ziyaret suresi kac" },
-            { "text": "tamamlanan ve bekleyen ziyaret" },
-            { "text": "bugun bekleyen ziyaret" },
-            { "text": "hangi durumda kac ziyaret var" },
-            { "text": "ziyaret tiplerine gore dagilim" },
-            { "text": "ziyaret trendi nasil" },
-            { "text": "en cok doldurulan alanlar hangileri" },
-            { "text": "raf alani kac kayitta dolu" }
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "bugun ziyaret sayisi"
+            },
+            {
+              "text": "ortalama ziyaret suresi kac"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "bugun bekleyen ziyaret"
+            },
+            {
+              "text": "hangi durumda kac ziyaret var"
+            },
+            {
+              "text": "ziyaret tiplerine gore dagilim"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            },
+            {
+              "text": "en cok doldurulan alanlar hangileri"
+            },
+            {
+              "text": "raf alani kac kayitta dolu"
+            }
           ]
         },
         {
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "Aktif şirket sayısı" },
-            { "text": "Toplam şirket sayısı" },
-            { "text": "Pasif şirket sayısı" },
-            { "text": "Şirketlerin kategorilere göre dağılımı"},
-            { "text": "Duruma göre müşteri dağılımı" },
-            { "text": "Ülklere göre müşteri dağılımı" },
-            { "text": "Şehirlere göre müşteri dağılımı" },
-            { "text": "Müşteri kazanım trendi" }
+            {
+              "text": "Aktif şirket sayısı"
+            },
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Pasif şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Duruma göre müşteri dağılımı"
+            },
+            {
+              "text": "Ülklere göre müşteri dağılımı"
+            },
+            {
+              "text": "Şehirlere göre müşteri dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
           ]
         },
         {
           "id": "sales",
-          "label": "Satis",
+          "label": "Satış",
           "questions": [
-            { "text": "toplam siparis sayisi nedir" },
-            { "text": "toplam siparis tutari ne kadar" },
-            { "text": "durumlarina gore siparis dagilimi" },
-            { "text": "gunluk siparis trendi" },
-            { "text": "kac aktif kampanya var" },
-            { "text": "toplam kampanya sayisi" },
-            { "text": "toplam maliyet tutari" },
-            { "text": "kategorilere gore maliyetler" },
-            { "text": "takip edilen kargo sayisi" },
-            { "text": "musteriye ozel fiyat tanimlari" }
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Sipariş durum dağılımı"
+            },
+            {
+              "text": "Günlük sipariş trendi"
+            },
+            {
+              "text": "Aktif kampanya sayısı"
+            }
           ]
         },
         {
           "id": "users",
           "label": "Kullanicilar",
           "questions": [
-            { "text": "kullanici ziyaret ozeti" },
-            { "text": "personel ziyaret ozeti" },
-            { "text": "gerceklesen ziyaretlerim" }
+            {
+              "text": "kullanici ziyaret ozeti"
+            },
+            {
+              "text": "personel ziyaret ozeti"
+            },
+            {
+              "text": "gerceklesen ziyaretlerim"
+            }
           ]
         }
       ]
@@ -69,46 +116,81 @@
           "id": "visit",
           "label": "Ziyaret",
           "questions": [
-            { "text": "ziyaret sayisi" },
-            { "text": "tamamlanan ve bekleyen ziyaret" },
-            { "text": "ortalama ziyaret suresi kac" },
-            { "text": "ziyaretler duruma gore nasil dagiliyor" },
-            { "text": "ziyaret trendi nasil" }
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "ortalama ziyaret suresi kac"
+            },
+            {
+              "text": "ziyaretler duruma gore nasil dagiliyor"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            }
           ]
         },
         {
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "Aktif şirket sayısı" },
-            { "text": "Toplam şirket sayısı" },
-            { "text": "Şirketlerin kategorilere göre dağılımı" },
-            { "text": "Müşteri kazanım trendi" }
+            {
+              "text": "Aktif şirket sayısı"
+            },
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
           ]
         },
         {
           "id": "sales",
-          "label": "Satis / Finans",
+          "label": "Satış / Finans",
           "questions": [
-            { "text": "toplam siparis sayisi nedir" },
-            { "text": "toplam fatura sayisi" },
-            { "text": "toplam fatura tutari nedir" },
-            { "text": "odenmemis fatura bakiyesi ne kadar" },
-            { "text": "fatura durum dagilimi" },
-            { "text": "faturalardan yapilan toplam tahsilat" },
-            { "text": "kac aktif kampanya var" },
-            { "text": "toplam komisyon tutari" }
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
           ]
         },
         {
           "id": "users",
           "label": "Kullanicilar",
           "questions": [
-            { "text": "takimlara gore kullanici dagilimi" },
-            { "text": "aktif kullanici sayisi kac" },
-            { "text": "kullanici durum ozeti" },
-            { "text": "basarili ve basarisiz login dagilimi" },
-            { "text": "kullanici ziyaret ozeti" }
+            {
+              "text": "takimlara gore kullanici dagilimi"
+            },
+            {
+              "text": "aktif kullanici sayisi kac"
+            },
+            {
+              "text": "kullanici durum ozeti"
+            },
+            {
+              "text": "basarili ve basarisiz login dagilimi"
+            },
+            {
+              "text": "kullanici ziyaret ozeti"
+            }
           ]
         }
       ]
@@ -121,40 +203,72 @@
           "id": "visit",
           "label": "Ziyaret",
           "questions": [
-            { "text": "ziyaret sayisi" },
-            { "text": "tamamlanan ve bekleyen ziyaret" },
-            { "text": "ortalama ziyaret suresi kac" },
-            { "text": "ziyaret trendi nasil" }
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "ortalama ziyaret suresi kac"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            }
           ]
         },
         {
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "Toplam şirket sayısı" },
-            { "text": "Şirketlerin kategorilere göre dağılımı" },
-            { "text": "Müşteri kazanım trendi" }
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
           ]
         },
         {
           "id": "sales",
-          "label": "Satis / Finans",
+          "label": "Satış / Finans",
           "questions": [
-            { "text": "toplam siparis sayisi" },
-            { "text": "toplam fatura sayisi" },
-            { "text": "toplam fatura tutari nedir" },
-            { "text": "durumlarina gore siparis dagilimi" },
-            { "text": "kac aktif kampanya var" }
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
           ]
         },
         {
           "id": "users",
           "label": "Kullanicilar",
           "questions": [
-            { "text": "takimlara gore kullanici dagilimi" },
-            { "text": "kullanici durum ozeti" },
-            { "text": "aktif personel kac" },
-            { "text": "kullanici ziyaret ozeti" }
+            {
+              "text": "takimlara gore kullanici dagilimi"
+            },
+            {
+              "text": "kullanici durum ozeti"
+            },
+            {
+              "text": "aktif personel kac"
+            },
+            {
+              "text": "kullanici ziyaret ozeti"
+            }
           ]
         }
       ]
@@ -167,46 +281,87 @@
           "id": "visit",
           "label": "Ziyaret",
           "questions": [
-            { "text": "sirket ziyaret sayisi" },
-            { "text": "ziyaret sayisi" },
-            { "text": "tamamlanan ve bekleyen ziyaret" },
-            { "text": "ziyaret trendi nasil" },
-            { "text": "hangi durumda kac ziyaret var" }
+            {
+              "text": "sirket ziyaret sayisi"
+            },
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            },
+            {
+              "text": "hangi durumda kac ziyaret var"
+            }
           ]
         },
         {
           "id": "client",
           "label": "Musteri",
           "questions": [
-            { "text": "Aktif şirket sayısı" },
-            { "text": "Toplam şirket sayısı" },
-            { "text": "Şirketlerin kategorilere göre dağılımı" },
-            { "text": "Ülkelere göre müşteri dağılımı" },
-            { "text": "Şehirlere göre müşteri dağılımı" }
+            {
+              "text": "Aktif şirket sayısı"
+            },
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Ülkelere göre müşteri dağılımı"
+            },
+            {
+              "text": "Şehirlere göre müşteri dağılımı"
+            }
           ]
         },
         {
           "id": "sales",
-          "label": "Satis / Finans",
+          "label": "Satış / Finans",
           "questions": [
-            { "text": "toplam fatura sayisi" },
-            { "text": "toplam fatura tutari nedir" },
-            { "text": "odenmemis fatura bakiyesi ne kadar" },
-            { "text": "toplam siparis sayisi nedir" },
-            { "text": "iyzico uzerinden kac islem gecti" },
-            { "text": "toplam genel odeme tutari" }
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
           ]
         },
         {
           "id": "users",
           "label": "Kullanicilar",
           "questions": [
-            { "text": "toplam kac kullanici var" },
-            { "text": "hangi rolde kac kisi var" },
-            { "text": "takimlara gore kullanici dagilimi" },
-            { "text": "son login kayitlari neler" },
-            { "text": "kac admin kullanici var" },
-            { "text": "aktif kullanici sayisi kac" }
+            {
+              "text": "toplam kac kullanici var"
+            },
+            {
+              "text": "hangi rolde kac kisi var"
+            },
+            {
+              "text": "takimlara gore kullanici dagilimi"
+            },
+            {
+              "text": "son login kayitlari neler"
+            },
+            {
+              "text": "kac admin kullanici var"
+            },
+            {
+              "text": "aktif kullanici sayisi kac"
+            }
           ]
         }
       ]

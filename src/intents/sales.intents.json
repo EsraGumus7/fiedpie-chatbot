@@ -18,6 +18,7 @@
         "sistemde kaç sipariş var",
         "toplam kaç adet sipariş girildi",
         "kesilen sipariş adedi kaç",
+        "toplam sipariş sayısı",
         "ne kadar siparişimiz var"
       ],
       "negative_keywords": [
@@ -50,7 +51,8 @@
         "siparişlerden gelen toplam ciro nedir",
         "toplam sipariş hacmi",
         "siparişlerin parasal değeri",
-        "ne kadarlık sipariş aldık"
+        "ne kadarlık sipariş aldık",
+        "toplam sipariş tutarı"
       ],
       "negative_keywords": [
         "sayisi",
@@ -82,7 +84,8 @@
         "kaç sipariş onaylandı kaçı bekliyor",
         "sipariş statü özeti",
         "iptal edilen siparişler",
-        "hangi durumda kaç sipariş var"
+        "hangi durumda kaç sipariş var",
+        "sipariş durum dağılımı"
       ],
       "negative_keywords": [
         "fatura",
@@ -225,6 +228,7 @@
         "kesilen faturaların toplam değeri",
         "faturalaşmış ciro ne kadar",
         "toplam fatura hacmi",
+        "toplam fatura tutarı",
         "ne kadarlık fatura kestik",
         "fatura toplamı",
         "kesilen fatura toplamı",
@@ -277,6 +281,7 @@
       "aliases": [
         "ödenmemiş fatura bakiyesi ne kadar",
         "toplam alacak tutarımız nedir",
+        "ödenmemiş fatura bakiyesi",
         "kalan fatura borçları",
         "müşterilerin fatura bakiyeleri",
         "ne kadar alacağımız kaldı",
@@ -428,6 +433,7 @@
         "gelen nakit ödeme tutarı",
         "faturalar için ne kadar tahsilat yapıldı",
         "fatura ödeme girişi",
+        "fatura tahsilatı",
         "faturalardan tahsil edilen tutar",
         "fatura tahsilat toplamı",
         "fatura tahsilatı ne kadar",
@@ -565,7 +571,8 @@
         "kaç aktif kampanya var",
         "devam eden kampanya sayısı",
         "güncel kampanyalar neler",
-        "aktif durumda kaç kampanya bulunuyor"
+        "aktif durumda kaç kampanya bulunuyor",
+        "aktif kampanya sayısı"
       ],
       "negative_keywords": [
         "toplam",
