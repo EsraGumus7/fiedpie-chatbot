@@ -6,7 +6,7 @@
       "intent": "clientCountActive",
       "description_tr": "Aktif / Mevcut müşteri sayısı",
       "keywords": ["aktif", "calisan", "musteri", "sayisi", "kac", "firma", "kurum", "portfoy", "mevcut"],
-      "aliases": ["aktif müşteri sayısı kaç", "sistemde kaç tane aktif müşteri var", "çalışan firma sayısı nedir"],
+      "aliases": ["aktif müşteri sayısı kaç","Aktif şirket sayısı", "sistemde kaç tane aktif müşteri var", "çalışan firma sayısı nedir"],
       "negative_keywords": ["pasif", "arşiv", "distribütör", "bayi", "tuketici", "fatura", "siparis"],
       "priority": 15,
       "metric_id": "client_count_active"
@@ -15,7 +15,7 @@
       "intent": "clientCountTotal",
       "description_tr": "Toplam müşteri / kurum sayısı",
       "keywords": ["toplam", "musteri", "sayisi", "adet", "kac", "firma", "kurum", "kayitli", "data"],
-      "aliases": ["sistemde toplam kaç müşteri var", "toplam firma sayısı nedir", "veritabanında kayıtlı kaç kurum var"],
+      "aliases": ["sistemde toplam kaç müşteri var", "Toplam şirket sayısı", "toplam firma sayısı nedir", "veritabanında kayıtlı kaç kurum var"],
       "negative_keywords": ["aktif", "pasif", "arşiv", "distribütör", "bayi", "tuketici", "fatura", "personel"],
       "priority": 10,
       "metric_id": "client_count_total"
@@ -24,7 +24,7 @@
       "intent": "clientCountPassive",
       "description_tr": "Pasif / Durdurulmuş müşteri sayısı",
       "keywords": ["pasif", "durdurulmus", "musteri", "sayisi", "kac", "firma", "kurum", "calismayan", "bekleyen"],
-      "aliases": ["pasif müşteri sayısı kaç", "çalışmayı durduran müşteri adedi", "kaç tane pasif firmamız var"],
+      "aliases": ["pasif müşteri sayısı kaç", "Pasif şirket sayısı","Pasif şirket sayısı","çalışmayı durduran müşteri adedi", "kaç tane pasif firmamız var"],
       "negative_keywords": ["aktif", "toplam", "arşiv", "distribütör", "bayi", "tuketici", "fatura"],
       "priority": 15,
       "metric_id": "client_count_passive"
@@ -42,7 +42,7 @@
       "intent": "clientsByGroup",
       "description_tr": "Gruplara göre müşteri dağılımı",
       "keywords": ["grup", "kategori", "dagilim", "musteri", "gruplara", "hangi", "kac", "sinif"],
-      "aliases": ["müşterilerin gruplara göre dağılımı", "kategori bazında firma sayısı", "hangi grupta kaç müşteri var"],
+      "aliases": ["müşterilerin gruplara göre dağılımı","Şirketlerin kategorilere göre dağılımı", "kategori bazında firma sayısı", "hangi grupta kaç müşteri var"],
       "negative_keywords": ["durum", "ulke", "program", "statu", "distribütör", "tuketici"],
       "priority": 20,
       "metric_id": "client_by_group"
@@ -51,7 +51,7 @@
       "intent": "clientsByState",
       "description_tr": "Durum / Seviyeye göre müşteri dağılımı",
       "keywords": ["durum", "statu", "seviye", "dagilim", "musteri", "state", "gore", "asama"],
-      "aliases": ["duruma göre müşteri dağılımı", "seviyelere göre müşteri sayısı", "müşteri durum özeti"],
+      "aliases": ["Duruma göre müşteri dağılımı","duruma göre müşteri dağılımı", "seviyelere göre müşteri sayısı", "müşteri durum özeti"],
       "negative_keywords": ["grup", "ulke", "program", "distribütör", "tuketici"],
       "priority": 20,
       "metric_id": "client_by_state"
@@ -87,7 +87,7 @@
       "intent": "clientTrend",
       "description_tr": "Müşteri kazanım trendi",
       "keywords": ["trend", "gunluk", "aylik", "kazanim", "gidisat", "zaman", "grafik", "musteri", "artis", "buyume"],
-      "aliases": ["müşteri kazanım trendi nasıl", "aylık müşteri artış grafiği", "müşteri kazanım durumu trendi"],
+      "aliases": ["Müşteri kazanım trendi","müşteri kazanım trendi nasıl", "aylık müşteri artış grafiği", "müşteri kazanım durumu trendi"],
       "negative_keywords": ["dagilim", "grup", "ulke", "durum", "distribütör", "tuketici"],
       "priority": 30,
       "metric_id": "client_daily_trend"
@@ -240,7 +240,7 @@
       "intent": "clientsByCity",
       "description_tr": "Şehre göre müşteri dağılımı",
       "keywords": [ "sehir","şehir","city",   "lokasyon","dagilim","dağılım","musteri","müşteri","client","hangi","sehirde","şehirde","nerede"],
-      "aliases": ["şehirlere göre müşteri dağılımı","hangi şehirde kaç firmamız var","hangi şehirde kaç müşteri var","hangi şehirde kaç client var","city bazında müşteri sayısı","şehir bazında firma dağılımı"],
+      "aliases": ["Şehirlere göre müşteri dağılımı","şehirlere göre müşteri dağılımı","hangi şehirde kaç firmamız var","hangi şehirde kaç müşteri var","hangi şehirde kaç client var","city bazında müşteri sayısı","şehir bazında firma dağılımı"],
       "negative_keywords": ["ulke", "ülke","country", "grup","durum", "program", "distribütör", "tuketici" ],
       "priority": 22,
       "metric_id": "client_by_city"
