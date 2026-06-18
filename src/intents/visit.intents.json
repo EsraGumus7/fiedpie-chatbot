@@ -111,6 +111,39 @@
       "priority": 18
     },
     {
+  "intent": "visitedClientsByUser",
+  "description_tr": "Kullanicilarin ziyaret ettigi musteriler",
+  "keywords": [
+    "kullanici",
+    "kullanıcı",
+    "user",
+    "kim",
+    "hangi",
+    "client",
+    "musteri",
+    "müşteri",
+    "ziyaret",
+    "ziyaret etti"
+  ],
+  "aliases": [
+    "kullanıcılar hangi clientleri ziyaret etti",
+    "kullanıcılar hangi müşterileri ziyaret etti",
+    "hangi kullanıcı hangi müşteriyi ziyaret etti",
+    "user bazlı müşteri ziyaretleri",
+    "kullanıcı bazlı client ziyaretleri"
+  ],
+  "negative_keywords": [
+    "sehir",
+    "şehir",
+    "ulke",
+    "ülke",
+    "durum",
+    "tip"
+  ],
+  "priority": 25,
+  "metric_id": "visited_clients_by_user"
+},
+    {
       "intent": "visitsByCompletionStatus",
       "metric_id": "visit_by_completion_status",
       "description_tr": "Tamamlanan ve bekleyen ziyaret dagilimi; ziyaret durumu ozeti",
