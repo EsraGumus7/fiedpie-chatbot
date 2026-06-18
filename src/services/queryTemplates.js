@@ -254,7 +254,34 @@ const TEMPLATES = {
     `,
     bind: { startDate, endDate },
   }),
-
+  visitedClientsByUser: ({ startDate, endDate }) => ({
+  query: `
+    SELECT TOP 100
+      u.Id AS userId,
+      u.Name AS userName,
+      c.Id AS clientId,
+      c.Name AS clientName,
+      COUNT(v.Id) AS total
+    FROM dbo.Visit v
+    INNER JOIN dbo.[User] u
+      ON u.Id = v.UserId
+     AND u.Deleted = 0
+    INNER JOIN dbo.Client c
+      ON c.Id = v.ClientId
+     AND c.Deleted = 0
+    WHERE v.Deleted = 0
+      AND (@startDate IS NULL OR v.CreateTime >= @startDate)
+      AND (@endDate IS NULL OR v.CreateTime < DATEADD(day, 1, @endDate))
+    GROUP BY
+      u.Id,
+      u.Name,
+      c.Id,
+      c.Name
+    ORDER BY total DESC;
+  `,
+  bind: { startDate, endDate }
+}),
+  
   usersByRole: ({ startDate, endDate }) => ({
     query: `
       SELECT
