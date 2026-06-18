@@ -64,6 +64,15 @@
       "security_scope": "tenant_user_scope"
     },
     {
+      "metric_id": "visited_clients_by_user",
+      "intent": "visitedClientsByUser",
+      "description_tr": "Kullanicilarin ziyaret ettigi musteriler ve ziyaret sayilari",
+      "source_tables": ["dbo.Visit", "dbo.User", "dbo.Client"],
+      "aggregation": "count_group_by",
+      "default_filters": ["Visit.Deleted = 0", "Client.Deleted = 0", "User.Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
       "metric_id": "dynamic_top_fields",
       "intent": "dynamicTopFields",
       "description_tr": "En cok doldurulan dynamic field listesi",
