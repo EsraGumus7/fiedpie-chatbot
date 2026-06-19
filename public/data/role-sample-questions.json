@@ -1,0 +1,373 @@
+{
+  "roles": {
+    "L1": {
+      "title": "Saha calisani (L1)",
+      "subtitle": "Yalnizca kendi veriniz — PKG_FIELD (50 intent)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "bugun ziyaret sayisi"
+            },
+            {
+              "text": "ortalama ziyaret suresi kac"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "bugun bekleyen ziyaret"
+            },
+            {
+              "text": "hangi durumda kac ziyaret var"
+            },
+            {
+              "text": "ziyaret tiplerine gore dagilim"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            },
+            {
+              "text": "en cok doldurulan alanlar hangileri"
+            },
+            {
+              "text": "raf alani kac kayitta dolu"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            {
+              "text": "Aktif şirket sayısı"
+            },
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Pasif şirket sayısı"
+            },
+            {
+              "text":"Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Duruma göre müşteri dağılımı"
+            },
+            {
+              "text": "Ülklere göre müşteri dağılımı"
+            },
+            {
+              "text": "Şehirlere göre müşteri dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış",
+          "questions": [
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Sipariş durum dağılımı"
+            },
+            {
+              "text": "Günlük sipariş trendi"
+            },
+            {
+              "text": "Aktif kampanya sayısı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            {
+              "text": "kullanici ziyaret ozeti"
+            },
+            {
+              "text": "personel ziyaret ozeti"
+            },
+            {
+              "text": "gerceklesen ziyaretlerim"
+            }
+          ]
+        }
+      ]
+    },
+    "L2": {
+      "title": "Takim lideri (L2)",
+      "subtitle": "Takim birlesik veri + finans — PKG_MANAGER (68 intent)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "ortalama ziyaret suresi kac"
+            },
+            {
+              "text": "ziyaretler duruma gore nasil dagiliyor"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            {
+              "text": "Aktif şirket sayısı"
+            },
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış / Finans",
+          "questions": [
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            {
+              "text": "takimlara gore kullanici dagilimi"
+            },
+            {
+              "text": "aktif kullanici sayisi kac"
+            },
+            {
+              "text": "kullanici durum ozeti"
+            },
+            {
+              "text": "basarili ve basarisiz login dagilimi"
+            },
+            {
+              "text": "kullanici ziyaret ozeti"
+            }
+          ]
+        }
+      ]
+    },
+    "L3": {
+      "title": "Coklu takim lideri (L3)",
+      "subtitle": "5 takim + toplam veya tek takim + uyeler — PKG_MANAGER",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "ortalama ziyaret suresi kac"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış / Finans",
+          "questions": [
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            {
+              "text": "takimlara gore kullanici dagilimi"
+            },
+            {
+              "text": "kullanici durum ozeti"
+            },
+            {
+              "text": "aktif personel kac"
+            },
+            {
+              "text": "kullanici ziyaret ozeti"
+            }
+          ]
+        }
+      ]
+    },
+    "L4": {
+      "title": "Admin (L4)",
+      "subtitle": "Sirket geneli — tum intentler (* paketi)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "sirket ziyaret sayisi"
+            },
+            {
+              "text": "ziyaret sayisi"
+            },
+            {
+              "text": "tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "ziyaret trendi nasil"
+            },
+            {
+              "text": "hangi durumda kac ziyaret var"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            {
+              "text": "Aktif şirket sayısı"
+            },
+            {
+              "text": "Toplam şirket sayısı"
+            },
+            {
+              "text": "Şirketlerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Ülkelere göre müşteri dağılımı"
+            },
+            {
+              "text": "Şehirlere göre müşteri dağılımı"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış / Finans",
+          "questions": [
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanicilar",
+          "questions": [
+            {
+              "text": "toplam kac kullanici var"
+            },
+            {
+              "text": "hangi rolde kac kisi var"
+            },
+            {
+              "text": "takimlara gore kullanici dagilimi"
+            },
+            {
+              "text": "son login kayitlari neler"
+            },
+            {
+              "text": "kac admin kullanici var"
+            },
+            {
+              "text": "aktif kullanici sayisi kac"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,4143 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saha Operasyonlari Chatbot</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f3f4f7;
+    }
+
+    .app {
+      max-width: 1380px;
+      margin: 18px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 220px 1fr 360px;
+      gap: 14px;
+      border-top: 6px solid #f26a2e;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin-top: 0;
+    }
+
+    .panel {
+      border: 1px solid #e4e7ef;
+      border-radius: 10px;
+      padding: 12px;
+      background: #fcfcfd;
+    }
+
+    .left-panel h3 {
+      margin-bottom: 8px;
+      letter-spacing: 0.8px;
+      color: #4b5c78;
+    }
+
+    input,
+    textarea,
+    button {
+      width: 100%;
+      padding: 9px;
+      border: 1px solid #d2d9e5;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    button {
+      background: #1d4ed8;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #ffffff;
+      color: #1f335f;
+      border: 1px solid #ccdaf5;
+    }
+
+    button.chart-btn {
+      margin-bottom: 8px;
+      text-align: center;
+      background: #ffffff;
+      color: #344767;
+      border: 1px solid #d9deea;
+      border-radius: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button.chart-btn.active {
+      background: #fff4ef;
+      color: #e55a1e;
+      border: 1px solid #f2b091;
+      box-shadow: 0 0 0 2px rgba(242, 106, 46, 0.1) inset;
+    }
+
+    button.chart-btn:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    button.chart-btn.locked {
+      opacity: 0.36;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+    }
+
+    .muted {
+      color: #5d6b8a;
+      font-size: 13px;
+    }
+
+    .center-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .chart-wrap {
+      background: #ffffff;
+      border: 1px solid #e4e9f3;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 360px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .kpi-card {
+      background: #fff7f3;
+      border: 1px solid #f5c7ae;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .kpi-title {
+      color: #46608f;
+      font-size: 12px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #cc4f1c;
+      margin-top: 4px;
+    }
+
+    .kpi-card.kpi-card--team-total {
+      background: #fff0e6;
+      border-color: #e08a5a;
+      grid-column: 1 / -1;
+    }
+
+    .kpi-card.kpi-card--member {
+      background: #f8fbff;
+      border-color: #c9d8ef;
+    }
+
+    .kpi-card.kpi-card--member .kpi-value {
+      font-size: 18px;
+      color: #35507a;
+    }
+
+    .kpi-card.kpi-card--member-hidden,
+    .kpi-card.kpi-card--team-breakdown-hidden {
+      display: none;
+    }
+
+    .member-breakdown-toggle {
+      grid-column: 1 / -1;
+      justify-self: start;
+      border: 1px solid #c9d8ef;
+      background: #eef4fc;
+      color: #35507a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .member-breakdown-toggle:hover {
+      background: #dfeaf8;
+    }
+
+    .scope-overlap-notice {
+      grid-column: 1 / -1;
+      margin: 4px 0 0;
+      padding: 10px 12px;
+      border: 1px solid #e8dcc4;
+      border-radius: 8px;
+      background: #fff9ef;
+      color: #6b5a3e;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .chat-log {
+      height: 430px;
+      overflow-y: auto;
+      border: 1px solid #d7e1f2;
+      border-radius: 10px;
+      padding: 10px 10px 2px;
+      background: #f5f8fc;
+      margin-bottom: 10px;
+    }
+
+    .msg {
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      line-height: 1.45;
+      font-size: 14px;
+      border: 1px solid transparent;
+    }
+
+    .msg.user {
+      background: #fff0e9;
+      border: 1px solid #f5d2c0;
+      margin-left: 28px;
+    }
+
+    .msg.bot {
+      background: #f2f5fa;
+      border: 1px solid #dce3f0;
+      margin-right: 28px;
+    }
+
+    .msg-role {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .msg-content {
+      white-space: normal;
+    }
+
+    .msg-content ul {
+      margin: 6px 0 0 16px;
+      padding: 0;
+    }
+
+    .msg-content li {
+      margin-bottom: 2px;
+    }
+
+    .msg-content .msg-scope-header {
+      font-weight: 600;
+      color: #2f4568;
+      margin-bottom: 4px;
+    }
+
+    .msg.user .msg-role {
+      color: #c34e1e;
+    }
+
+    .msg.bot .msg-role {
+      color: #4f6386;
+    }
+
+    .chat-input {
+      border: 1px solid #d7e1f2;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .assistant-header {
+      margin-bottom: 6px;
+    }
+
+    .assistant-header h2 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+      line-height: 1.1;
+      color: #1e293b;
+    }
+
+    .assistant-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .assistant-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    .scope-toggle-group {
+      display: inline-flex;
+      align-items: stretch;
+      position: relative;
+      border: 1px solid #c8d6ef;
+      border-radius: 8px;
+      overflow: visible;
+      background: #fff;
+    }
+
+    .scope-toggle-group.hidden {
+      display: none;
+    }
+
+    .scope-teams-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: stretch;
+      border-right: 1px solid #c8d6ef;
+    }
+
+    .scope-teams-menu {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 4px);
+      min-width: 260px;
+      max-height: 300px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #d7e1f2;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(31, 45, 74, 0.12);
+      padding: 8px;
+      z-index: 30;
+    }
+
+    .scope-teams-menu.hidden {
+      display: none;
+    }
+
+    .scope-teams-menu label {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: start;
+      column-gap: 8px;
+      padding: 6px 4px;
+      font-size: 13px;
+      line-height: 1.35;
+      cursor: pointer;
+      text-align: left;
+      justify-items: start;
+    }
+
+    .scope-teams-menu label input[type="checkbox"] {
+      width: 16px;
+      min-width: 16px;
+      height: 16px;
+      margin: 1px 0 0;
+      padding: 0;
+      box-sizing: border-box;
+      justify-self: start;
+    }
+
+    .scope-teams-menu label span {
+      min-width: 0;
+    }
+
+    .scope-teams-menu .scope-menu-all {
+      border-bottom: 1px solid #e8eef8;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      font-weight: 600;
+      align-items: center;
+    }
+
+    .scope-teams-menu .scope-menu-empty {
+      font-size: 12px;
+      color: #6b7c99;
+      padding: 6px 4px;
+    }
+
+    .scope-teams-menu .scope-menu-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #6b7c99;
+      padding: 8px 4px 4px;
+      margin: 0;
+    }
+
+    .scope-teams-menu .scope-menu-group-title:first-of-type {
+      padding-top: 2px;
+    }
+
+    .scope-teams-menu .scope-menu-group+.scope-menu-group {
+      border-top: 1px solid #e8eef8;
+      margin-top: 4px;
+      padding-top: 2px;
+    }
+
+    .scope-toggle-btn.scope-menu-btn {
+      padding: 8px 10px;
+      min-width: 32px;
+      border-left: 1px solid #c8d6ef;
+    }
+
+    .scope-toggle-btn.scope-menu-btn.menu-open {
+      background: #fff4ef;
+      color: #cc4f1c;
+    }
+
+    .scope-toggle-btn.scope-menu-btn.active {
+      background: #e55a1e;
+      color: #fff;
+    }
+
+    .scope-toggle-btn.scope-menu-btn.active.menu-open {
+      background: #cc4f1c;
+      color: #fff;
+    }
+
+    .scope-toggle-btn {
+      width: auto;
+      min-width: 0;
+      flex: 0 0 auto;
+      border: none;
+      border-right: 1px solid #c8d6ef;
+      background: #fff;
+      color: #2f4568;
+      border-radius: 0;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: none;
+    }
+
+    /* prevent layout shift when label length changes */
+    .scope-toggle-btn {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .scope-toggle-btn:last-child {
+      border-right: none;
+    }
+
+    .scope-toggle-btn:hover:not(:disabled):not(.active) {
+      background: #f3f7ff;
+    }
+
+    .scope-toggle-btn.active {
+      background: #e55a1e;
+      color: #fff;
+    }
+
+    .scope-toggle-btn:disabled,
+    .scope-toggle-btn.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .help-open-btn {
+      width: 46px;
+      height: 46px;
+      min-width: 46px;
+      padding: 0;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ff8347, #e55a1e);
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 4px 14px rgba(229, 90, 30, 0.35);
+      flex-shrink: 0;
+    }
+
+    .help-open-btn:hover {
+      background: linear-gradient(145deg, #ff9259, #d44f15);
+      transform: scale(1.04);
+    }
+
+    .help-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .help-modal-backdrop.hidden {
+      display: none;
+    }
+
+    .help-modal {
+      position: relative;
+      width: min(75vw, 980px);
+      height: min(78vh, 820px);
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+      border: 1px solid #e4e7ef;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .help-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 22px;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .help-modal-close:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .help-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 32px 24px;
+      overflow: hidden;
+    }
+
+    .help-step.hidden {
+      display: none;
+    }
+
+    .help-step h2 {
+      margin: 0 0 8px;
+      color: #1e293b;
+      font-size: 24px;
+    }
+
+    .help-role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 24px;
+      flex: 1;
+      align-content: center;
+    }
+
+    .help-role-btn {
+      min-height: 110px;
+      padding: 16px;
+      text-align: left;
+      background: #f8fafc;
+      color: #1e293b;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .help-role-btn:hover {
+      border-color: #f2b091;
+      background: #fff7f3;
+      color: #c34e1e;
+    }
+
+    .help-role-btn:disabled,
+    .help-role-btn.is-locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      color: #94a3b8;
+      box-shadow: none;
+    }
+
+    .help-role-btn:disabled:hover,
+    .help-role-btn.is-locked:hover {
+      border-color: #e2e8f0;
+      background: #f1f5f9;
+      color: #94a3b8;
+      transform: none;
+    }
+
+    .help-role-btn.is-current {
+      border-color: #e55a1e;
+      background: #fff4ef;
+    }
+
+    .help-role-btn.is-current strong {
+      color: #c34e1e;
+    }
+
+    .help-access-banner {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #eef4fc;
+      border: 1px solid #c9d8ef;
+      color: #35507a;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .help-role-btn strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 6px;
+      color: #e55a1e;
+    }
+
+    .help-questions-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .help-back-btn {
+      width: auto;
+      padding: 8px 14px;
+      background: #fff;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+    }
+
+    .help-back-btn:hover {
+      background: #f8fafc;
+    }
+
+    .help-role-subtitle {
+      margin: 0 0 12px;
+      flex-shrink: 0;
+    }
+
+    .help-domain-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .help-domain-tab {
+      width: auto;
+      padding: 8px 14px;
+      background: #fff;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .help-domain-tab.active {
+      background: #fff4ef;
+      color: #e55a1e;
+      border-color: #f2b091;
+    }
+
+    .help-questions-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-content: flex-start;
+      padding-right: 4px;
+    }
+
+    .help-question-chip {
+      width: auto;
+      max-width: 100%;
+      padding: 10px 14px;
+      text-align: left;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .help-question-chip:hover {
+      background: #eef4fc;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+
+    @media (max-width: 720px) {
+      .help-modal {
+        width: 94vw;
+        height: 88vh;
+      }
+
+      .help-role-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .help-step {
+        padding: 20px 16px 16px;
+      }
+    }
+
+    .sql-panel {
+      margin-top: 10px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: none;
+    }
+
+    .sql-panel.visible {
+      display: block;
+    }
+
+    .sql-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .sql-panel-header strong {
+      font-size: 13px;
+      color: #f8fafc;
+    }
+
+    .sql-intent-badge {
+      font-size: 11px;
+      color: #94a3b8;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    .sql-code {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #cbd5e1;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .sql-bind {
+      margin: 8px 0 0;
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .sql-scope-title {
+      margin: 10px 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .sql-scope {
+      margin: 0;
+      font-size: 11px;
+      color: #a5b4fc;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Courier New", monospace;
+      line-height: 1.5;
+    }
+
+    .chat-input label {
+      font-size: 12px;
+      color: #5d6b8a;
+      font-weight: 600;
+    }
+
+    .send-row {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .send-row button {
+      width: 130px;
+      background: #f26a2e;
+    }
+
+    .send-row button:hover {
+      background: #e05c20;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chart-grid .chart-btn {
+      height: 82px;
+      margin-bottom: 0;
+    }
+
+    .chart-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chart-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 1px solid #c8d6ec;
+      color: #6e819f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: #f8fbff;
+    }
+
+    button.chart-btn.active .chart-icon {
+      border-color: #f2b091;
+      color: #e55a1e;
+      background: #fff3ec;
+    }
+
+    .chart-name {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .chart-sub {
+      font-size: 11px;
+      color: #8492a9;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loginOverlay" style="
+  position:fixed;
+  inset:0;
+  background:#f3f4f7;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+">
+    <div style="
+    width:360px;
+    background:white;
+    padding:24px;
+    border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);
+  ">
+      <h2 style="margin-top:0;">Giriş Yap</h2>
+
+      <input id="loginEmail" type="email" placeholder="Email" value="mehmetkordon09@gmail.com"
+        style="margin-bottom:12px;" />
+
+      <input id="loginPassword" type="password" placeholder="Şifre" value="1463" style="margin-bottom:12px;" />
+
+      <button id="loginBtn">Giriş Yap</button>
+
+      <div id="loginError" style="
+      color:red;
+      margin-top:10px;
+      font-size:13px;
+    "></div>
+    </div>
+  </div>
+
+  <!-- Kullanıcı paneli: Giriş sonrası gösterilir -->
+  <!-- Kullanıcı paneli: Giriş sonrası gösterilir (taşındı) -->
+
+  <div class="app">
+    <section class="panel left-panel">
+      <h3>Görünüm</h3>
+      <p class="muted"></p>
+      <div class="chart-grid">
+        <button class="chart-btn active" data-chart="stateBar">
+          <span class="chart-card">
+            <span class="chart-icon">▦</span>
+            <span class="chart-name">Bar</span>
+            <span class="chart-sub">Durum sayisi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="statePie">
+          <span class="chart-card">
+            <span class="chart-icon">◔</span>
+            <span class="chart-name">Pie</span>
+            <span class="chart-sub">Kategori payi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="fieldBar">
+          <span class="chart-card">
+            <span class="chart-icon">▤</span>
+            <span class="chart-name">Field</span>
+            <span class="chart-sub">Alan dagilimi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="kpiCards">
+          <span class="chart-card">
+            <span class="chart-icon">☰</span>
+            <span class="chart-name">KPI</span>
+            <span class="chart-sub">Kart ozeti</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="visitTrend">
+          <span class="chart-card">
+            <span class="chart-icon">╱</span>
+            <span class="chart-name">Line</span>
+            <span class="chart-sub">Gunluk trend</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="typeBar">
+          <span class="chart-card">
+            <span class="chart-icon">◫</span>
+            <span class="chart-name">Type</span>
+            <span class="chart-sub">Visit tipi</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="stateDoughnut">
+          <span class="chart-card">
+            <span class="chart-icon">◕</span>
+            <span class="chart-name">Doughnut</span>
+            <span class="chart-sub">Kategori payi (Doughnut)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="statePolar">
+          <span class="chart-card">
+            <span class="chart-icon">◎</span>
+            <span class="chart-name">Polar</span>
+            <span class="chart-sub">Kategori payi (Polar)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="stateRadar">
+          <span class="chart-card">
+            <span class="chart-icon">✺</span>
+            <span class="chart-name">Radar</span>
+            <span class="chart-sub">Etiket bazli radar</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="stateHBar">
+          <span class="chart-card">
+            <span class="chart-icon">☰</span>
+            <span class="chart-name">H-Bar</span>
+            <span class="chart-sub">Yatay Bar</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="stateArea">
+          <span class="chart-card">
+            <span class="chart-icon">∿</span>
+            <span class="chart-name">Area</span>
+            <span class="chart-sub">Alan grafiği (Area)</span>
+          </span>
+        </button>
+        <button class="chart-btn" data-chart="stateStacked">
+          <span class="chart-card">
+            <span class="chart-icon">▦▦</span>
+            <span class="chart-name">Stacked</span>
+            <span class="chart-sub">Yiginlanmis Bar</span>
+          </span>
+        </button>
+      </div>
+      <hr />
+      <!-- Removed: Form Alani / Field ID (not used) -->
+      <div id="userPanel"
+        style="margin-top:12px; background:#fff; padding:10px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:none; font-size:13px;">
+        <div style="margin-bottom:6px; color:#333;">
+          <strong id="userPanelName">Kullanıcı</strong>
+        </div>
+        <button id="logoutBtn"
+          style="width:100%; padding:8px; background:#d32f2f; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">Çıkış
+          Yap</button>
+      </div>
+      <p class="muted">Grafikleri seçilen tarih aralığına göre oluşturabilirsiniz..</p>
+    </section>
+
+    <section class="panel">
+      <div class="center-header">
+      <h2 id="chartTitle">Duruma Gore Ziyaretler (Bar)</h2> 
+        <button id="refreshBtn" class="secondary">Grafiği yenile</button>
+      </div>
+      <div class="row">
+        <div>
+          <label for="startDate">Başlangıç</label>
+          <input id="startDate" type="date" />
+        </div>
+        <div>
+          <label for="endDate">Bitiş</label>
+          <input id="endDate" type="date" />
+        </div>
+      </div>
+      <div class="chart-wrap" id="chartArea">
+        <canvas id="mainChart"></canvas>
+        <div id="kpiArea" style="display:none;" class="kpi-grid"></div>
+      </div>
+      <div id="sqlPanel" class="sql-panel">
+        <div class="sql-panel-header">
+          <strong>SQL &amp; Scope</strong>
+          <span id="sqlIntentBadge" class="sql-intent-badge"></span>
+        </div>
+        <pre id="sqlPreview" class="sql-code">-- Sorgu burada görünecek</pre>
+        <pre id="sqlBind" class="sql-bind"></pre>
+        <div class="sql-scope-title">Kullanıcı Scope</div>
+        <pre id="sqlScope" class="sql-scope"></pre>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="assistant-header">
+        <h2>Asistan</h2>
+      </div>
+      <div class="assistant-header-row">
+        <div class="assistant-header-actions">
+          <div id="scopeToggleGroup" class="scope-toggle-group hidden">
+            <div class="scope-teams-wrap">
+              <button type="button" id="scopeTeamsBtn" class="scope-toggle-btn">Takımlar</button>
+              <button type="button" id="scopeTeamsMenuBtn" class="scope-toggle-btn scope-menu-btn"
+                title="Yönetilen takımları seç" aria-label="Yönetilen takımları seç">
+                ▼
+              </button>
+              <div id="scopeTeamsMenu" class="scope-teams-menu hidden"></div>
+            </div>
+            <button type="button" id="scopeCompanyBtn" class="scope-toggle-btn">Şirket</button>
+          </div>
+          <button type="button" id="helpOpenBtn" class="help-open-btn" title="Ornek sorular"
+            aria-label="Ornek sorular">?</button>
+        </div>
+      </div>
+      <div class="chat-log" id="chatLog">
+        <div class="msg bot">
+          <div class="msg-role">Asistan</div>
+          Merhaba! Soru yazarak başlayabilirsiniz..
+        </div>
+      </div>
+      <div class="chat-input">
+        <label for="question">Soru</label>
+        <textarea id="question" placeholder="Orn: Bu ay gerceklesen ziyaret sayisi nedir?"></textarea>
+        <div class="send-row">
+          <button id="askBtn">Gönder</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="helpModalBackdrop" class="help-modal-backdrop hidden" aria-hidden="true">
+    <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+      <button type="button" id="helpCloseBtn" class="help-modal-close" aria-label="Kapat">&times;</button>
+
+      <div id="helpStepRole" class="help-step">
+        <h2 id="helpModalTitle">Siz kimsiniz?</h2>
+        <p class="muted">Örnek soruları görebilirsiniz..</p>
+        <p id="helpAccessBanner" class="help-access-banner hidden"></p>
+        <div class="help-role-grid">
+          <button type="button" class="help-role-btn" data-role="L1">
+            <strong>L1 — Saha calisani</strong>
+            Yalnizca kendi ziyaret, musteri ve siparis verileri
+          </button>
+          <button type="button" class="help-role-btn" data-role="L2">
+            <strong>L2 — Takim lideri</strong>
+            Takim birlesik veri + finans intentleri
+          </button>
+          <button type="button" class="help-role-btn" data-role="L3">
+            <strong>L3 — Coklu takim lideri</strong>
+            Birden fazla takim + toplam veya tek takim + uyeler
+          </button>
+          <button type="button" class="help-role-btn" data-role="L4">
+            <strong>L4 — Admin</strong>
+            Sirket geneli, tum intentler
+          </button>
+        </div>
+      </div>
+
+      <div id="helpStepQuestions" class="help-step hidden">
+        <div class="help-questions-header">
+          <button type="button" id="helpBackBtn" class="help-back-btn">&larr; Geri</button>
+          <h2 id="helpRoleTitle">Ornek sorular</h2>
+        </div>
+        <p id="helpRoleSubtitle" class="muted help-role-subtitle"></p>
+        <div class="help-domain-tabs" id="helpDomainTabs"></div>
+        <div class="help-questions-list" id="helpQuestionsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const loginOverlay = document.getElementById("loginOverlay");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginError = document.getElementById("loginError");
+    const userPanel = document.getElementById("userPanel");
+    const userPanelName = document.getElementById("userPanelName");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function getToken() {
+      return localStorage.getItem("token");
+    }
+
+    function hideLogin() {
+      loginOverlay.style.display = "none";
+    }
+
+    function showUserPanel() {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      if (user && user.name) {
+        userPanelName.textContent = user.name;
+      } else if (user && user.email) {
+        userPanelName.textContent = user.email;
+      }
+      userPanel.style.display = "block";
+    }
+
+    async function logout() {
+      try {
+        const token = getToken();
+        if (token) {
+          await fetch("/auth/logout", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).catch(() => { });
+        }
+      } catch (err) {
+        console.error("Logout hatasi:", err);
+      }
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      userPanel.style.display = "none";
+      loginOverlay.style.display = "flex";
+      document.getElementById("loginEmail").value = "";
+      document.getElementById("loginPassword").value = "";
+      loginError.innerText = "";
+      // Clear chat UI and state to avoid leaking previous user's conversation
+      try {
+        const chatLogEl = document.getElementById("chatLog");
+        if (chatLogEl) chatLogEl.innerHTML = "";
+      } catch (e) { }
+
+      try {
+        // clear last result and question input
+        if (typeof lastChatResult !== "undefined") lastChatResult = null;
+        const q = document.getElementById("question");
+        if (q) q.value = "";
+      } catch (e) { }
+
+      try {
+        // clear sql / preview panels
+        const sp = document.getElementById("sqlPreview");
+        const sb = document.getElementById("sqlBind");
+        const ss = document.getElementById("sqlScope");
+        if (sp) sp.textContent = "-- Sorgu burada gorunecek";
+        if (sb) sb.textContent = "";
+        if (ss) ss.textContent = "";
+      } catch (e) { }
+
+      try {
+        // reset charts/kpi area if helper exists
+        if (typeof resetChartArea === "function") {
+          resetChartArea(true);
+        } else {
+          const ctx = document.getElementById("mainChart");
+          if (ctx && window.Chart && Chart.getChart(ctx)) {
+            Chart.getChart(ctx).destroy();
+          }
+          const kpi = document.getElementById("kpiArea");
+          if (kpi) kpi.innerHTML = "";
+        }
+      } catch (e) { }
+
+      if (typeof addMessage === "function") {
+        addMessage("Çıkış yapıldı. Lütfen yeniden giriş yapın.", "bot");
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      loginError.innerText = "";
+
+      try {
+        const response = await fetch("/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          loginError.innerText = data.error || "Login başarısız";
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        const who = data.user
+          ? `${data.user.name || data.user.email} (#${data.user.id})`
+          : data.user?.email || "";
+        if (who && typeof addMessage === "function") {
+          let hint = `Giris: ${who}. Admin panelde ayni UserId icin intent atayin.`;
+          if (data.user?.admin) {
+            hint += " Admin+takim lideri isen ozet sorularda takim ve sirket sonucu birlikte gelir.";
+          }
+          addMessage(hint, "bot");
+        }
+
+        hideLogin();
+        showUserPanel();
+        if (typeof loadUserHelpAccess === "function") {
+          loadUserHelpAccess().catch(() => { });
+        }
+        if (typeof initScopeToggleButtons === "function") {
+          initScopeToggleButtons().catch(() => { });
+        }
+        if (typeof appendHierarchyLoginHint === "function") {
+          appendHierarchyLoginHint().catch(() => { });
+        }
+
+      } catch (err) {
+        loginError.innerText = err.message;
+      }
+    }
+    const chartTitle = document.getElementById("chartTitle");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const chartArea = document.getElementById("chartArea");
+    const kpiArea = document.getElementById("kpiArea");
+    const chartButtons = document.querySelectorAll(".chart-btn[data-chart]");
+    const askBtn = document.getElementById("askBtn");
+    const chatLog = document.getElementById("chatLog");
+    const startDateEl = document.getElementById("startDate");
+    const endDateEl = document.getElementById("endDate");
+    // fieldName/fieldId inputs removed — no DOM elements for them anymore
+    const questionEl = document.getElementById("question");
+    const sqlPanel = document.getElementById("sqlPanel");
+    const helpOpenBtn = document.getElementById("helpOpenBtn");
+    const helpModalBackdrop = document.getElementById("helpModalBackdrop");
+    const helpCloseBtn = document.getElementById("helpCloseBtn");
+    const helpStepRole = document.getElementById("helpStepRole");
+    const helpStepQuestions = document.getElementById("helpStepQuestions");
+    const helpBackBtn = document.getElementById("helpBackBtn");
+    const helpRoleTitle = document.getElementById("helpRoleTitle");
+    const helpRoleSubtitle = document.getElementById("helpRoleSubtitle");
+    const helpDomainTabs = document.getElementById("helpDomainTabs");
+    const helpQuestionsList = document.getElementById("helpQuestionsList");
+    const helpRoleButtons = document.querySelectorAll(".help-role-btn[data-role]");
+    const helpAccessBanner = document.getElementById("helpAccessBanner");
+
+    const HELP_ROLE_LEVELS = { L1: 1, L2: 2, L3: 3, L4: 4 };
+    const HELP_ROLE_LABELS = {
+      L1: "L1 — Saha calisani",
+      L2: "L2 — Takim lideri",
+      L3: "L3 — Coklu takim lideri",
+      L4: "L4 — Admin",
+    };
+
+    let sampleQuestionsCatalog = null;
+    let selectedHelpRole = null;
+    let selectedHelpDomainId = "visit";
+    let userHelpAccess = null;
+    const sqlPreview = document.getElementById("sqlPreview");
+    const sqlBind = document.getElementById("sqlBind");
+    const sqlScope = document.getElementById("sqlScope");
+    const sqlIntentBadge = document.getElementById("sqlIntentBadge");
+
+    let selectedChart = "stateBar";
+    let chartInstance = null;
+    let chartLoadSeq = 0;
+    let allowedCharts = new Set([
+      "stateBar",
+      "statePie",
+      "fieldBar",
+      "kpiCards",
+      "visitTrend",
+      "typeBar",
+      "stateDoughnut",
+      "statePolar",
+      "stateRadar",
+      "stateHBar",
+      "stateArea",
+      "stateStacked",
+    ]);
+    let lastChatResult = null;
+    let scopeToolbarConfig = null;
+    let scopeSelection = {
+      teamsActive: false,
+      companyActive: false,
+      teamScope: "all",
+      teamIds: [],
+      userIds: [],
+    };
+
+    const scopeToggleGroup = document.getElementById("scopeToggleGroup");
+    const scopeTeamsBtn = document.getElementById("scopeTeamsBtn");
+    const scopeTeamsMenuBtn = document.getElementById("scopeTeamsMenuBtn");
+    const scopeTeamsMenu = document.getElementById("scopeTeamsMenu");
+    const scopeCompanyBtn = document.getElementById("scopeCompanyBtn");
+
+    function getManagedTeamsList(config = scopeToolbarConfig) {
+      return config?.operationalTeams || [];
+    }
+
+    function getTeamMenuGroups(config = scopeToolbarConfig) {
+      return config?.teamMenuGroups || null;
+    }
+
+    function renderTeamMenuCheckbox(team) {
+      const allChecked = scopeSelection.teamScope === "all";
+      const selectedTeamIds = (scopeSelection.teamIds || []).map(Number);
+      const selectedUserIds = (scopeSelection.userIds || []).map(Number);
+
+      const checked =
+        allChecked || selectedTeamIds.includes(Number(team.teamId));
+
+      const members = team.members || team.users || [];
+
+      const memberHtml = members.length
+        ? `
+          <div style="margin-left:22px; margin-top:4px;">
+            ${members
+              .map((member) => {
+                const userId = Number(member.userId);
+                const userChecked = selectedUserIds.includes(userId);
+
+                return `
+                  <label style="font-size:12px; padding:4px 4px;">
+                    <input
+                      type="checkbox"
+                      name="scopeManagedUser"
+                      value="${userId}"
+                      data-team-id="${team.teamId}"
+                      ${userChecked ? "checked" : ""}
+                    />
+                    <span>${escapeHtml(member.userName || `Kullanici ${userId}`)}</span>
+                  </label>
+                `;
+              })
+              .join("")}
+          </div>
+        `
+        : "";
+
+      return `
+        <div class="scope-team-item">
+          <label>
+            <input
+              type="checkbox"
+              name="scopeManagedTeam"
+              value="${team.teamId}"
+              ${checked ? "checked" : ""}
+            />
+            <span>${escapeHtml(team.teamName || `Takim ${team.teamId}`)}</span>
+          </label>
+          ${memberHtml}
+        </div>
+      `;
+    }
+
+
+    function renderTeamMenuGroup(title, teams = []) {
+      if (!teams.length) {
+        return "";
+      }
+      return `
+        <div class="scope-menu-group">
+          <div class="scope-menu-group-title">${escapeHtml(title)}</div>
+          ${teams.map((team) => renderTeamMenuCheckbox(team)).join("")}
+        </div>
+      `;
+    }
+
+    function closeTeamsMenu() {
+      if (!scopeTeamsMenu) {
+        return;
+      }
+      scopeTeamsMenu.classList.add("hidden");
+      if (scopeTeamsMenuBtn) {
+        scopeTeamsMenuBtn.classList.remove("menu-open");
+      }
+    }
+
+    function openTeamsMenu() {
+      if (!scopeTeamsMenu || !scopeTeamsMenuBtn) {
+        return;
+      }
+      renderTeamsMenu();
+      scopeTeamsMenu.classList.remove("hidden");
+      scopeTeamsMenuBtn.classList.add("menu-open");
+    }
+
+    function toggleTeamsMenu() {
+      if (!scopeTeamsMenu) {
+        return;
+      }
+      if (scopeTeamsMenu.classList.contains("hidden")) {
+        openTeamsMenu();
+      } else {
+        closeTeamsMenu();
+      }
+    }
+
+    function renderTeamsMenu() {
+      if (!scopeTeamsMenu || !scopeToolbarConfig) {
+        return;
+      }
+
+      const teams = getManagedTeamsList();
+      const menuGroups = getTeamMenuGroups();
+      if (!teams.length) {
+        scopeTeamsMenu.innerHTML =
+          '<div class="scope-menu-empty">Yonetilen takim bulunamadi.</div>';
+        return;
+      }
+
+      const parts = [];
+      if (teams.length > 1) {
+        const allChecked = scopeSelection.teamScope === "all";
+        const allLabel = scopeToolbarConfig?.isCompanyScopeUser
+          ? "Tum takimlar"
+          : "Tum takimlarim";
+        parts.push(`
+          <label class="scope-menu-all">
+            <input type="checkbox" name="scopeManagedTeam" value="all" ${allChecked ? "checked" : ""} />
+            <span>${allLabel}</span>
+          </label>
+        `);
+      }
+
+      if (menuGroups?.showGrouped) {
+        parts.push(renderTeamMenuGroup("Yonettiginiz takimlar", menuGroups.managedTeams || []));
+        parts.push(renderTeamMenuGroup("Diger takimlar", menuGroups.otherTeams || []));
+      } else {
+        teams.forEach((team) => {
+          parts.push(renderTeamMenuCheckbox(team));
+        });
+      }
+
+      scopeTeamsMenu.innerHTML = parts.join("");
+    }
+
+    function syncTeamsSelectAllCheckbox() {
+      if (!scopeTeamsMenu) {
+        return;
+      }
+      const allInput = scopeTeamsMenu.querySelector(
+        'input[name="scopeManagedTeam"][value="all"]'
+      );
+      if (!allInput) {
+        return;
+      }
+      const teamInputs = [
+        ...scopeTeamsMenu.querySelectorAll('input[name="scopeManagedTeam"]'),
+      ].filter((el) => el.value !== "all");
+      allInput.checked =
+        teamInputs.length > 0 && teamInputs.every((el) => el.checked);
+    }
+
+function readTeamsMenuSelection() {
+  if (!scopeTeamsMenu || !scopeToolbarConfig) {
+    return;
+  }
+
+  const teams = getManagedTeamsList();
+
+  const teamInputs = scopeTeamsMenu.querySelectorAll(
+    'input[name="scopeManagedTeam"]'
+  );
+  const checkedTeams = [...teamInputs].filter((el) => el.checked);
+
+  const userInputs = scopeTeamsMenu.querySelectorAll(
+    'input[name="scopeManagedUser"]'
+  );
+  const checkedUsers = [...userInputs].filter((el) => el.checked);
+
+  const userIds = checkedUsers
+    .map((el) => Number(el.value))
+    .filter((id) => Number.isFinite(id) && id > 0);
+
+  scopeSelection.userIds = userIds;
+
+  if (teams.length > 1 && checkedTeams.some((el) => el.value === "all")) {
+    scopeSelection.teamScope = "all";
+    scopeSelection.teamIds = [];
+  } else {
+    const teamIds = checkedTeams
+      .map((el) => Number(el.value))
+      .filter((id) => Number.isFinite(id) && id > 0);
+
+    if (!teamIds.length) {
+      scopeSelection.teamScope = "none";
+      scopeSelection.teamIds = [];
+    } else if (teamIds.length === 1) {
+      scopeSelection.teamScope = "single";
+      scopeSelection.teamIds = teamIds;
+    } else {
+      scopeSelection.teamScope = "multi";
+      scopeSelection.teamIds = teamIds;
+    }
+  }
+
+  if (scopeSelection.userIds.length > 0) {
+    scopeSelection.teamsActive = true;
+  }
+
+  if (!scopeToolbarConfig.teamsButton?.locked) {
+    scopeSelection.teamsActive = true;
+  }
+}
+
+    function formatTeamsButtonLabel() {
+      if (!scopeToolbarConfig || scopeToolbarConfig.teamsButton?.locked) {
+        return "Takimlar";
+      }
+      if (!scopeSelection.teamsActive) {
+        return "Takimlar";
+      }
+      if (scopeSelection.teamScope === "all") {
+        const teams = getManagedTeamsList();
+        return teams.length > 1 ? `Takimlar (${teams.length})` : "Takimlar";
+      }
+      if (!(scopeSelection.teamIds || []).length) {
+        return "Takimlar";
+      }
+      const teams = getManagedTeamsList();
+      if (scopeSelection.teamIds.length === 1) {
+        const team = teams.find((t) => Number(t.teamId) === Number(scopeSelection.teamIds[0]));
+        const name = team?.teamName || "1 takim";
+        return name.length > 18 ? `Takimlar (${name.slice(0, 16)}…)` : `Takimlar · ${name}`;
+      }
+      return `Takimlar (${scopeSelection.teamIds.length})`;
+    }
+
+    function mapDefaultToScopeSelection(defaultSelection = {}, config = {}) {
+      const mode = defaultSelection.mode || "teams";
+      if (mode === "self") {
+        return {
+          teamsActive: false,
+          companyActive: false,
+          teamScope: "single",
+          teamIds: [],
+        };
+      }
+      if (mode === "company") {
+        return {
+          teamsActive: false,
+          companyActive: !config.companyButton?.locked,
+          teamScope: "none",
+          teamIds: [],
+        };
+      }
+      if (mode === "both") {
+        return {
+          teamsActive: !config.teamsButton?.locked,
+          companyActive: !config.companyButton?.locked,
+          teamScope: "all",
+          teamIds: [],
+        };
+      }
+      return {
+        teamsActive: !config.teamsButton?.locked,
+        companyActive: false,
+        teamScope: defaultSelection.teamScope || "all",
+        teamIds: [...(defaultSelection.teamIds || [])],
+      };
+    }
+
+    function applyFirstTeamDefault(config = scopeToolbarConfig) {
+      const teams = getManagedTeamsList(config);
+      if (!teams.length) {
+        selectAllTeamsInScope();
+        return;
+      }
+      scopeSelection.teamScope = "single";
+      scopeSelection.teamIds = [Number(teams[0].teamId)];
+    }
+
+    function selectAllTeamsInScope() {
+      scopeSelection.teamScope = "all";
+      scopeSelection.teamIds = [];
+    }
+
+    function activateTeamsSelection() {
+      scopeSelection.teamsActive = true;
+      selectAllTeamsInScope();
+    }
+
+    function ensureTeamsOnlySelection() {
+      scopeSelection.teamsActive = true;
+      scopeSelection.companyActive = false;
+      if (!scopeSelection.teamScope || scopeSelection.teamScope === "none") {
+        applyFirstTeamDefault();
+      }
+    }
+
+    function ensureScopeTeamDefaults() {
+      if (!scopeSelection.teamsActive) {
+        return;
+      }
+      if (scopeSelection.teamScope === "all") {
+        scopeSelection.teamIds = [];
+        return;
+      }
+      if (scopeSelection.teamIds?.length) {
+        return;
+      }
+      if (
+        scopeSelection.companyActive &&
+        scopeToolbarConfig?.allowDualScopeSelect
+      ) {
+        scopeSelection.teamScope = "all";
+        scopeSelection.teamIds = [];
+        return;
+      }
+      if (!scopeSelection.companyActive) {
+        if (!scopeToolbarConfig?.allowDualScopeSelect) {
+          applyFirstTeamDefault();
+          return;
+        }
+        scopeSelection.teamScope = "all";
+        scopeSelection.teamIds = [];
+      }
+    }
+
+    function isSelfOnlyScopeToolbar(config = scopeToolbarConfig) {
+      if (!config) {
+        return true;
+      }
+      const level = Number(config.operationalLevel ?? 1);
+      if (level <= 1) {
+        return true;
+      }
+      return !!config.teamsButton?.locked && !!config.companyButton?.locked;
+    }
+
+    function buildScopeSelectionPayload() {
+      if (isSelfOnlyScopeToolbar()) {
+        return null;
+      }
+
+      ensureScopeTeamDefaults();
+
+      const payload = {
+        teamsActive: !!scopeSelection.teamsActive,
+        companyActive: !!scopeSelection.companyActive,
+        teamScope: scopeSelection.teamScope || "all",
+        teamIds: [...(scopeSelection.teamIds || [])],
+        userIds: [...(scopeSelection.userIds || [])],
+      };
+
+      if (payload.userIds.length > 0) {
+      payload.mode = "users";
+
+      payload.teamIds = [];
+      payload.teamScope = "users";
+
+      return payload;
+    }
+
+      if (payload.teamsActive) {
+        if (payload.teamScope === "all") {
+          payload.teamIds = [];
+        } else if (payload.teamIds.length === 1) {
+          payload.teamScope = "single";
+        } else if (payload.teamIds.length > 1) {
+          payload.teamScope = "multi";
+        } else if (payload.teamsActive && payload.companyActive) {
+          payload.teamScope = "all";
+          payload.teamIds = [];
+        } else {
+          payload.teamScope = "all";
+          payload.teamIds = [];
+        }
+      }
+
+      if (payload.teamsActive && payload.companyActive) {
+        payload.mode = "both";
+      } else if (payload.companyActive) {
+        payload.mode = "company";
+      } else if (payload.teamsActive) {
+        payload.mode = "teams";
+      }
+
+      return payload;
+}
+
+    function applyScopeToggleLocks(config = scopeToolbarConfig) {
+      if (!scopeToggleGroup || !scopeTeamsBtn || !scopeCompanyBtn) {
+        return;
+      }
+
+      scopeToggleGroup.classList.remove("hidden");
+      const teamsLocked = !!config?.teamsButton?.locked;
+      const companyLocked = !!config?.companyButton?.locked;
+      scopeTeamsBtn.disabled = teamsLocked;
+      scopeCompanyBtn.disabled = companyLocked;
+      scopeTeamsBtn.classList.toggle("locked", teamsLocked);
+      scopeCompanyBtn.classList.toggle("locked", companyLocked);
+    }
+
+    function syncScopeToggleUi() {
+      if (!scopeTeamsBtn || !scopeCompanyBtn) {
+        return;
+      }
+
+      const teamsUsable = !scopeToolbarConfig?.teamsButton?.locked;
+      const companyUsable = !scopeToolbarConfig?.companyButton?.locked;
+
+      if (teamsUsable && !companyUsable) {
+        ensureTeamsOnlySelection();
+      } else if (!teamsUsable && companyUsable) {
+        scopeSelection.teamsActive = false;
+        scopeSelection.companyActive = true;
+      } else if (!teamsUsable && !companyUsable) {
+        scopeSelection.teamsActive = false;
+        scopeSelection.companyActive = false;
+      } else if (teamsUsable && companyUsable) {
+        if (!scopeSelection.teamsActive && !scopeSelection.companyActive) {
+          scopeSelection.teamsActive = true;
+          scopeSelection.companyActive = true;
+          selectAllTeamsInScope();
+        }
+      }
+
+      scopeTeamsBtn.classList.toggle("active", !!scopeSelection.teamsActive && teamsUsable);
+      scopeCompanyBtn.classList.toggle("active", !!scopeSelection.companyActive && companyUsable);
+      if (scopeTeamsMenuBtn) {
+        scopeTeamsMenuBtn.classList.toggle("active", !!scopeSelection.teamsActive && teamsUsable);
+      }
+      if (scopeTeamsBtn && teamsUsable) {
+        scopeTeamsBtn.textContent = formatTeamsButtonLabel();
+      } else if (scopeTeamsBtn) {
+        scopeTeamsBtn.textContent = "Takimlar";
+      }
+      if (scopeTeamsMenuBtn) {
+        const teams = getManagedTeamsList(scopeToolbarConfig);
+        const teamsLocked = !!scopeToolbarConfig?.teamsButton?.locked;
+        scopeTeamsMenuBtn.disabled = teamsLocked || teams.length === 0;
+        scopeTeamsMenuBtn.classList.toggle("locked", teamsLocked || teams.length === 0);
+      }
+      applyScopeToggleLocks(scopeToolbarConfig);
+
+      if (scopeTeamsMenu && !scopeTeamsMenu.classList.contains("hidden")) {
+        renderTeamsMenu();
+      }
+    }
+
+    async function initScopeToggleButtons() {
+      if (!getToken() || !scopeTeamsBtn || !scopeCompanyBtn) {
+        return;
+      }
+
+      try {
+        const data = await fetchJson("/auth/me");
+        const config = data.context?.scopeToolbar;
+        if (!config) {
+          scopeToolbarConfig = null;
+          if (scopeToggleGroup) {
+            scopeToggleGroup.classList.add("hidden");
+          }
+          return;
+        }
+
+        scopeToolbarConfig = config;
+        scopeSelection = mapDefaultToScopeSelection(config.defaultSelection, config);
+        if (isSelfOnlyScopeToolbar(config)) {
+          scopeSelection.teamsActive = false;
+          scopeSelection.companyActive = false;
+        } else {
+          ensureScopeTeamDefaults();
+        }
+        closeTeamsMenu();
+        syncScopeToggleUi();
+      } catch (_error) {
+        if (scopeToggleGroup) {
+          scopeToggleGroup.classList.add("hidden");
+        }
+      }
+    }
+
+    if (scopeTeamsBtn) {
+      scopeTeamsBtn.addEventListener("click", () => {
+        if (scopeTeamsBtn.disabled) {
+          return;
+        }
+
+        if (scopeToolbarConfig?.allowDualScopeSelect) {
+          closeTeamsMenu();
+          if (scopeSelection.teamsActive) {
+            scopeSelection.teamsActive = false;
+            if (!scopeSelection.companyActive) {
+              scopeSelection.companyActive = true;
+            }
+          } else {
+            activateTeamsSelection();
+          }
+        } else if (scopeSelection.teamsActive) {
+          openTeamsMenu();
+        } else {
+          closeTeamsMenu();
+          scopeSelection.teamsActive = true;
+          if (!scopeSelection.teamScope || scopeSelection.teamScope === "none") {
+            applyFirstTeamDefault();
+          }
+          scopeSelection.companyActive = false;
+        }
+
+        syncScopeToggleUi();
+      });
+    }
+
+    if (scopeTeamsMenuBtn) {
+      scopeTeamsMenuBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (scopeTeamsMenuBtn.disabled) {
+          return;
+        }
+        if (!scopeSelection.teamsActive && !scopeToolbarConfig?.teamsButton?.locked) {
+          scopeSelection.teamsActive = true;
+          if (!scopeSelection.teamScope || scopeSelection.teamScope === "none") {
+            applyFirstTeamDefault();
+          }
+        }
+        toggleTeamsMenu();
+        syncScopeToggleUi();
+      });
+    }
+
+   if (scopeTeamsMenu) {
+  scopeTeamsMenu.addEventListener("change", (event) => {
+    const input = event.target;
+
+    if (
+      input?.name !== "scopeManagedTeam" &&
+      input?.name !== "scopeManagedUser"
+    ) {
+      return;
+    }
+
+    if (input.name === "scopeManagedUser") {
+      const teamId = Number(input.dataset.teamId);
+
+      const allInput = scopeTeamsMenu.querySelector(
+        'input[name="scopeManagedTeam"][value="all"]'
+      );
+
+      if (allInput) {
+        allInput.checked = false;
+      }
+
+      const teamInput = scopeTeamsMenu.querySelector(
+        `input[name="scopeManagedTeam"][value="${teamId}"]`
+      );
+
+      if (teamInput) {
+        teamInput.checked = true;
+      }
+    }
+
+    if (input.name === "scopeManagedTeam") {
+      if (input.value === "all") {
+        scopeTeamsMenu
+          .querySelectorAll('input[name="scopeManagedTeam"]')
+          .forEach((el) => {
+            if (el.value !== "all") {
+              el.checked = input.checked;
+            }
+          });
+
+        scopeTeamsMenu
+          .querySelectorAll('input[name="scopeManagedUser"]')
+          .forEach((el) => {
+            el.checked = false;
+          });
+      } else {
+        if (!input.checked) {
+          const allInput = scopeTeamsMenu.querySelector(
+            'input[name="scopeManagedTeam"][value="all"]'
+          );
+
+          if (allInput) {
+            allInput.checked = false;
+          }
+
+          scopeTeamsMenu
+            .querySelectorAll(
+              `input[name="scopeManagedUser"][data-team-id="${input.value}"]`
+            )
+            .forEach((el) => {
+              el.checked = false;
+            });
+        } else {
+          syncTeamsSelectAllCheckbox();
+        }
+      }
+    }
+
+    readTeamsMenuSelection();
+
+    console.log("SCOPE SELECTION AFTER MENU:", scopeSelection);
+    console.log("SCOPE PAYLOAD:", buildScopeSelectionPayload());
+
+    //syncScopeToggleUi();
+  });
+}
+
+    if (scopeCompanyBtn) {
+      scopeCompanyBtn.addEventListener("click", () => {
+        if (scopeCompanyBtn.disabled) {
+          return;
+        }
+
+        closeTeamsMenu();
+
+        if (scopeToolbarConfig?.allowDualScopeSelect) {
+          scopeSelection.companyActive = !scopeSelection.companyActive;
+          if (!scopeSelection.teamsActive && !scopeSelection.companyActive) {
+            scopeSelection.companyActive = true;
+          }
+        } else {
+          scopeSelection.companyActive = true;
+          scopeSelection.teamsActive = false;
+          scopeSelection.teamScope = "all";
+          scopeSelection.teamIds = [];
+        }
+
+        syncScopeToggleUi();
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      if (!scopeTeamsMenu || scopeTeamsMenu.classList.contains("hidden")) {
+        return;
+      }
+      if (
+        scopeTeamsMenu.contains(event.target) ||
+        scopeTeamsBtn?.contains(event.target) ||
+        scopeTeamsMenuBtn?.contains(event.target)
+      ) {
+        return;
+      }
+      closeTeamsMenu();
+    });
+
+    function addMessage(text, role) {
+      const div = document.createElement("div");
+      div.className = `msg ${role}`;
+      const roleLabel = role === "user" ? "Siz" : "Asistan";
+      div.innerHTML = `<div class="msg-role">${roleLabel}</div><div class="msg-content">${formatBotText(text, role)}</div>`;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function escapeHtml(raw) {
+      return String(raw)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function formatBotText(text, role) {
+      const escaped = escapeHtml(text || "");
+      if (role !== "bot") {
+        return escaped.replace(/\n/g, "<br>");
+      }
+
+      const parts = [];
+      let listItems = [];
+
+      function flushList() {
+        if (!listItems.length) {
+          return;
+        }
+        parts.push(`<ul>${listItems.map((item) => `<li>${item}</li>`).join("")}</ul>`);
+        listItems = [];
+      }
+
+      escaped.split("\n").forEach((line) => {
+        const trimmed = line.trimEnd();
+        if (!trimmed.trim()) {
+          flushList();
+          parts.push("<br>");
+          return;
+        }
+
+        if (trimmed.startsWith("- ")) {
+          listItems.push(trimmed.slice(2));
+          return;
+        }
+
+        flushList();
+        const lineClass = / icin:$/.test(trimmed.trim())
+          ? "msg-line msg-scope-header"
+          : "msg-line";
+        parts.push(`<div class="${lineClass}">${trimmed}</div>`);
+      });
+
+      flushList();
+      return parts.join("") || escaped.replace(/\n/g, "<br>");
+    }
+
+    function formatScopeIdList(list) {
+      if (!Array.isArray(list) || !list.length) return "— (kisit yok)";
+      if (list.includes("*")) return "* (tumu)";
+      if (list.length <= 10) return list.join(", ");
+      return `${list.slice(0, 10).join(", ")} … (+${list.length - 10})`;
+    }
+
+    function renderScopeLines(scope) {
+      if (!scope) return "Scope bilgisi yok.";
+      if (!scope.loggedIn) return scope.message || "Giris yapilmadi.";
+
+      const lines = [
+        `User #${scope.userId} | Subscription: ${scope.subscriptionId ?? "—"}`,
+        `Admin: ${scope.isAdmin ? "evet" : "hayir"} | manageAll: ${scope.manageAll ? "evet" : "hayir"}`,
+        `Hiyerarsi: ${scope.hierarchyLabel || scope.hierarchyLevel || "—"} | saf L4: ${scope.isPureCompanyScopeUser ? "evet" : "hayir"}`,
+        `Yonetilen takim: ${scope.managedTeamCount ?? "—"} | Subscription takim: ${scope.subscriptionTeamCount ?? "—"}`,
+        `Roller: ${formatScopeIdList(scope.roleIds)}`,
+        `Intent izinleri: ${formatScopeIdList(scope.allowedIntents)}`,
+        `Metric security_scope: ${scope.metricSecurityScope || "—"}`,
+      ];
+
+      if (scope.scopeCheck) {
+        const status = scope.scopeCheck.allowed ? "OK" : `RED (${scope.scopeCheck.reason || "?"})`;
+        lines.push(`Scope guard: ${status}`);
+        if (scope.scopeCheck.warnings?.length) {
+          lines.push(`Uyarilar: ${scope.scopeCheck.warnings.join("; ")}`);
+        }
+      }
+
+      if (scope.subscriptionTeamCount > 0 && Array.isArray(scope.subscriptionTeamNames)) {
+        lines.push(`L4 takim ornekleri: ${scope.subscriptionTeamNames.join(", ")}`);
+      }
+
+      const labels = {
+        company: "Company",
+        country: "Country",
+        team: "Team",
+        brand: "Brand",
+      };
+
+      const filters = scope.filters || {};
+      Object.entries(labels).forEach(([key, label]) => {
+        lines.push(`${label}: ${formatScopeIdList(filters[key])}`);
+      });
+
+      return lines.join("\n");
+    }
+
+    function renderSqlPanel(data) {
+      const hasSql = !!data?.sql?.query;
+      const hasScope = !!data?.scope;
+
+      if (!hasSql && !hasScope) {
+        sqlPanel.classList.remove("visible");
+        return;
+      }
+
+      sqlPanel.classList.add("visible");
+      sqlIntentBadge.textContent = data.intent ? `Intent: ${data.intent}` : "";
+
+      if (hasSql) {
+        sqlPreview.textContent = data.sql.query;
+        const bind = data.sql.bind || {};
+        const bindKeys = Object.keys(bind);
+        if (!bindKeys.length) {
+          sqlBind.textContent = "";
+        } else {
+          const bindLines = bindKeys.map((key) => {
+            const value = bind[key];
+            const shown = value === null || value === undefined ? "NULL" : JSON.stringify(value);
+            return `@${key} = ${shown}`;
+          });
+          sqlBind.textContent = `Parametreler:\n${bindLines.join("\n")}`;
+        }
+      } else {
+        sqlPreview.textContent = "-- SQL onizlemesi yok";
+        sqlBind.textContent = "";
+      }
+
+      sqlScope.textContent = renderScopeLines(data.scope);
+    }
+
+    function cleanAssistantAnswer(text) {
+      return String(text || "")
+        .replace(/\*\*/g, "")
+        .replace(/\r/g, "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line, idx, arr) => line || (idx > 0 && arr[idx - 1]))
+        .join("\n")
+        .trim();
+    }
+
+    function applyFiltersToInputs(filters = {}) {
+      if (filters.startDate) {
+        startDateEl.value = String(filters.startDate).slice(0, 10);
+      }
+      if (filters.endDate) {
+        endDateEl.value = String(filters.endDate).slice(0, 10);
+      }
+      // fieldName/fieldId removed; nothing to apply to inputs
+    }
+
+    const INTENT_CHART_CONFIG = {
+      visitcountrealized: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      avgvisitduration: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      visitedclientsbyuser: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "kpiCards"],
+        labelKeys: ["clientName", "userName", "groupName", "name", "label"],
+        valueKey: "total",
+      },
+      visitsbycompletionstatus: {
+        chart: "statePie",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["visitState"],
+        valueKey: "total",
+      },
+      visitsbystate: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: [
+          "stateBar",
+          "statePie",
+          "stateDoughnut",
+          "statePolar",
+          "stateRadar",
+          "stateHBar",
+          "stateArea",
+          "stateStacked",
+        ],
+        labelKeys: ["visitState", "stateName"],
+        valueKey: "total",
+      },
+      visitsbytype: {
+        chart: "typeBar",
+        mode: "distribution",
+        allowed: ["typeBar", "statePie"],
+        labelKeys: ["visitType"],
+        valueKey: "total",
+      },
+      visittrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["visitDate"],
+        valueKey: "total",
+      },
+      dynamicfieldsummary: {
+        chart: "fieldBar",
+        mode: "distribution",
+        allowed: ["fieldBar"],
+        labelKeys: ["fieldName"],
+        valueKey: "responseCount",
+      },
+      dynamictopfields: {
+        chart: "fieldBar",
+        mode: "distribution",
+        allowed: ["fieldBar"],
+        labelKeys: ["fieldId", "fieldName"],
+        valueKey: "responseCount",
+      },
+      usertotalcount: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      userstatussummary: {
+        chart: "kpiCards",
+        mode: "summary",
+        allowed: ["kpiCards", "statePie", "stateBar"],
+      },
+      useradminsummary: {
+        chart: "kpiCards",
+        mode: "summary",
+        allowed: ["kpiCards", "stateBar", "statePie"],
+      },
+      usersbyrole: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["roleName"],
+        valueKey: "totalUsers",
+      },
+      usersbyteam: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["teamName"],
+        valueKey: "totalUsers",
+      },
+      usersbybrand: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["brandName"],
+        valueKey: "totalUsers",
+      },
+      usersbyclient: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateHBar", "kpiCards"],
+        labelKeys: ["clientName"],
+        valueKey: "totalUsers",
+      },
+      userrecentlogins: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      userloginsuccesssummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "kpiCards"],
+        labelKeys: ["loginStatus"],
+        valueKey: "totalLogins",
+      },
+      userdevicesummary: {
+        chart: "kpiCards",
+        mode: "summary",
+        allowed: ["kpiCards", "statePie", "stateBar"],
+      },
+      usersavedviewsummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "kpiCards"],
+        labelKeys: ["moduleName"],
+        valueKey: "savedViewCount",
+      },
+      userstepsummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "stateHBar", "kpiCards"],
+        labelKeys: ["userName"],
+        valueKey: "totalSteps",
+      },
+      uservisitsummary: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "stateHBar", "kpiCards"],
+        labelKeys: ["userName"],
+        valueKey: "totalVisits",
+      },
+    };
+    Object.assign(INTENT_CHART_CONFIG, {
+      // SALES / FINANCE - KPI intents
+      totalpurchaseorders: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalpurchaseorderamount: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalpurchaseorderdetails: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoices: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoiceamount: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoicebalance: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoicedetails: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalinvoicepayments: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalpayments: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      activecampaigns: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcampaigns: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcampaignproducts: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalclientproductprices: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcosts: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalcommissions: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totaltrackedorders: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totalbippromotions: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totaldistributorcommercials: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+      totaliyzicotransactions: {
+        chart: "kpiCards",
+        mode: "kpi",
+        allowed: ["kpiCards"],
+      },
+
+      // SALES / FINANCE - distribution intents
+      purchaseordersbystatus: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+      invoicesbystatus: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+      paymentsbystate: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+      costsbycategory: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["categoryName", "groupName", "name"],
+        valueKey: "total",
+      },
+      iyzicotransactionsbystatus: {
+        chart: "stateBar",
+        mode: "distribution",
+        allowed: ["stateBar", "statePie", "stateDoughnut", "stateHBar"],
+        labelKeys: ["statusName", "stateName", "groupName"],
+        valueKey: "total",
+      },
+
+      // SALES / FINANCE - trend intents
+      purchaseordertrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["createDate", "visitDate", "paymentDate"],
+        valueKey: "total",
+        datasetLabel: "Günlük Sipariş Sayısı",
+      },
+      invoicetrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["createDate", "visitDate", "paymentDate"],
+        valueKey: "total",
+        datasetLabel: "Günlük Fatura Sayısı",
+      },
+      invoicepaymenttrend: {
+        chart: "visitTrend",
+        mode: "trend",
+        allowed: ["visitTrend"],
+        labelKeys: ["paymentDate", "createDate", "visitDate"],
+        valueKey: "total",
+        datasetLabel: "Günlük Tahsilat Sayısı",
+      },
+    });
+
+    function getUserSummaryFields(normalizedIntent) {
+      const map = {
+        userstatussummary: [
+          { key: "activeUsers", label: "Aktif" },
+          { key: "blockedUsers", label: "Bloke" },
+          { key: "deleteRequestUsers", label: "Silme Talebi" },
+        ],
+        useradminsummary: [
+          { key: "adminUsers", label: "Admin" },
+          { key: "apiUsers", label: "API User" },
+          { key: "clientUsers", label: "Client User" },
+          { key: "contractorUsers", label: "Contractor" },
+          { key: "managerOfAllTeamsUsers", label: "Tum Takim Yoneticisi" },
+        ],
+        userdevicesummary: [
+          { key: "usersWithDevice", label: "Cihazli Kullanici" },
+          { key: "activeDeviceRecords", label: "Aktif Cihaz" },
+          { key: "terminatedDeviceRecords", label: "Sonlandirilmis" },
+          { key: "criticalOnlyDeviceRecords", label: "Kritik Only" },
+        ],
+      };
+      return map[normalizedIntent] || [];
+    }
+
+    function isUserSummaryIntent(normalizedIntent) {
+      return getUserSummaryFields(normalizedIntent).length > 0;
+    }
+
+    function formatUserSummaryRow(row = {}, normalizedIntent) {
+      const fields = getUserSummaryFields(normalizedIntent);
+      if (!fields.length) {
+        return "-";
+      }
+
+      const parts = fields.map(
+        (field) => `${field.label}: ${formatDisplayNumber(row[field.key] ?? 0)}`
+      );
+
+      if (normalizedIntent === "userstatussummary" && row.totalUsers != null) {
+        return `Toplam: ${formatDisplayNumber(row.totalUsers)} | ${parts.join(" | ")}`;
+      }
+
+      if (normalizedIntent === "userdevicesummary" && row.totalDeviceRecords != null) {
+        return `Toplam kayit: ${formatDisplayNumber(row.totalDeviceRecords)} | ${parts.join(" | ")}`;
+      }
+
+      return parts.join(" | ");
+    }
+
+    function expandSummaryRowsForChart(normalizedIntent, rows = []) {
+      const row = rows[0] || {};
+      return getUserSummaryFields(normalizedIntent).map((field) => ({
+        label: field.label,
+        total: Number(row[field.key] ?? 0),
+      }));
+    }
+
+    function isKpiBreakdownChart(chartConfig = {}) {
+      return (
+        chartConfig.mode === "kpi" ||
+        (chartConfig.mode === "summary" && chartConfig.chart === "kpiCards")
+      );
+    }
+
+    function getIntentChartConfig(intent) {
+      const normalized = String(intent || "").trim().toLowerCase();
+      return (
+        INTENT_CHART_CONFIG[normalized] || {
+          chart: "stateBar",
+          mode: "distribution",
+          allowed: ["stateBar", "statePie", "fieldBar", "kpiCards", "visitTrend", "typeBar"],
+          labelKeys: ["visitState", "visitType", "groupName", "statusName", "name", "label"],
+          valueKey: "total",
+        }
+      );
+    }
+
+    function getAllowedChartsForIntent(intent) {
+      return getIntentChartConfig(intent).allowed;
+    }
+
+    function chartForIntent(intent) {
+      return getIntentChartConfig(intent).chart;
+    }
+
+    function pickRowLabelKey(row = {}, config = {}) {
+      for (const key of config.labelKeys || []) {
+        if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    function resolveChartRows(data = {}) {
+      const intent = String(data.intent || "").trim();
+      const pickers =
+        intent === "visitTrend"
+          ? [
+            () => data.multiTeamScope?.combined?.rows,
+            () => data.companyTeamScope?.company?.rows,
+            () => data.dualScope?.company?.rows,
+            () => data.singleTeamScope?.rows,
+            () => data.rows,
+          ]
+          : [
+            () => data.companyTeamScope?.company?.rows,
+            () => data.multiTeamScope?.combined?.rows,
+            () => data.dualScope?.company?.rows,
+            () => data.dualScope?.operational?.rows,
+            () => data.singleTeamScope?.rows,
+            () => data.rows,
+          ];
+
+      for (const pick of pickers) {
+        const rows = pick();
+        if (Array.isArray(rows) && rows.length) {
+          return rows;
+        }
+      }
+      return [];
+    }
+
+    function chartTypeForKey(chartKey) {
+      if (chartKey === "visitTrend" || chartKey === "stateArea") return "line";
+      if (chartKey === "statePie") return "pie";
+      if (chartKey === "stateDoughnut") return "doughnut";
+      if (chartKey === "statePolar") return "polarArea";
+      if (chartKey === "stateRadar") return "radar";
+      return "bar";
+    }
+
+    function renderPrimaryChartForIntent(data, chartConfig, title) {
+      const normalizedIntent = String(data.intent || "").trim().toLowerCase();
+      const rows = resolveChartRows(data);
+      applyChartAvailability(chartConfig.allowed);
+      applySelectedChart(chartConfig.chart);
+      chartTitle.textContent = title || data.intent || "Grafik";
+
+      if (!rows.length) {
+        resetChartArea(true);
+        renderKpiCards([{ title: title || data.intent || "Sorgu", value: "Veri bulunamadi." }]);
+        return;
+      }
+
+      if (chartConfig.mode === "summary") {
+        const row = rows[0] || {};
+        const summaryFields = getUserSummaryFields(normalizedIntent);
+
+        if (chartConfig.chart === "kpiCards") {
+          const cards = [];
+          if (normalizedIntent === "userstatussummary" && row.totalUsers != null) {
+            cards.push({
+              title: "Toplam",
+              value: formatDisplayNumber(row.totalUsers),
+            });
+          }
+          if (normalizedIntent === "userdevicesummary" && row.totalDeviceRecords != null) {
+            cards.push({
+              title: "Toplam Cihaz Kaydi",
+              value: formatDisplayNumber(row.totalDeviceRecords),
+            });
+          }
+          summaryFields.forEach((field) => {
+            cards.push({
+              title: field.label,
+              value: formatDisplayNumber(row[field.key] ?? 0),
+            });
+          });
+          resetChartArea(true);
+          renderKpiCards(
+            cards.length
+              ? cards
+              : [{ title: title || data.intent || "Ozet", value: "-" }]
+          );
+          return;
+        }
+
+        const distRows = expandSummaryRowsForChart(normalizedIntent, rows);
+        const chartType = chartTypeForKey(chartConfig.chart);
+        const labels = distRows.map((item) => item.label);
+        const values = distRows.map((item) => item.total);
+        resetChartArea(false);
+        createChart(chartType, labels, values, "Kullanici Ozeti");
+        return;
+      }
+
+      if (chartConfig.mode === "trend") {
+        resetChartArea(false);
+        const labelKeys = chartConfig.labelKeys?.length
+          ? chartConfig.labelKeys
+          : ["visitDate", "createDate", "paymentDate"];
+
+        const labels = rows.map((row) => {
+          const key = labelKeys.find(
+            (candidate) =>
+              row[candidate] !== undefined &&
+              row[candidate] !== null &&
+              row[candidate] !== ""
+          );
+          return String(key ? row[key] : "Bilinmeyen").slice(0, 10);
+        });
+
+        const valueKey = chartConfig.valueKey || "total";
+        const values = rows.map((row) => Number(row[valueKey] ?? row.total ?? 0));
+        createChart("line", labels, values, chartConfig.datasetLabel || "Günlük Kayıt Sayısı");
+        return;
+      }
+
+      if (chartConfig.mode === "distribution") {
+        const labelKey =
+          pickRowLabelKey(rows[0], chartConfig) ||
+          Object.keys(rows[0]).find(
+            (key) =>
+              !["total", "responseCount", "avgNumericValue", "avgDurationSec"].includes(key) &&
+              Number.isNaN(Number(rows[0][key]))
+          );
+        const valueKey = chartConfig.valueKey || "total";
+        const chartType = chartTypeForKey(chartConfig.chart);
+        const labels = rows.map((row) => {
+          if (labelKey === "fieldId") {
+            return `Field-${row.fieldId ?? row[labelKey]}`;
+          }
+          return String(row[labelKey] ?? "Bilinmeyen");
+        });
+        const values = rows.map((row) =>
+          Number(row[valueKey] ?? row.total ?? row.responseCount ?? 0)
+        );
+        const extra =
+          chartConfig.chart === "stateHBar"
+            ? { options: { indexAxis: "y" } }
+            : chartConfig.chart === "stateStacked"
+              ? {
+                options: {
+                  scales: {
+                    x: { stacked: true },
+                    y: { stacked: true },
+                  },
+                },
+              }
+              : {};
+        resetChartArea(false);
+        createChart(chartType, labels, values, "Kayit Sayisi", extra);
+        return;
+      }
+
+      resetChartArea(true);
+      const first = rows[0] || {};
+      renderKpiCards([
+        {
+          title: title || data.intent || "Ozet",
+          value: formatDisplayNumber(first.total ?? first.responseCount ?? "-"),
+        },
+      ]);
+    }
+
+    function applyChartAvailability(allowedList) {
+      allowedCharts = new Set(allowedList);
+      chartButtons.forEach((btn) => {
+        const key = btn.dataset.chart;
+        const isAllowed = allowedCharts.has(key);
+        btn.classList.toggle("locked", !isAllowed);
+        btn.setAttribute("aria-disabled", isAllowed ? "false" : "true");
+      });
+
+      if (!allowedCharts.has(selectedChart)) {
+        const firstAllowed = allowedList[0];
+        if (firstAllowed) {
+          applySelectedChart(firstAllowed);
+        }
+      }
+    }
+
+    function getFilters() {
+      return {
+        startDate: startDateEl.value || null,
+        endDate: endDateEl.value || null,
+        // fieldName/fieldId removed from filters
+      };
+    }
+
+    async function fetchJson(url, options = null) {
+      const token = getToken();
+      const opts = options ? { ...options } : {};
+      const headers = { ...(opts.headers || {}) };
+      if (token && !headers.Authorization) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      opts.headers = headers;
+      const response = await fetch(url, opts);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Bilinmeyen hata");
+      }
+      return data;
+    }
+
+    function resetChartArea(showKpi) {
+      const canvas = document.getElementById("mainChart");
+      const existing = Chart.getChart(canvas);
+      if (existing) {
+        existing.destroy();
+      }
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+      canvas.style.display = showKpi ? "none" : "block";
+      kpiArea.style.display = showKpi ? "grid" : "none";
+      kpiArea.innerHTML = "";
+    }
+
+    function createChart(type, labels, values, label, cfg = {}) {
+      const ctx = document.getElementById("mainChart");
+      const existing = Chart.getChart(ctx);
+      if (existing) {
+        existing.destroy();
+      }
+      const isLine = type === "line" || type === "area";
+      // base dataset
+      let datasets = [];
+      if (cfg.datasets && Array.isArray(cfg.datasets)) {
+        datasets = cfg.datasets;
+      } else {
+        datasets = [
+          {
+            label,
+            data: values,
+            backgroundColor: isLine
+              ? "rgba(29, 78, 216, 0.18)"
+              : ["#1d4ed8", "#0ea5e9", "#14b8a6", "#8b5cf6", "#22c55e", "#f59e0b"],
+            borderColor: isLine ? "#f26a2e" : undefined,
+            borderWidth: isLine ? 3 : 1,
+            tension: isLine ? 0.25 : 0,
+            fill: isLine,
+          },
+        ];
+      }
+
+      const defaultOptions = { responsive: true, maintainAspectRatio: false };
+      const options = Object.assign({}, defaultOptions, cfg.options || {});
+
+      chartInstance = new Chart(ctx, {
+        type: type === "area" ? "line" : type,
+        data: {
+          labels,
+          datasets,
+        },
+        options,
+      });
+    }
+
+    function applySelectedChart(chartKey) {
+      if (!allowedCharts.has(chartKey)) {
+        return;
+      }
+      selectedChart = chartKey;
+      chartButtons.forEach((b) => b.classList.remove("active"));
+      const activeBtn = document.querySelector(`.chart-btn[data-chart="${chartKey}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add("active");
+      }
+      const titles = {
+        stateBar: "Duruma Gore Ziyaretler (Bar)",
+        statePie: "Duruma Gore Ziyaretler (Pie)",
+        stateDoughnut: "Duruma Gore Ziyaretler (Doughnut)",
+        statePolar: "Duruma Gore Ziyaretler (PolarArea)",
+        stateRadar: "Duruma Gore Ziyaretler (Radar)",
+        stateHBar: "Duruma Gore Ziyaretler (Yatay Bar)",
+        stateArea: "Duruma Gore Ziyaretler (Area)",
+        stateStacked: "Duruma Gore Ziyaretler (Stacked Bar)",
+        visitTrend: "Gunluk Ziyaret Trendi (Line)",
+        typeBar: "Ziyaret Tipi Dagilimi (Bar)",
+        fieldBar: "Dynamic Field Dagilimi (Bar)",
+        kpiCards: "KPI Ozet Kartlari",
+      };
+      chartTitle.textContent = titles[chartKey] || "Grafik";
+    }
+
+    function renderKpiCards(cards) {
+      cards.forEach((card) => {
+        const el = document.createElement("div");
+        el.className = "kpi-card";
+        if (card.variant === "team-total") {
+          el.classList.add("kpi-card--team-total");
+        }
+        if (card.variant === "member") {
+          el.classList.add("kpi-card--member");
+          if (card.hidden) {
+            el.classList.add("kpi-card--member-hidden");
+          }
+        }
+        if (card.variant === "team-breakdown") {
+          el.classList.add("kpi-card--team-breakdown");
+          if (card.hidden) {
+            el.classList.add("kpi-card--team-breakdown-hidden");
+          }
+        }
+        el.innerHTML = `<div class="kpi-title">${card.title}</div><div class="kpi-value">${card.value}</div>`;
+        kpiArea.appendChild(el);
+      });
+    }
+
+    function appendBreakdownShowMoreToggle(hiddenClass, hiddenCount, label) {
+      if (!hiddenCount || hiddenCount <= 0) {
+        return;
+      }
+
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "member-breakdown-toggle";
+      toggle.textContent = label;
+      toggle.addEventListener("click", () => {
+        kpiArea.querySelectorAll(`.${hiddenClass}`).forEach((el) => {
+          el.classList.remove(hiddenClass);
+        });
+        toggle.remove();
+      });
+      kpiArea.appendChild(toggle);
+    }
+
+    function appendScopeOverlapNotice(message) {
+      if (!message || !kpiArea) {
+        return;
+      }
+      const notice = document.createElement("div");
+      notice.className = "scope-overlap-notice";
+      notice.textContent = message;
+      kpiArea.appendChild(notice);
+    }
+
+    function isListRowCountIntent(normalizedIntent) {
+      return normalizedIntent === "userrecentlogins";
+    }
+
+    function formatListRowCountValue(scopeRows = []) {
+      const count = (scopeRows || []).length;
+      return count ? `${formatDisplayNumber(count)} kayit` : "0 kayit";
+    }
+
+    function pickScopeRowValue(scopeRows, valueCandidates, normalizedIntent = "") {
+      if (!scopeRows.length) {
+        return "-";
+      }
+
+      if (isListRowCountIntent(normalizedIntent)) {
+        return formatListRowCountValue(scopeRows);
+      }
+
+      const first = scopeRows[0] || {};
+      const valueKeyLocal =
+        valueCandidates.find((key) => first[key] !== undefined) ||
+        Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+
+      return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+    }
+
+    function isCardDistributionIntent(normalizedIntent) {
+      return new Set([
+        "visitsbystate",
+        "visitsbytype",
+        "usersbyrole",
+        "usersbyteam",
+        "usersbybrand",
+        "usersbyclient",
+        "purchaseordersbystatus",
+        "invoicesbystatus",
+      ]).has(normalizedIntent);
+    }
+
+    function pickDistributionLabel(row = {}) {
+      return (
+        row.clientName ||
+        row.roleName ||
+        row.teamName ||
+        row.brandName ||
+        row.visitState ||
+        row.visitType ||
+        row.moduleName ||
+        row.userName ||
+        row.loginStatus ||
+        row.stateName ||
+        row.statusName ||
+        row.groupName ||
+        "Diger"
+      );
+    }
+
+    function pickDistributionValue(row = {}) {
+      const value =
+        row.total ??
+        row.totalUsers ??
+        row.savedViewCount ??
+        row.totalSteps ??
+        row.totalVisits ??
+        row.totalLogins ??
+        row.responseCount;
+      return formatDisplayNumber(value ?? 0);
+    }
+
+
+
+    function formatVisitTrendValue(rows = []) {
+      if (!rows.length) {
+        return "-";
+      }
+
+      const total = rows.reduce((sum, row) => sum + Number(row.total || 0), 0);
+      const avg = rows.length ? (total / rows.length).toFixed(1) : "0";
+      const maxRow = rows.reduce((max, row) =>
+        Number(row.total || 0) > Number(max.total || 0) ? row : max
+      );
+      const maxDate = String(maxRow.visitDate || "").slice(0, 10);
+      const dayParts = rows
+        .slice(-4)
+        .map((row) => `${String(row.visitDate || "").slice(0, 10)}: ${formatDisplayNumber(row.total ?? 0)}`)
+        .join(" | ");
+
+      return `Toplam ${formatDisplayNumber(total)} ziyaret, ${rows.length} gun, ort. ${avg}/gun, en yuksek ${maxDate} (${formatDisplayNumber(maxRow.total ?? 0)}). ${dayParts}`;
+    }
+
+    function formatTeamScopeValue(normalizedIntent, scopeRows, valueCandidates) {
+      if (normalizedIntent === "visittrend" && scopeRows.length) {
+        return formatVisitTrendValue(scopeRows);
+      }
+
+      if (isListRowCountIntent(normalizedIntent)) {
+        return formatListRowCountValue(scopeRows);
+      }
+
+      if (isUserSummaryIntent(normalizedIntent) && scopeRows.length) {
+        return formatUserSummaryRow(scopeRows[0] || {}, normalizedIntent);
+      }
+
+      if (normalizedIntent === "visitsbycompletionstatus") {
+        const tam = scopeRows.find((row) => row.visitState === "Tamamlanan");
+        const bek = scopeRows.find((row) => row.visitState === "Bekleyen");
+        return `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`;
+      }
+
+      if (isCardDistributionIntent(normalizedIntent) && scopeRows.length) {
+        return scopeRows
+          .slice(0, 4)
+          .map((row) => `${pickDistributionLabel(row)}: ${pickDistributionValue(row)}`)
+          .join(" | ");
+      }
+
+      if (scopeRows.length > 1) {
+        return scopeRows
+          .slice(0, 4)
+          .map((row) => `${pickDistributionLabel(row)}: ${pickDistributionValue(row)}`)
+          .join(" | ");
+      }
+
+      return pickScopeRowValue(scopeRows, valueCandidates, normalizedIntent);
+    }
+
+    function renderTeamMemberBreakdown(data, { title, normalizedIntent, valueCandidates }) {
+      const scope = data.singleTeamScope || {};
+      const scopeRows = scope.rows || [];
+      const members = scope.members || [];
+      const displayLimit = scope.displayLimit || 15;
+      const cardTitle = scope.displayLabel || `Takim (${scope.teamName || "-"})`;
+      const teamValue = formatTeamScopeValue(normalizedIntent, scopeRows, valueCandidates);
+
+      const cards = [
+        {
+          title: `${cardTitle} — ${title} (Toplam)`,
+          value: teamValue,
+          variant: "team-total",
+        },
+      ];
+
+      members.forEach((member, index) => {
+        cards.push({
+          title: member.displayLabel || member.userName || `Kullanici ${member.userId}`,
+          value: member.displayValue || "-",
+          variant: "member",
+          hidden: index >= displayLimit,
+        });
+      });
+
+      renderKpiCards(cards);
+
+      const hiddenMemberCount = Math.max(0, members.length - displayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--member-hidden",
+        hiddenMemberCount,
+        `Daha fazla goster (${hiddenMemberCount} kisi daha)`
+      );
+    }
+
+    function renderCompanyTeamBreakdown(data, { title, normalizedIntent, valueCandidates }) {
+      const scope = data.companyTeamScope || {};
+      const teams = scope.teams || [];
+      const displayLimit = scope.displayLimit || 15;
+      const cards = [];
+
+      const pushValueCard = (cardTitle, rows) => {
+        if (isUserSummaryIntent(normalizedIntent) && (rows || []).length) {
+          cards.push({
+            title: cardTitle,
+            value: formatUserSummaryRow((rows || [])[0] || {}, normalizedIntent),
+          });
+          return;
+        }
+
+        if (normalizedIntent === "visitsbycompletionstatus") {
+          const tam = (rows || []).find((row) => row.visitState === "Tamamlanan");
+          const bek = (rows || []).find((row) => row.visitState === "Bekleyen");
+          cards.push({
+            title: cardTitle,
+            value: `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`,
+          });
+          return;
+        }
+
+        if (normalizedIntent === "visittrend" && (rows || []).length) {
+          cards.push({
+            title: cardTitle,
+            value: formatVisitTrendValue(rows),
+          });
+          return;
+        }
+
+        if (isCardDistributionIntent(normalizedIntent) && (rows || []).length) {
+          cards.push({
+            title: cardTitle,
+            value: formatTeamScopeValue(normalizedIntent, rows, valueCandidates),
+          });
+          return;
+        }
+
+        if (isListRowCountIntent(normalizedIntent)) {
+          cards.push({
+            title: cardTitle,
+            value: formatListRowCountValue(rows),
+          });
+          return;
+        }
+
+        const first = (rows || [])[0] || {};
+        const valueKeyLocal =
+          valueCandidates.find((key) => first[key] !== undefined) ||
+          Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+        cards.push({
+          title: cardTitle,
+          value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+        });
+      };
+
+      pushValueCard(`${scope.company?.displayLabel || "Sirket geneli"} — ${title}`, scope.company?.rows || []);
+
+      teams.forEach((team, index) => {
+        const card = {
+          title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+          variant: "team-breakdown",
+          hidden: index >= displayLimit,
+        };
+        if (isUserSummaryIntent(normalizedIntent) && (team.rows || []).length) {
+          card.value = formatUserSummaryRow((team.rows || [])[0] || {}, normalizedIntent);
+        } else if (normalizedIntent === "visitsbycompletionstatus") {
+          const rows = team.rows || [];
+          const tam = rows.find((row) => row.visitState === "Tamamlanan");
+          const bek = rows.find((row) => row.visitState === "Bekleyen");
+          card.value = `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`;
+        } else if (normalizedIntent === "visittrend" && (team.rows || []).length) {
+          card.value = formatVisitTrendValue(team.rows || []);
+        } else if (isCardDistributionIntent(normalizedIntent) && (team.rows || []).length) {
+          card.value = formatTeamScopeValue(normalizedIntent, team.rows || [], valueCandidates);
+        } else if (isListRowCountIntent(normalizedIntent)) {
+          card.value = formatListRowCountValue(team.rows || []);
+        } else {
+          const first = (team.rows || [])[0] || {};
+          const valueKeyLocal =
+            valueCandidates.find((key) => first[key] !== undefined) ||
+            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+          card.value = formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+        }
+        cards.push(card);
+      });
+
+      const members = scope.members || [];
+      const memberDisplayLimit = scope.memberDisplayLimit || 15;
+      members.forEach((member, index) => {
+        cards.push({
+          title: member.displayLabel || member.userName || `Kullanici ${member.userId}`,
+          value: member.displayValue || "-",
+          variant: "member",
+          hidden: index >= memberDisplayLimit,
+        });
+      });
+
+      pushValueCard(
+        `${scope.selectedCombined?.label || "Secili takimlar toplami"} — ${title}`,
+        scope.selectedCombined?.rows || []
+      );
+
+      renderKpiCards(cards);
+
+      const hiddenTeamCount = Math.max(0, teams.length - displayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--team-breakdown-hidden",
+        hiddenTeamCount,
+        `Daha fazla goster (${hiddenTeamCount} takim daha)`
+      );
+
+      const hiddenMemberCount = Math.max(0, members.length - memberDisplayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--member-hidden",
+        hiddenMemberCount,
+        `Daha fazla goster (${hiddenMemberCount} kisi daha)`
+      );
+
+      appendScopeOverlapNotice(scope.overlapNotice);
+    }
+
+    function renderMultiTeamBreakdown(data, { title, normalizedIntent, valueCandidates }) {
+      const scope = data.multiTeamScope || {};
+      const teams = scope.teams || [];
+      const displayLimit = scope.displayLimit || 15;
+      const combinedRows = scope.combined?.rows || [];
+      const combinedTitle =
+        scope.scopeSource === "subscription"
+          ? `Sirket geneli — ${title}`
+          : scope.scopeSource === "selected"
+            ? `${scope.combined?.label || "Secili takimlar toplami"} — ${title}`
+            : `Toplam — ${title}`;
+
+      const cards = [];
+
+      if (normalizedIntent === "visitsbycompletionstatus") {
+        teams.forEach((team, index) => {
+          const rows = team.rows || [];
+          const tam = rows.find((row) => row.visitState === "Tamamlanan");
+          const bek = rows.find((row) => row.visitState === "Bekleyen");
+          cards.push({
+            title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+            value: `Tamamlanan: ${formatDisplayNumber(tam?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bek?.total ?? 0)}`,
+            variant: "team-breakdown",
+            hidden: index >= displayLimit,
+          });
+        });
+        const tamTotal = combinedRows.find((row) => row.visitState === "Tamamlanan");
+        const bekTotal = combinedRows.find((row) => row.visitState === "Bekleyen");
+        cards.push({
+          title: combinedTitle,
+          value: `Tamamlanan: ${formatDisplayNumber(tamTotal?.total ?? 0)} | Bekleyen: ${formatDisplayNumber(bekTotal?.total ?? 0)}`,
+          variant: "team-total",
+        });
+      } else {
+        teams.forEach((team, index) => {
+          const teamRows = team.rows || [];
+          const cardValue =
+            normalizedIntent === "visittrend" && teamRows.length
+              ? formatVisitTrendValue(teamRows)
+              : isUserSummaryIntent(normalizedIntent) && teamRows.length
+              ? formatUserSummaryRow(teamRows[0] || {}, normalizedIntent)
+              : isCardDistributionIntent(normalizedIntent) && teamRows.length
+                ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
+                : (() => {
+                  const first = teamRows[0] || {};
+                  const valueKeyLocal =
+                    valueCandidates.find((key) => first[key] !== undefined) ||
+                    Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+                  return formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-");
+                })();
+          cards.push({
+            title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
+            value: cardValue,
+            variant: "team-breakdown",
+            hidden: index >= displayLimit,
+          });
+        });
+        const combinedValue =
+          normalizedIntent === "visittrend" && combinedRows.length
+            ? formatVisitTrendValue(combinedRows)
+            : isUserSummaryIntent(normalizedIntent) && combinedRows.length
+              ? formatUserSummaryRow(combinedRows[0] || {}, normalizedIntent)
+              : isCardDistributionIntent(normalizedIntent) && combinedRows.length
+                ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
+                : (() => {
+                    const combinedFirst = combinedRows[0] || {};
+                    const combinedValueKey =
+                      valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+                      Object.keys(combinedFirst).find((key) =>
+                        !Number.isNaN(Number(combinedFirst[key]))
+                      );
+                    return formatDisplayNumber(
+                      combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                    );
+                  })();
+
+        cards.push({
+          title: combinedTitle,
+          value: combinedValue,
+          variant: "team-total",
+        });
+      }
+
+      renderKpiCards(cards);
+
+      const hiddenTeamCount = Math.max(0, teams.length - displayLimit);
+      appendBreakdownShowMoreToggle(
+        "kpi-card--team-breakdown-hidden",
+        hiddenTeamCount,
+        `Daha fazla goster (${hiddenTeamCount} takim daha)`
+      );
+
+      appendScopeOverlapNotice(scope.overlapNotice);
+    }
+
+    function formatDisplayNumber(value) {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      const numeric = Number(value);
+      if (!Number.isNaN(numeric)) {
+        return numeric.toLocaleString("tr-TR");
+      }
+
+      return String(value);
+    }
+
+    function renderChatResultVisualization(data, overrideChart = null) {
+      renderSqlPanel(data);
+
+      if (!data || data.needsClarification) {
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = "Netleştirme Gerekli";
+        renderKpiCards([
+          {
+            title: "Sorgu net değil",
+            value: "Lütfen seçeneklerden birini belirtin.",
+          },
+        ]);
+        return true;
+      }
+
+      const normalizedIntent = String(data.intent || "").trim().toLowerCase();
+      const baseChartConfig = getIntentChartConfig(data.intent);
+      const chartConfig =
+        overrideChart && baseChartConfig.allowed.includes(overrideChart)
+          ? { ...baseChartConfig, chart: overrideChart }
+          : baseChartConfig;
+      const rows = Array.isArray(data.rows) ? data.rows : [];
+      const firstRow = rows[0] || {};
+
+      const kpiTitleMap = {
+        clientcountactive: "Aktif Firma Sayısı",
+        clientcounttotal: "Toplam Firma Sayısı",
+        totalinvoices: "Kesilen Fatura Adedi",
+        totalinvoicecount: "Kesilen Fatura Adedi",
+        invoicecount: "Kesilen Fatura Adedi",
+        totalinvoiceamount: "Toplam Fatura Tutarı",
+        totalinvoicebalance: "Ödenmemiş Fatura Bakiyesi",
+        totalinvoicepayments: "Fatura Tahsilat Toplamı",
+        usertotalcount: "Toplam Kullanıcı Sayısı",
+        userstatussummary: "Kullanıcı Durum Özeti",
+        useradminsummary: "Yetki Özeti",
+        userdevicesummary: "Cihaz Özeti",
+        visitcountrealized: "Gerçekleşen Ziyaret Sayısı",
+        activecampaigns: "Aktif Kampanya Sayısı",
+      };
+
+      const chartTitleMap = {
+        usersbyrole: "Rollere Göre Kullanıcı Dağılımı",
+        usersbyteam: "Takımlara Göre Kullanıcı Dağılımı",
+        usersbybrand: "Markalara Göre Kullanıcı Dağılımı",
+        usersbyclient: "Müşterilere Göre Kullanıcı Dağılımı",
+        userloginsuccesssummary: "Giriş Başarı Dağılımı",
+        usersavedviewsummary: "Kayıtlı Görünüm Özeti",
+        userstepsummary: "Kullanıcı Adım Özeti",
+        uservisitsummary: "Kullanıcı Ziyaret Özeti",
+        visitsbytype: "Ziyaret Tipi Dağılımı",
+        visitsbystate: "Duruma Göre Ziyaretler",
+        visitsbycompletionstatus: "Ziyaret Durumu (Tamamlanan / Bekleyen)",
+        invoicesbystatus: "Fatura Durum Dağılımı",
+        clientsbygroup: "Gruplara Göre Firma Dağılımı",
+        clientsbystate: "Duruma Göre Firma Dağılımı",
+        clientsbycountry: "Ülkelere Göre Firma Dağılımı",
+        clientsByCity: "sehirlere gore musteri dagilimi",
+        distributorsbystatus: "Duruma Göre Distribütör Dağılımı",
+      };
+
+      if (
+        !rows.length &&
+        !data.dualScope &&
+        !data.multiTeamScope &&
+        !data.singleTeamScope &&
+        !data.companyTeamScope
+      ) {
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = "Sorgu Sonucu";
+        renderKpiCards([
+          {
+            title: data.intent || "Sorgu Sonucu",
+            value: "Veri bulunamadı.",
+          },
+        ]);
+        return true;
+      }
+
+      const labelCandidates = [
+        "roleName",
+        "teamName",
+        "brandName",
+        "clientName",
+        "moduleName",
+        "userName",
+        "loginStatus",
+        "groupName",
+        "statusName",
+        "visitType",
+        "visitState",
+        "countryName",
+        "stateName",
+        "cityName",
+        "regionName",
+        "clientName",
+        "name",
+        "label",
+        "type",
+        "category",
+      ];
+
+      const valueCandidates = [
+        "total",
+        "totalUsers",
+        "userCount",
+        "count",
+        "responseCount",
+        "value",
+        "amount",
+        "totalAmount",
+        "totalBalance",
+        "activeUsers",
+        "totalLogins",
+        "savedViewCount",
+        "totalSteps",
+        "totalVisits",
+      ];
+
+      const numericKeys = Object.keys(firstRow).filter((key) => {
+        const value = firstRow[key];
+        return value !== null && value !== undefined && value !== "" && !Number.isNaN(Number(value));
+      });
+
+      const labelKey =
+        labelCandidates.find((key) => firstRow[key] !== undefined) ||
+        Object.keys(firstRow).find((key) => !numericKeys.includes(key));
+
+      const valueKey =
+        valueCandidates.find((key) => firstRow[key] !== undefined) ||
+        numericKeys[0];
+
+      const scopeDisplay = data.scopePlan?.display;
+
+      if (scopeDisplay === "message" && data.answer) {
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(["kpiCards"]);
+        applySelectedChart("kpiCards");
+        chartTitle.textContent = data.intent || "Sorgu Sonucu";
+        renderKpiCards([{ title: "Bilgi", value: data.answer }]);
+        return true;
+      }
+
+      // Hibrit kullanici: takim + sirket
+      if (scopeDisplay === "dual" || (data.dualScope?.operational && data.dualScope?.company)) {
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+        chartLoadSeq++;
+
+        if (!isKpiBreakdownChart(chartConfig)) {
+          renderPrimaryChartForIntent(data, chartConfig, title);
+          return true;
+        }
+
+        const opRows = data.dualScope.operational.rows || [];
+        const coRows = data.dualScope.company.rows || [];
+        resetChartArea(true);
+        applyChartAvailability(chartConfig.allowed);
+        applySelectedChart(chartConfig.chart);
+        chartTitle.textContent = "";
+
+        const opCardTitle =
+          data.dualScope.operational.displayLabel ||
+          `Takim (${data.dualScope.operational.label || "Takim"})`;
+        const coCardTitle =
+          data.dualScope.company.displayLabel ||
+          `Sirket geneli (${data.dualScope.company.label || "Sirket geneli"})`;
+
+        renderKpiCards([
+          {
+            title: `${opCardTitle} — ${title}`,
+            value: isUserSummaryIntent(normalizedIntent)
+              ? formatUserSummaryRow(opRows[0] || {}, normalizedIntent)
+              : pickScopeRowValue(opRows, valueCandidates),
+          },
+          {
+            title: `${coCardTitle} — ${title}`,
+            value: isUserSummaryIntent(normalizedIntent)
+              ? formatUserSummaryRow(coRows[0] || {}, normalizedIntent)
+              : pickScopeRowValue(coRows, valueCandidates),
+          },
+        ]);
+
+        return true;
+      }
+
+      const distributionIntents = new Set([
+        "visitsbystate",
+        "visitsbycompletionstatus",
+        "visitsbytype",
+        "invoicesbystatus",
+        "usersbyrole",
+        "usersbyteam",
+        "usersbybrand",
+        "usersbyclient",
+        "purchaseordersbystatus",
+      ]);
+
+      // Takim adiyla sorulan sorgu: toplam + uye kirilimi
+      if (
+        (scopeDisplay === "single" || scopeDisplay === "team_detail") &&
+        data.singleTeamScope?.rows
+      ) {
+        const scopeRows = data.singleTeamScope.rows || [];
+        const members = data.singleTeamScope.members || [];
+        const isDistribution =
+          distributionIntents.has(normalizedIntent) && scopeRows.length > 0;
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+
+        if (members.length) {
+          chartLoadSeq++;
+          resetChartArea(true);
+          applyChartAvailability(["kpiCards"]);
+          applySelectedChart("kpiCards");
+          chartTitle.textContent = "";
+          renderTeamMemberBreakdown(data, {
+            title,
+            normalizedIntent,
+            valueCandidates,
+          });
+          return true;
+        }
+
+        if (!isDistribution) {
+          const first = scopeRows[0] || {};
+          const valueKeyLocal =
+            valueCandidates.find((key) => first[key] !== undefined) ||
+            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+
+          chartLoadSeq++;
+          resetChartArea(true);
+          applyChartAvailability(chartConfig.allowed);
+          applySelectedChart(chartConfig.chart);
+          chartTitle.textContent = "";
+
+          const cardTitle =
+            data.singleTeamScope.displayLabel ||
+            `Takim (${data.singleTeamScope.teamName || "-"})`;
+
+          renderKpiCards([
+            {
+              title: `${cardTitle} — ${title}`,
+              value: formatDisplayNumber(valueKeyLocal ? first[valueKeyLocal] : "-"),
+            },
+          ]);
+
+          return true;
+        }
+
+        chartLoadSeq++;
+        renderPrimaryChartForIntent(
+          data,
+          chartConfig,
+          data.singleTeamScope.displayLabel
+            ? `${data.singleTeamScope.displayLabel} — ${title}`
+            : title
+        );
+        return true;
+      }
+
+      // Sirket + secili takimlar
+      if (scopeDisplay === "company_team_breakdown" || data.companyTeamScope?.company) {
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+
+        chartLoadSeq++;
+
+        if (isKpiBreakdownChart(chartConfig)) {
+          resetChartArea(true);
+          applyChartAvailability(chartConfig.allowed);
+          applySelectedChart(chartConfig.chart);
+          chartTitle.textContent = "";
+          renderCompanyTeamBreakdown(data, {
+            title,
+            normalizedIntent,
+            valueCandidates,
+          });
+          return true;
+        }
+
+        renderPrimaryChartForIntent(data, chartConfig, title);
+        return true;
+      }
+
+      // L3 / L4 cok takimli: takim bazli KPI + toplam
+      if (scopeDisplay === "breakdown" || data.multiTeamScope?.teams?.length) {
+        const title =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Sorgu Sonucu";
+
+        chartLoadSeq++;
+
+        if (isKpiBreakdownChart(chartConfig)) {
+          resetChartArea(true);
+          applyChartAvailability(chartConfig.allowed);
+          applySelectedChart(chartConfig.chart);
+          chartTitle.textContent = "";
+          renderMultiTeamBreakdown(data, {
+            title,
+            normalizedIntent,
+            valueCandidates,
+          });
+          return true;
+        }
+
+        renderPrimaryChartForIntent(data, chartConfig, title);
+        return true;
+      }
+
+      // Tek satır + sayısal sonuç: KPI kartı
+      if (chartConfig.mode === "kpi" && rows.length === 1 && valueKey) {
+        const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
+        const value = firstRow[valueKey];
+        const isCompanySingleKpi =
+          data.scope?.isPureCompanyScopeUser &&
+          !data.singleTeamScope &&
+          !data.multiTeamScope?.teams?.length &&
+          !data.dualScope;
+
+        chartLoadSeq++;
+        resetChartArea(true);
+        applyChartAvailability(chartConfig.allowed);
+        applySelectedChart(chartConfig.chart);
+        chartTitle.textContent = "";
+
+        renderKpiCards([
+          {
+            title: isCompanySingleKpi ? `Sirket geneli — ${title}` : title,
+            value: formatDisplayNumber(value),
+          },
+        ]);
+
+        return true;
+      }
+
+      if (chartConfig.mode === "trend" || chartConfig.mode === "distribution") {
+        chartLoadSeq++;
+        const baseTitle =
+          chartTitleMap[normalizedIntent] || data.intent || "Grafik";
+        renderPrimaryChartForIntent(data, chartConfig, baseTitle);
+        return true;
+      }
+
+      chartLoadSeq++;
+      resetChartArea(true);
+      applyChartAvailability(chartConfig.allowed);
+      applySelectedChart(chartConfig.chart);
+      chartTitle.textContent = "Sorgu Sonucu";
+
+      renderKpiCards([
+        {
+          title: data.intent || "Sorgu Sonucu",
+          value: "Bu sonuç için uygun grafik oluşturulamadı.",
+        },
+      ]);
+
+      return true;
+    }
+
+    async function loadChartData() {
+      const seq = ++chartLoadSeq;
+      const filters = getFilters();
+      if (selectedChart === "visitTrend" && !filters.startDate && !filters.endDate) {
+        const today = new Date();
+        const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        start.setDate(start.getDate() - 30);
+        const s = start.toISOString().slice(0, 10);
+        const e = today.toISOString().slice(0, 10);
+        startDateEl.value = s;
+        endDateEl.value = e;
+        filters.startDate = s;
+        filters.endDate = e;
+      }
+      const params = new URLSearchParams();
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
+
+      if (selectedChart === "kpiCards") {
+        resetChartArea(true);
+        const [countRes, durationRes, stateRes, fieldRes] = await Promise.all([
+          fetchJson(`/api/visit/count?${params.toString()}`),
+          fetchJson(`/api/visit/duration/avg?${params.toString()}`),
+          fetchJson(`/api/visit/by-state?${params.toString()}`),
+          fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`),
+        ]);
+        if (seq !== chartLoadSeq) return;
+
+        renderKpiCards([
+          { title: "Gerceklesen Ziyaret", value: countRes.rows?.[0]?.total ?? "-" },
+          {
+            title: "Ort. Sure (dk)",
+            value:
+              durationRes.rows?.[0]?.avgDurationSec != null
+                ? Math.round(durationRes.rows[0].avgDurationSec / 60)
+                : "-",
+          },
+          { title: "Ziyaret Durum Cesidi", value: stateRes.rows?.length ?? 0 },
+          { title: "Eslesen Field", value: fieldRes.rows?.length ?? 0 },
+        ]);
+        return;
+      }
+
+      resetChartArea(false);
+
+      if (selectedChart === "visitTrend") {
+        const data = await fetchJson(`/api/visit/trend?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => String(x.visitDate).slice(0, 10));
+        const values = data.rows.map((x) => x.total);
+        createChart("line", labels, values, "Gunluk Gerceklesen Ziyaret");
+        return;
+      }
+
+      if (selectedChart === "fieldBar") {
+        const data = await fetchJson(`/api/dynamic-data/field-summary?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.fieldName);
+        const values = data.rows.map((x) => x.responseCount);
+        createChart("bar", labels, values, "Field Yanit Sayisi");
+        return;
+      }
+
+      if (selectedChart === "typeBar") {
+        const data = await fetchJson(`/api/visit/by-type?${params.toString()}`);
+        if (seq !== chartLoadSeq) return;
+        const labels = data.rows.map((x) => x.visitType);
+        const values = data.rows.map((x) => x.total);
+        createChart("bar", labels, values, "Visit Type Dagilimi");
+        return;
+      }
+
+      const data = await fetchJson(`/api/visit/by-state?${params.toString()}`);
+      if (seq !== chartLoadSeq) return;
+      const labels = data.rows.map((x) => x.visitState);
+      const values = data.rows.map((x) => x.total);
+
+      // Handle the extended chart types by reusing the same labels/values
+      if (selectedChart === "statePie") {
+        createChart("pie", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+      if (selectedChart === "stateDoughnut") {
+        createChart("doughnut", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+      if (selectedChart === "statePolar") {
+        createChart("polarArea", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+      if (selectedChart === "stateRadar") {
+        // radar expects a single dataset across labels
+        createChart("radar", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+      if (selectedChart === "stateHBar") {
+        createChart("bar", labels, values, "Ziyaret Sayisi", { options: { indexAxis: "y" } });
+        return;
+      }
+      if (selectedChart === "stateArea") {
+        createChart("area", labels, values, "Ziyaret Sayisi");
+        return;
+      }
+      if (selectedChart === "stateStacked") {
+        // split values into two series for stacked appearance (approximate)
+        const a = values.map((v) => Math.floor(v / 2));
+        const b = values.map((v) => v - Math.floor(v / 2));
+        createChart("bar", labels, values, "Ziyaret Sayisi", {
+          datasets: [
+            { label: "A", data: a, backgroundColor: "#1d4ed8" },
+            { label: "B", data: b, backgroundColor: "#0ea5e9" },
+          ],
+          options: { scales: { x: { stacked: true }, y: { stacked: true } } },
+        });
+        return;
+      }
+
+      // default bar
+      createChart("bar", labels, values, "Ziyaret Sayisi");
+    }
+
+    chartButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chartKey = btn.dataset.chart;
+
+        if (!allowedCharts.has(chartKey)) {
+          addMessage("Bu soru icin bu grafik tipi uygun degil.", "bot");
+          return;
+        }
+
+        if (lastChatResult) {
+          renderChatResultVisualization(lastChatResult, chartKey);
+          return;
+        }
+
+        applySelectedChart(chartKey);
+        loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
+      });
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      if (lastChatResult) {
+        renderChatResultVisualization(lastChatResult, selectedChart);
+        return;
+      }
+
+      loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
+    });
+
+    askBtn.addEventListener("click", () => {
+      submitQuestion(questionEl.value);
+    });
+
+    function resolveMaxHelpLevel(context = {}) {
+      const operationalLevel = Number(context.operationalLevel);
+      if (operationalLevel >= 4) {
+        return 4;
+      }
+      if (operationalLevel >= 3) {
+        return 3;
+      }
+      if (operationalLevel >= 2) {
+        return 2;
+      }
+      return 1;
+    }
+
+    function resolveHelpRoleKey(maxLevel) {
+      return `L${maxLevel}`;
+    }
+
+    function applyHelpRoleLocks() {
+      const maxLevel = userHelpAccess?.maxLevel || 0;
+      const loggedIn = maxLevel > 0;
+
+      if (helpAccessBanner) {
+        if (!loggedIn) {
+          helpAccessBanner.textContent =
+            "Örnek sorular için giriş yapın. Hiyerarşi seviyenize göre örnek soruları görebilirsiniz.";
+          helpAccessBanner.classList.remove("hidden");
+        } else {
+          const roleLabel =
+            HELP_ROLE_LABELS[userHelpAccess.roleKey] || userHelpAccess.roleKey;
+          let text = `Giriş: ${userHelpAccess.userName}. En fazla ${roleLabel} örneklerine erişebilirsiniz.`;
+          if (userHelpAccess.isHybrid) {
+            text +=
+              " Admin + takim lideri hesabi: operational seviye (L2) geçerlidir, L4 örnekleri kapalıdır.";
+          }
+          helpAccessBanner.textContent = text;
+          helpAccessBanner.classList.remove("hidden");
+        }
+      }
+
+      helpRoleButtons.forEach((button) => {
+        const roleKey = button.dataset.role;
+        const roleLevel = HELP_ROLE_LEVELS[roleKey] || 0;
+        const locked = !loggedIn || roleLevel > maxLevel;
+        button.disabled = locked;
+        button.classList.toggle("is-locked", locked);
+        button.classList.toggle(
+          "is-current",
+          loggedIn && roleKey === userHelpAccess.roleKey
+        );
+      });
+    }
+
+    async function loadUserHelpAccess() {
+      const token = getToken();
+      if (!token) {
+        userHelpAccess = null;
+        applyHelpRoleLocks();
+        return;
+      }
+
+      try {
+        const data = await fetchJson("/auth/me");
+        const ctx = data.context || {};
+        const maxLevel = resolveMaxHelpLevel(ctx);
+        const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+        userHelpAccess = {
+          maxLevel,
+          roleKey: resolveHelpRoleKey(maxLevel),
+          userName:
+            storedUser?.name || data.user?.name || data.user?.email || "Kullanici",
+          isHybrid: !!ctx.isHybridScopeUser,
+          managedTeamCount: (ctx.managedTeamIds || []).length,
+          isPureCompanyScopeUser: !!ctx.isPureCompanyScopeUser,
+          subscriptionTeamCount: (ctx.subscriptionTeams || []).length,
+        };
+      } catch (_error) {
+        userHelpAccess = null;
+      }
+
+      applyHelpRoleLocks();
+    }
+
+    async function appendHierarchyLoginHint() {
+      if (!getToken()) {
+        return;
+      }
+
+      try {
+        const data = await fetchJson("/auth/me");
+        const ctx = data.context || {};
+        const parts = [];
+
+        if (ctx.isPureCompanyScopeUser) {
+          const teamCount = (ctx.subscriptionTeams || []).length;
+          parts.push(
+            `L4 (Admin): ${teamCount} takım erişebilir. Ornek sorular: "ziyaret sayisi" | "CP REMOTE-Ahmed ziyaret sayisi" | "takim bazinda ziyaret sayisi".`
+          );
+        } else if ((ctx.managedTeamIds || []).length > 1) {
+          parts.push(
+            `L3 scope: ${ctx.managedTeamIds.length} yonetilen takim. Genel KPI sorularinda takim+toplam beklenir.`
+          );
+        } else if ((ctx.managedTeamIds || []).length === 1) {
+          parts.push("L2 scope: 1 yonetilen takim.");
+        } else if (Number(ctx.operationalLevel) === 1) {
+          parts.push("L1 scope: yalnizca kendi verinizi görebilirsiniz.");
+        }
+
+        if (parts.length) {
+          addMessage(parts.join(" "), "bot");
+        }
+      } catch (_error) {
+        // ignore
+      }
+    }
+
+    async function loadSampleQuestionsCatalog() {
+      if (sampleQuestionsCatalog) {
+        return sampleQuestionsCatalog;
+      }
+
+      const response = await fetch("/data/role-sample-questions.json");
+      if (!response.ok) {
+        throw new Error("Ornek sorular yuklenemedi");
+      }
+      sampleQuestionsCatalog = await response.json();
+      return sampleQuestionsCatalog;
+    }
+
+    function openHelpModal() {
+      applyHelpRoleLocks();
+      helpModalBackdrop.classList.remove("hidden");
+      helpModalBackdrop.setAttribute("aria-hidden", "false");
+      showHelpRoleStep();
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeHelpModal() {
+      helpModalBackdrop.classList.add("hidden");
+      helpModalBackdrop.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function showHelpRoleStep() {
+      helpStepRole.classList.remove("hidden");
+      helpStepQuestions.classList.add("hidden");
+      selectedHelpRole = null;
+    }
+
+    function renderHelpDomainTabs(roleData) {
+      helpDomainTabs.innerHTML = "";
+      const domains = roleData?.domains || [];
+
+      domains.forEach((domain, index) => {
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.className = `help-domain-tab${domain.id === selectedHelpDomainId || (!selectedHelpDomainId && index === 0) ? " active" : ""}`;
+        tab.textContent = domain.label || domain.id;
+        tab.dataset.domainId = domain.id;
+        if (index === 0 && !domains.find((item) => item.id === selectedHelpDomainId)) {
+          selectedHelpDomainId = domain.id;
+        }
+        tab.addEventListener("click", () => {
+          selectedHelpDomainId = domain.id;
+          renderHelpDomainTabs(roleData);
+          renderHelpQuestionsList(roleData);
+        });
+        helpDomainTabs.appendChild(tab);
+      });
+    }
+
+    function renderHelpQuestionsList(roleData) {
+      helpQuestionsList.innerHTML = "";
+      const domain = (roleData?.domains || []).find((item) => item.id === selectedHelpDomainId);
+      const questions = domain?.questions || [];
+
+      if (!questions.length) {
+        helpQuestionsList.innerHTML = '<p class="muted">Bu kategori icin örnek soru yok.</p>';
+        return;
+      }
+
+      questions.forEach((item) => {
+        const text = String(item.text || "").trim();
+        if (!text) return;
+
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "help-question-chip";
+        chip.textContent = text;
+        chip.addEventListener("click", () => {
+          closeHelpModal();
+          questionEl.value = text;
+          questionEl.focus();
+          submitQuestion(text);
+        });
+        helpQuestionsList.appendChild(chip);
+      });
+    }
+
+    async function showHelpQuestionsStep(roleKey) {
+      const roleLevel = HELP_ROLE_LEVELS[roleKey] || 0;
+      if (!userHelpAccess || roleLevel > userHelpAccess.maxLevel) {
+        return;
+      }
+
+      try {
+        const catalog = await loadSampleQuestionsCatalog();
+        const roleData = catalog?.roles?.[roleKey];
+        if (!roleData) {
+          addMessage(`Ornek sorular bulunamadi: ${roleKey}`, "bot");
+          return;
+        }
+
+        selectedHelpRole = roleKey;
+        selectedHelpDomainId = roleData.domains?.[0]?.id || "visit";
+        helpRoleTitle.textContent = roleData.title || roleKey;
+        helpRoleSubtitle.textContent = roleData.subtitle || "";
+
+        helpStepRole.classList.add("hidden");
+        helpStepQuestions.classList.remove("hidden");
+        renderHelpDomainTabs(roleData);
+        renderHelpQuestionsList(roleData);
+      } catch (error) {
+        addMessage(`Örnek sorular yüklenemedi: ${error.message}`, "bot");
+        closeHelpModal();
+      }
+    }
+
+    helpOpenBtn.addEventListener("click", openHelpModal);
+    helpCloseBtn.addEventListener("click", closeHelpModal);
+    helpBackBtn.addEventListener("click", showHelpRoleStep);
+    helpModalBackdrop.addEventListener("click", (event) => {
+      if (event.target === helpModalBackdrop) {
+        closeHelpModal();
+      }
+    });
+    helpRoleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.disabled) {
+          return;
+        }
+        showHelpQuestionsStep(button.dataset.role);
+      });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !helpModalBackdrop.classList.contains("hidden")) {
+        closeHelpModal();
+      }
+    });
+
+    async function submitQuestion(rawQuestion) {
+  const question = String(rawQuestion || "").trim();
+  const filters = getFilters();
+
+  if (!question) {
+    addMessage("Lutfen soru gir.", "bot");
+    return;
+  }
+
+  addMessage(question, "user");
+  addMessage("Sorgu calisiyor...", "bot");
+
+  try {
+    const scopePayload = buildScopeSelectionPayload();
+
+    console.log("SCOPE PAYLOAD:", scopePayload);
+
+    const data = await fetchJson("/api/chat/query", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+
+      body: JSON.stringify({
+        question,
+        filters,
+        ...(scopePayload
+          ? { scopeSelection: scopePayload }
+          : {}),
+      }),
+    });
+
+    const dateInfo =
+      data.filters?.startDate || data.filters?.endDate
+        ? `\nTarih: ${data.filters?.startDate || "-"} / ${data.filters?.endDate || "-"}`
+        : "";
+
+    applyFiltersToInputs(data.filters || {});
+
+    const cleanAnswer = cleanAssistantAnswer(data.answer);
+    const botText = `${cleanAnswer}${dateInfo}`;
+
+    chatLog.lastElementChild.remove();
+    addMessage(botText, "bot");
+
+    lastChatResult = data;
+    renderChatResultVisualization(data);
+
+    questionEl.value = "";
+  } catch (error) {
+    chatLog.lastElementChild.remove();
+    addMessage(`Hata: ${error.message}`, "bot");
+  }
+}
+
+    loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
+    loginBtn.addEventListener("click", login);
+    logoutBtn.addEventListener("click", logout);
+
+    if (getToken()) {
+      hideLogin();
+      showUserPanel();
+      loadUserHelpAccess().catch(() => { });
+      initScopeToggleButtons().catch(() => { });
+      appendHierarchyLoginHint().catch(() => { });
+    }
+  </script>
+</body>
+
+</html>
