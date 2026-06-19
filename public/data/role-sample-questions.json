@@ -2,7 +2,7 @@
   "roles": {
     "L1": {
       "title": "Saha calisani (L1)",
-      "subtitle": "Yalnizca kendi veriniz â€” PKG_FIELD (50 intent)",
+      "subtitle": "Yalnizca kendi veriniz ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PKG_FIELD (50 intent)",
       "domains": [
         {
           "id": "visit",
@@ -45,52 +45,52 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif ÅŸirket sayÄ±sÄ±"
+              "text": "Aktif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam ÅŸirket sayÄ±sÄ±"
+              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Pasif ÅŸirket sayÄ±sÄ±"
+              "text": "Pasif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text":"KullanÄ±cÄ±larÄ±n ziyaret ettiÄŸi mÃ¼ÅŸteriler ve ziyaret sayÄ±larÄ±"
+              "text":"KullanÃƒâ€Ã‚Â±cÃƒâ€Ã‚Â±larÃƒâ€Ã‚Â±n ziyaret ettiÃƒâ€Ã…Â¸i mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teriler ve ziyaret sayÃƒâ€Ã‚Â±larÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Åirketlerin kategorilere gÃ¶re daÄŸÄ±lÄ±mÄ±"
+              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Duruma gÃ¶re mÃ¼ÅŸteri daÄŸÄ±lÄ±mÄ±"
+              "text": "Duruma gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Ãœlklere gÃ¶re mÃ¼ÅŸteri daÄŸÄ±lÄ±mÄ±"
+              "text": "ÃƒÆ’Ã…â€œlklere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Åehirlere gÃ¶re mÃ¼ÅŸteri daÄŸÄ±lÄ±mÄ±"
+              "text": "Ãƒâ€¦Ã‚Âehirlere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "MÃ¼ÅŸteri kazanÄ±m trendi"
+              "text": "MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri kazanÃƒâ€Ã‚Â±m trendi"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÄ±ÅŸ",
+          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸",
           "questions": [
             {
-              "text": "Toplam sipariÅŸ sayÄ±sÄ±"
+              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam sipariÅŸ tutarÄ±"
+              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ tutarÃƒâ€Ã‚Â±"
             },
             {
-              "text": "SipariÅŸ durum daÄŸÄ±lÄ±mÄ±"
+              "text": "SipariÃƒâ€¦Ã…Â¸ durum daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "GÃ¼nlÃ¼k sipariÅŸ trendi"
+              "text": "GÃƒÆ’Ã‚Â¼nlÃƒÆ’Ã‚Â¼k sipariÃƒâ€¦Ã…Â¸ trendi"
             },
             {
-              "text": "Aktif kampanya sayÄ±sÄ±"
+              "text": "Aktif kampanya sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             }
           ]
         },
@@ -113,7 +113,7 @@
     },
     "L2": {
       "title": "Takim lideri (L2)",
-      "subtitle": "Takim birlesik veri + finans â€” PKG_MANAGER (68 intent)",
+      "subtitle": "Takim birlesik veri + finans ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PKG_MANAGER (68 intent)",
       "domains": [
         {
           "id": "visit",
@@ -141,37 +141,40 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif ÅŸirket sayÄ±sÄ±"
+              "text": "Aktif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam ÅŸirket sayÄ±sÄ±"
+              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Åirketlerin kategorilere gÃ¶re daÄŸÄ±lÄ±mÄ±"
+              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "MÃ¼ÅŸteri kazanÄ±m trendi"
+              "text": "MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri kazanÃƒâ€Ã‚Â±m trendi"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÄ±ÅŸ / Finans",
+          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ / Finans",
           "questions": [
             {
-              "text": "Toplam fatura sayÄ±sÄ±"
+              "text": "Toplam fatura sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam fatura tutarÄ±"
+              "text": "Toplam fatura tutarÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Ã–denmemiÅŸ fatura bakiyesi"
+              "text": "ÃƒÆ’Ã¢â‚¬â€œdenmemiÃƒâ€¦Ã…Â¸ fatura bakiyesi"
             },
             {
-              "text": "Toplam sipariÅŸ sayÄ±sÄ±"
+              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Fatura tahsilatÄ±"
+              "text": "Toplam sipariÃ…Å¸ tutarÃ„Â±"
+            },
+            {
+              "text": "Fatura tahsilatÃ„Â±"
             }
           ]
         },
@@ -200,7 +203,7 @@
     },
     "L3": {
       "title": "Coklu takim lideri (L3)",
-      "subtitle": "5 takim + toplam veya tek takim + uyeler â€” PKG_MANAGER",
+      "subtitle": "5 takim + toplam veya tek takim + uyeler ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PKG_MANAGER",
       "domains": [
         {
           "id": "visit",
@@ -225,34 +228,37 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Toplam ÅŸirket sayÄ±sÄ±"
+              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Åirketlerin kategorilere gÃ¶re daÄŸÄ±lÄ±mÄ±"
+              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "MÃ¼ÅŸteri kazanÄ±m trendi"
+              "text": "MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri kazanÃƒâ€Ã‚Â±m trendi"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÄ±ÅŸ / Finans",
+          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ / Finans",
           "questions": [
             {
-              "text": "Toplam fatura sayÄ±sÄ±"
+              "text": "Toplam fatura sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam fatura tutarÄ±"
+              "text": "Toplam fatura tutarÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Ã–denmemiÅŸ fatura bakiyesi"
+              "text": "ÃƒÆ’Ã¢â‚¬â€œdenmemiÃƒâ€¦Ã…Â¸ fatura bakiyesi"
             },
             {
-              "text": "Toplam sipariÅŸ sayÄ±sÄ±"
+              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Fatura tahsilatÄ±"
+              "text": "Toplam sipariÃ…Å¸ tutarÃ„Â±"
+            },
+            {
+              "text": "Fatura tahsilatÃ„Â±"
             }
           ]
         },
@@ -278,7 +284,7 @@
     },
     "L4": {
       "title": "Admin (L4)",
-      "subtitle": "Sirket geneli â€” tum intentler (* paketi)",
+      "subtitle": "Sirket geneli ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â tum intentler (* paketi)",
       "domains": [
         {
           "id": "visit",
@@ -306,40 +312,43 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif ÅŸirket sayÄ±sÄ±"
+              "text": "Aktif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam ÅŸirket sayÄ±sÄ±"
+              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Åirketlerin kategorilere gÃ¶re daÄŸÄ±lÄ±mÄ±"
+              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Ãœlkelere gÃ¶re mÃ¼ÅŸteri daÄŸÄ±lÄ±mÄ±"
+              "text": "ÃƒÆ’Ã…â€œlkelere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Åehirlere gÃ¶re mÃ¼ÅŸteri daÄŸÄ±lÄ±mÄ±"
+              "text": "Ãƒâ€¦Ã‚Âehirlere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÄ±ÅŸ / Finans",
+          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ / Finans",
           "questions": [
             {
-              "text": "Toplam fatura sayÄ±sÄ±"
+              "text": "Toplam fatura sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Toplam fatura tutarÄ±"
+              "text": "Toplam fatura tutarÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Ã–denmemiÅŸ fatura bakiyesi"
+              "text": "ÃƒÆ’Ã¢â‚¬â€œdenmemiÃƒâ€¦Ã…Â¸ fatura bakiyesi"
             },
             {
-              "text": "Toplam sipariÅŸ sayÄ±sÄ±"
+              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
             },
             {
-              "text": "Fatura tahsilatÄ±"
+              "text": "Toplam sipariÃ…Å¸ tutarÃ„Â±"
+            },
+            {
+              "text": "Fatura tahsilatÃ„Â±"
             }
           ]
         },

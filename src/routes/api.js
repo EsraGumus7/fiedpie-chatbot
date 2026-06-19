@@ -47,7 +47,22 @@ const {
   formatMemberDisplayValue,
 } = require("../services/teamMemberBreakdownService");
 
+const {
+  executeSalesFinanceCustomerBreakdown,
+  formatSalesFinanceCustomerBreakdown,
+  isSalesFinanceCustomerBreakdownIntent,
+} = require("../services/salesFinanceCustomerBreakdownService");
+
 const router = express.Router();
+
+const CUSTOMER_BREAKDOWN_INTENTS = new Set([
+  "totalInvoices",
+  "totalInvoiceAmount",
+  "totalInvoiceBalance",
+  "totalPurchaseOrders",
+  "totalPurchaseOrderAmount",
+  "totalInvoicePayments",
+]);
 
 const MULTI_TEAM_QUERY_CONCURRENCY = 8;
 
@@ -115,6 +130,220 @@ function appendTeamTotalOverlapNote(lines, notice) {
   }
   lines.push("");
   lines.push(notice);
+}
+
+function shouldUseCustomerBreakdown(intent = "") {
+  const normalized = String(intent || "").trim();
+
+  return (
+    CUSTOMER_BREAKDOWN_INTENTS.has(normalized) &&
+    isSalesFinanceCustomerBreakdownIntent(normalized)
+  );
+}
+
+function getTeamTotalNotice(intent = "", fallbackNotice = "") {
+  if (!fallbackNotice) {
+    return null;
+  }
+
+  if (!shouldUseCustomerBreakdown(intent)) {
+    return fallbackNotice;
+  }
+
+  return "Not: Şirket geneli / toplam satırı şirket kapsamındaki tüm ilgili kayıtları içerir. Takım kartları yalnızca ilgili takım üyelerine ait kayıtları gösterir. Takım kartlarına dahil olmayan kayıtlar Diğer şirket kayıtları altında gösterilir. Ortak üyeler varsa aynı kayıt birden fazla takım kartında görünebilir, toplam satırında tekilleştirilir.";
+}
+
+function formatCustomerBreakdownTitle(title = "") {
+  const rawTitle = String(title || "").trim();
+
+  const baseTitle = rawTitle
+    .replace(/\s*musteri\s*\/\s*kullanici\s*kirilimi\s*$/i, "")
+    .replace(/\s*musteri\s*kirilimi\s*$/i, "")
+    .replace(/\s*musteri\s*bazli\s*dagilim[ıi]?\s*$/i, "")
+    .replace(/\s*müşteri\s*\/\s*kullanıcı\s*kırılımı\s*$/i, "")
+    .replace(/\s*müşteri\s*kırılımı\s*$/i, "")
+    .replace(/\s*müşteri\s*bazlı\s*dağılım[ıi]?\s*$/i, "")
+    .trim();
+
+  return baseTitle
+    ? `${baseTitle} müşteri bazlı dağılımı`
+    : "Müşteri bazlı dağılım";
+}
+
+function appendCustomerBreakdownLines(
+  lines,
+  intent,
+  rows = [],
+  title = "Müşteri bazlı dağılım"
+) {
+  if (!shouldUseCustomerBreakdown(intent)) {
+    return;
+  }
+
+  const normalizedTitle = formatCustomerBreakdownTitle(title);
+  const text = formatSalesFinanceCustomerBreakdown(intent, rows, normalizedTitle);
+  if (!text) {
+    return;
+  }
+
+  lines.push("");
+  lines.push(text);
+}
+
+function normalizeAnswerTurkishText(text = "") {
+  return String(text || "")
+    .replaceAll("Sirket", "Şirket")
+    .replaceAll("Takim", "Takım")
+    .replaceAll("Secili takimlar toplami", "Seçili takımlar toplamı")
+    .replaceAll("Tum donem", "Tüm dönem")
+
+    .replaceAll("fatura tutari", "fatura tutarı")
+    .replaceAll("siparis tutari", "sipariş tutarı")
+    .replaceAll("sipariş tutari", "sipariş tutarı")
+    .replaceAll("fatura tahsilat tutari", "fatura tahsilatı")
+    .replaceAll("fatura tahsilat tutarı", "fatura tahsilatı")
+    .replaceAll("tahsilat tutari", "tahsilat tutarı")
+    .replaceAll("araliginda", "aralığında")
+    .replaceAll("tutari", "tutarı")
+
+    .replaceAll("odenmemis", "ödenmemiş")
+    .replaceAll("musteri", "müşteri")
+    .replaceAll("kullanici", "kullanıcı")
+    .replaceAll("siparis", "sipariş")
+    .replaceAll("satinalma", "satın alma");
+}
+
+async function buildCustomerBreakdownForContext(intent, params, userContext, metric) {
+  if (!shouldUseCustomerBreakdown(intent) || !userContext || !metric) {
+    return [];
+  }
+
+  try {
+    const breakdownResult = await executeSalesFinanceCustomerBreakdown({
+      intent,
+      params,
+      userContext,
+      metric,
+    });
+
+    return breakdownResult.recordset || [];
+  } catch (error) {
+    console.warn(
+      `[salesFinanceCustomerBreakdown] ${intent} kirilimi alinamadi: ${error.message}`
+    );
+    return [];
+  }
+}
+
+async function buildCustomerBreakdownForMainRows(
+  intent,
+  params,
+  mainRows,
+  userContext,
+  metric
+) {
+  if (!shouldUseCustomerBreakdown(intent)) {
+    return [];
+  }
+
+  const mainValue = extractPrimaryMetricValue(intent, mainRows || []);
+  if (mainValue == null || Number(mainValue) <= 0) {
+    return [];
+  }
+
+  return buildCustomerBreakdownForContext(intent, params, userContext, metric);
+}
+
+function getCustomerBreakdownNumericValue(intent = "", row = {}) {
+  if (intent === "totalInvoiceBalance") {
+    return Number(row.totalBalance || 0);
+  }
+
+  if (isMoneyIntent(intent)) {
+    return Number(row.totalAmount || 0);
+  }
+
+  return Number(row.total || 0);
+}
+
+function setCustomerBreakdownNumericValue(intent = "", row = {}, value = 0) {
+  if (intent === "totalInvoiceBalance") {
+    return { ...row, totalBalance: value };
+  }
+
+  if (isMoneyIntent(intent)) {
+    return { ...row, totalAmount: value };
+  }
+
+  return { ...row, total: value };
+}
+
+function getCustomerBreakdownKey(row = {}) {
+  return `${row.clientName || "Müşteri bilgisi yok"}|||${row.userName || "Kullanıcı bilgisi yok"}`;
+}
+
+function buildOtherCompanyCustomerBreakdown(intent = "", companyRows = [], teamRows = []) {
+  if (!shouldUseCustomerBreakdown(intent)) {
+    return [];
+  }
+
+  const companyMap = new Map();
+
+  (companyRows || []).forEach((row) => {
+    const key = getCustomerBreakdownKey(row);
+    const current = companyMap.get(key) || {
+      row,
+      value: 0,
+    };
+
+    current.value += getCustomerBreakdownNumericValue(intent, row);
+    companyMap.set(key, current);
+  });
+
+  const teamMap = new Map();
+
+  (teamRows || []).forEach((row) => {
+    const key = getCustomerBreakdownKey(row);
+    const value = getCustomerBreakdownNumericValue(intent, row);
+
+    /*
+      Aynı kullanıcı birden fazla takımda yer alabiliyorsa aynı kayıt birden
+      fazla takım kartında görünebilir. Bu yüzden burada SUM yerine MAX almak
+      daha güvenli: şirket toplamından aynı kaydı iki kez düşmemiş oluruz.
+    */
+    teamMap.set(key, Math.max(teamMap.get(key) || 0, value));
+  });
+
+  const epsilon = 0.0001;
+
+  return Array.from(companyMap.entries())
+    .map(([key, item]) => {
+      const remainingValue = item.value - (teamMap.get(key) || 0);
+      return {
+        key,
+        row: setCustomerBreakdownNumericValue(intent, item.row, remainingValue),
+        value: remainingValue,
+      };
+    })
+    .filter((item) => item.value > epsilon)
+    .sort((a, b) => {
+      if (b.value !== a.value) {
+        return b.value - a.value;
+      }
+
+      return String(a.row.clientName || "").localeCompare(
+        String(b.row.clientName || ""),
+        "tr"
+      );
+    })
+    .map((item) => item.row);
+}
+
+function sumCustomerBreakdownRows(intent = "", rows = []) {
+  return (rows || []).reduce(
+    (sum, row) => sum + getCustomerBreakdownNumericValue(intent, row),
+    0
+  );
 }
 
 async function mapTeamsWithConcurrency(teams, mapper, concurrency = MULTI_TEAM_QUERY_CONCURRENCY) {
@@ -447,14 +676,14 @@ function extractPrimaryMetricValue(intent, rows = []) {
 function getScopedMetricLabel(intent, filters = {}) {
   const labels = {
     visitCountRealized: buildVisitStatusLabel(filters),
-    totalPurchaseOrders: "siparis",
+    totalPurchaseOrders: "sipariş",
     clientCountActive: "aktif firma",
     totalInvoices: "fatura",
-    totalInvoiceAmount: "fatura tutari",
-    totalInvoiceBalance: "odenmemis fatura bakiyesi",
-    totalInvoicePayments: "fatura tahsilat tutari",
-    totalPurchaseOrderAmount: "siparis tutari",
-    totalPurchaseOrderDetails: "siparis kalemi",
+    totalInvoiceAmount: "fatura tutarı",
+    totalInvoiceBalance: "ödenmemiş fatura bakiyesi",
+    totalInvoicePayments: "fatura tahsilatı",
+    totalPurchaseOrderAmount: "sipariş tutarı",
+    totalPurchaseOrderDetails: "sipariş kalemi",
   };
 
   return labels[intent] || "kayit";
@@ -626,17 +855,35 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
 
   const metricLabel = getScopedMetricLabel(intent, filters);
 
+  const lines = [];
+
   if (intent === "avgVisitDuration") {
-    return [
-      `${opTitle} (${rangeInfo}): ${formatNumber(opValue ?? "-")}`,
-      `${coTitle} (${rangeInfo}): ${formatNumber(companyValue ?? "-")}`,
-    ].join("\n");
+    lines.push(`${opTitle} (${rangeInfo}): ${formatNumber(opValue ?? "-")}`);
+    lines.push(`${coTitle} (${rangeInfo}): ${formatNumber(companyValue ?? "-")}`);
+    return lines.join("\n");
   }
 
-  return [
-    `${opTitle} (${rangeInfo}): ${formatMetricValue(intent, opValue ?? 0)} ${metricLabel}`,
-    `${coTitle} (${rangeInfo}): ${formatMetricValue(intent, companyValue ?? 0)} ${metricLabel}`,
-  ].join("\n");
+  lines.push(
+    `${opTitle} (${rangeInfo}): ${formatMetricValue(intent, opValue ?? 0)} ${metricLabel}`
+  );
+  appendCustomerBreakdownLines(
+    lines,
+    intent,
+    operational.customerBreakdown || [],
+    `${opTitle} musteri kirilimi`
+  );
+
+  lines.push(
+    `${coTitle} (${rangeInfo}): ${formatMetricValue(intent, companyValue ?? 0)} ${metricLabel}`
+  );
+  appendCustomerBreakdownLines(
+    lines,
+    intent,
+    company.customerBreakdown || [],
+    `${coTitle} musteri kirilimi`
+  );
+
+  return lines.join("\n");
 }
 
 function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) {
@@ -654,19 +901,69 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
       extractPrimaryMetricValue(intent, companyTeamScope.company?.rows || []) ?? 0
     )} ${metricLabel}`;
 
-  const lines = [`${companyTitle} (${rangeInfo}):`, companyBody, ""];
+  const lines = [`${companyTitle} (${rangeInfo}):`, companyBody];
+
+  lines.push("");
 
   (companyTeamScope.teams || []).forEach((team) => {
     const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
+
     if (isDistributionIntent(intent)) {
       lines.push(`${title} (${rangeInfo}):`);
       lines.push(summarizeDistributionBullets(intent, team.rows || []));
     } else {
       const value = extractPrimaryMetricValue(intent, team.rows || []);
-      lines.push(`${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`);
+      lines.push(
+        `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`
+      );
     }
+
+    appendCustomerBreakdownLines(
+      lines,
+      intent,
+      team.customerBreakdown || [],
+      `${title} musteri kirilimi`
+    );
+
     lines.push("");
   });
+
+  const allTeamCustomerBreakdownRows = (companyTeamScope.teams || []).flatMap(
+    (team) => team.customerBreakdown || []
+  );
+
+  const otherCompanyCustomerBreakdown = buildOtherCompanyCustomerBreakdown(
+    intent,
+    companyTeamScope.company?.customerBreakdown || [],
+    allTeamCustomerBreakdownRows
+  );
+
+  if (
+    shouldUseCustomerBreakdown(intent) &&
+    (companyTeamScope.teams || []).length > 1 &&
+    otherCompanyCustomerBreakdown.length
+  ) {
+    const otherCompanyValue = sumCustomerBreakdownRows(
+      intent,
+      otherCompanyCustomerBreakdown
+    );
+
+    lines.push(
+      `Diğer şirket kayıtları (${rangeInfo}): ${formatMetricValue(
+        intent,
+        otherCompanyValue
+      )} ${metricLabel}`
+    );
+
+    appendCustomerBreakdownLines(
+      lines,
+      intent,
+      otherCompanyCustomerBreakdown,
+      "Diğer şirket kayıtları"
+    );
+
+    lines.push("");
+  }
 
   if (companyTeamScope.includeMemberBreakdown) {
     appendMemberSummaryLines(lines, companyTeamScope, intent);
@@ -674,16 +971,41 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
   }
 
   const selectedRows = companyTeamScope.selectedCombined?.rows || [];
-  if (isDistributionIntent(intent)) {
-    lines.push(`${selectedLabel} (${rangeInfo}):`);
-    lines.push(summarizeDistributionBullets(intent, selectedRows));
-  } else {
-    const selectedValue = extractPrimaryMetricValue(intent, selectedRows);
-    lines.push(`${selectedLabel} (${rangeInfo}): ${formatMetricValue(intent, selectedValue ?? 0)} ${metricLabel}`);
+  const selectedTeamCount = (companyTeamScope.teams || []).length;
+  const selectedCombinedLabel = String(selectedLabel || "").toLocaleLowerCase("tr-TR");
+
+  const shouldShowSelectedCombined =
+    selectedTeamCount > 1 &&
+    !selectedCombinedLabel.includes("şirket geneli toplam") &&
+    !selectedCombinedLabel.includes("sirket geneli toplam");
+
+  if (shouldShowSelectedCombined) {
+    if (isDistributionIntent(intent)) {
+      lines.push(`${selectedLabel} (${rangeInfo}):`);
+      lines.push(summarizeDistributionBullets(intent, selectedRows));
+    } else {
+      const selectedValue = extractPrimaryMetricValue(intent, selectedRows);
+      lines.push(
+        `${selectedLabel} (${rangeInfo}): ${formatMetricValue(
+          intent,
+          selectedValue ?? 0
+        )} ${metricLabel}`
+      );
+    }
+
+    appendCustomerBreakdownLines(
+      lines,
+      intent,
+      companyTeamScope.selectedCombined?.customerBreakdown || [],
+      `${selectedLabel} müşteri bazlı dağılım`
+    );
   }
 
   if ((companyTeamScope.teams || []).length > 1) {
-    appendTeamTotalOverlapNote(lines, COMPANY_TEAM_TOTAL_OVERLAP_NOTICE);
+    appendTeamTotalOverlapNote(
+      lines,
+      getTeamTotalNotice(intent, COMPANY_TEAM_TOTAL_OVERLAP_NOTICE)
+    );
   }
 
   return lines.join("\n").trim();
@@ -711,12 +1033,26 @@ function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
   }
 
   const metricLabel = getScopedMetricLabel(intent, filters);
-  const lines = [`${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`];
+  const lines = [
+    `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`,
+  ];
+
+  appendCustomerBreakdownLines(
+    lines,
+    intent,
+    singleTeamScope.customerBreakdown || [],
+    `${title} musteri kirilimi`
+  );
+
   appendMemberSummaryLines(lines, singleTeamScope, intent);
   return lines.join("\n");
 }
 
 function appendMemberSummaryLines(lines, singleTeamScope = {}, intent = "") {
+  if (shouldUseCustomerBreakdown(intent)) {
+    return;
+  }
+
   const members = singleTeamScope.members || [];
   if (!members.length) {
     return;
@@ -776,7 +1112,10 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     }
 
     if ((multiTeamScope.teams || []).length > 1) {
-      appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
+      appendTeamTotalOverlapNote(
+        lines,
+        getTeamTotalNotice(intent, MULTI_TEAM_TOTAL_OVERLAP_NOTICE)
+      );
     }
 
     return lines.join("\n");
@@ -796,7 +1135,10 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     }
 
     if ((multiTeamScope.teams || []).length > 1) {
-      appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
+      appendTeamTotalOverlapNote(
+        lines,
+        getTeamTotalNotice(intent, MULTI_TEAM_TOTAL_OVERLAP_NOTICE)
+      );
     }
 
     return lines.join("\n\n");
@@ -804,26 +1146,58 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
 
   const metricLabel = getScopedMetricLabel(intent, filters);
 
-  const lines = (multiTeamScope.teams || []).map((team) => {
+  const lines = [];
+
+  (multiTeamScope.teams || []).forEach((team) => {
     const value = extractPrimaryMetricValue(intent, team.rows || []);
     const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
+
     if (intent === "avgVisitDuration") {
-      return `${title} (${rangeInfo}): ${formatNumber(value ?? "-")}`;
+      lines.push(`${title} (${rangeInfo}): ${formatNumber(value ?? "-")}`);
+    } else {
+      lines.push(
+        `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`
+      );
     }
-    return `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`;
+
+    appendCustomerBreakdownLines(
+      lines,
+      intent,
+      team.customerBreakdown || [],
+      `${title} musteri kirilimi`
+    );
   });
 
-  const combinedValue = extractPrimaryMetricValue(intent, multiTeamScope.combined?.rows || []);
+  const combinedValue = extractPrimaryMetricValue(
+    intent,
+    multiTeamScope.combined?.rows || []
+  );
+
   if (combinedValue != null) {
     if (intent === "avgVisitDuration") {
       lines.push(`${combinedLabel} (${rangeInfo}): ${formatNumber(combinedValue ?? "-")}`);
     } else {
-      lines.push(`${combinedLabel} (${rangeInfo}): ${formatMetricValue(intent, combinedValue ?? 0)} ${metricLabel}`);
+      lines.push(
+        `${combinedLabel} (${rangeInfo}): ${formatMetricValue(
+          intent,
+          combinedValue ?? 0
+        )} ${metricLabel}`
+      );
     }
+
+    appendCustomerBreakdownLines(
+      lines,
+      intent,
+      multiTeamScope.combined?.customerBreakdown || [],
+      `${combinedLabel} musteri kirilimi`
+    );
   }
 
   if ((multiTeamScope.teams || []).length > 1) {
-    appendTeamTotalOverlapNote(lines, MULTI_TEAM_TOTAL_OVERLAP_NOTICE);
+    appendTeamTotalOverlapNote(
+      lines,
+      getTeamTotalNotice(intent, MULTI_TEAM_TOTAL_OVERLAP_NOTICE)
+    );
   }
 
   return lines.join("\n");
@@ -864,18 +1238,27 @@ function isDistributionIntent(intent = "") {
 }
 
 function renderScopeAnswer(intent, params, scopePayload = {}) {
-  const { dualScope, singleTeamScope, multiTeamScope, companyTeamScope, rows = [] } =
-    scopePayload;
+  const {
+    dualScope,
+    singleTeamScope,
+    multiTeamScope,
+    companyTeamScope,
+    rows = [],
+    customerBreakdown = [],
+  } = scopePayload;
 
   if (companyTeamScope) {
     return summarizeCompanyTeamScope(intent, companyTeamScope, params);
   }
+
   if (dualScope) {
     return summarizeDualScope(intent, dualScope, params);
   }
+
   if (multiTeamScope) {
     return summarizeMultiTeamScope(intent, multiTeamScope, params);
   }
+
   if (singleTeamScope && isDistributionIntent(intent)) {
     const teamTitle =
       singleTeamScope.displayLabel ||
@@ -883,10 +1266,21 @@ function renderScopeAnswer(intent, params, scopePayload = {}) {
     const body = summarizeRows(intent, singleTeamScope.rows || rows, params);
     return `${teamTitle}\n${body}`;
   }
+
   if (singleTeamScope) {
     return summarizeSingleTeamScope(intent, singleTeamScope, params);
   }
-  return summarizeRows(intent, rows, params);
+
+  const lines = [summarizeRows(intent, rows, params)];
+
+  appendCustomerBreakdownLines(
+    lines,
+    intent,
+    customerBreakdown,
+    "Müşteri bazlı dağılım"
+  );
+
+  return lines.join("\n");
 }
 
 function summarizeRows(intent, rows, filters = {}) {
@@ -1487,27 +1881,58 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         userContext: companyContext,
         metric,
       });
+      const normalizedCompanyRows = applyIntentRowNormalization(
+        intent,
+        companyResult.recordset
+      );
+      const companyCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        normalizedCompanyRows,
+        companyContext,
+        metric
+      );
+
       const teamResults = await mapTeamsWithConcurrency(breakdownTeams, async (team) => {
-        const teamContext = await buildIntentSingleTeamScopedContext(intent, userContext, team.teamId);
+        const teamContext = await buildIntentSingleTeamScopedContext(
+          intent,
+          userContext,
+          team.teamId
+        );
         const teamResult = await executeIntent(intent, params, {
           userContext: teamContext,
           metric,
         });
+        const normalizedTeamRows = applyIntentRowNormalization(
+          intent,
+          teamResult.recordset
+        );
+        const teamCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+          intent,
+          params,
+          normalizedTeamRows,
+          teamContext,
+          metric
+        );
+
         return {
           teamId: team.teamId,
           teamName: team.teamName,
           displayLabel: formatOperationalDisplayLabel(team.teamName),
-          rows: applyIntentRowNormalization(intent, teamResult.recordset),
+          rows: normalizedTeamRows,
+          customerBreakdown: teamCustomerBreakdown,
           allowedUserIdsCount: teamContext.allowedUserIds?.length || 0,
         };
       });
 
       let selectedCombinedRows;
+      let selectedCustomerBreakdown = [];
       let selectedAllowedUserIdsCount;
       const useCompanyScopeForCombinedTotal = !!scopePlan.useCompanyScopeForCombinedTotal;
 
       if (useCompanyScopeForCombinedTotal) {
-        selectedCombinedRows = applyIntentRowNormalization(intent, companyResult.recordset);
+        selectedCombinedRows = normalizedCompanyRows;
+        selectedCustomerBreakdown = companyCustomerBreakdown;
         selectedAllowedUserIdsCount = companyContext.allowedUserIds?.length || 0;
       } else {
         const selectedContext = await buildIntentSelectedTeamsCombinedContext(
@@ -1522,6 +1947,13 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         selectedCombinedRows = applyIntentRowNormalization(
           intent,
           selectedCombinedResult.recordset
+        );
+        selectedCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+          intent,
+          params,
+          selectedCombinedRows,
+          selectedContext,
+          metric
         );
         selectedAllowedUserIdsCount = selectedContext.allowedUserIds?.length || 0;
       }
@@ -1547,13 +1979,17 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         company: {
           label: userContext.companyScopeLabel || "Sirket geneli",
           displayLabel: formatCompanyDisplayLabel(userContext.companyScopeLabel),
-          rows: applyIntentRowNormalization(intent, companyResult.recordset),
+          rows: normalizedCompanyRows,
+          customerBreakdown: companyCustomerBreakdown,
           allowedUserIdsCount: companyContext.allowedUserIds?.length || 0,
         },
         teams: teamResults,
         selectedCombined: {
-          label: scopePlan.combinedLabel || "Secili takimlar toplami",
+          label: useCompanyScopeForCombinedTotal
+            ? "Sirket geneli toplam"
+            : scopePlan.combinedLabel || "Secili takimlar toplami",
           rows: selectedCombinedRows,
+          customerBreakdown: selectedCustomerBreakdown,
           allowedUserIdsCount: selectedAllowedUserIdsCount,
         },
         displayLimit: TEAM_DISPLAY_LIMIT,
@@ -1565,7 +2001,9 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         memberDisplayLimit: memberBreakdown?.displayLimit || MEMBER_DISPLAY_LIMIT,
         hasMoreMembers: memberBreakdown?.hasMore || false,
         overlapNotice:
-          teamResults.length > 1 ? COMPANY_TEAM_TOTAL_OVERLAP_NOTICE : null,
+          teamResults.length > 1
+            ? getTeamTotalNotice(intent, COMPANY_TEAM_TOTAL_OVERLAP_NOTICE)
+            : null,
       };
       result = companyResult;
       userContextForQuery = companyContext;
@@ -1578,6 +2016,30 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         executeIntent(intent, params, { userContext: companyContext, metric }),
       ]);
 
+      const normalizedOperationalRows = applyIntentRowNormalization(
+        intent,
+        operationalResult.recordset
+      );
+      const normalizedCompanyRows = applyIntentRowNormalization(
+        intent,
+        companyResult.recordset
+      );
+
+      const operationalCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        normalizedOperationalRows,
+        operationalContext,
+        metric
+      );
+      const companyCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        normalizedCompanyRows,
+        companyContext,
+        metric
+      );
+
       const operationalLabel = userContext.operationalScopeLabel || "Takim";
       const companyLabel = userContext.companyScopeLabel || "Sirket geneli";
       dualScope = {
@@ -1585,14 +2047,16 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
           mode: "operational",
           label: operationalLabel,
           displayLabel: formatOperationalDisplayLabel(operationalLabel),
-          rows: operationalResult.recordset,
+          rows: normalizedOperationalRows,
+          customerBreakdown: operationalCustomerBreakdown,
           allowedUserIdsCount: operationalContext.allowedUserIds?.length || 0,
         },
         company: {
           mode: "company",
           label: companyLabel,
           displayLabel: formatCompanyDisplayLabel(companyLabel),
-          rows: companyResult.recordset,
+          rows: normalizedCompanyRows,
+          customerBreakdown: companyCustomerBreakdown,
           allowedUserIdsCount: companyContext.allowedUserIds?.length || 0,
         },
       };
@@ -1608,6 +2072,14 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         metric,
       });
       const normalizedTeamRows = applyIntentRowNormalization(intent, teamResult.recordset);
+      const teamCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        normalizedTeamRows,
+        teamContext,
+        metric
+      );
+
       const memberBreakdown = await executeTeamMemberBreakdown({
         intent,
         params,
@@ -1624,6 +2096,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         teamName: scopePlan.teamMatch.teamName,
         displayLabel: formatOperationalDisplayLabel(scopePlan.teamMatch.teamName),
         rows: normalizedTeamRows,
+        customerBreakdown: teamCustomerBreakdown,
         allowedUserIdsCount: teamContext.allowedUserIds?.length || 0,
         members: memberBreakdown.members,
         memberTotalCount: memberBreakdown.memberTotalCount,
@@ -1659,16 +2132,30 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
           userContext: teamContext,
           metric,
         });
+        const normalizedTeamRows = applyIntentRowNormalization(
+          intent,
+          teamResult.recordset
+        );
+        const teamCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+          intent,
+          params,
+          normalizedTeamRows,
+          teamContext,
+          metric
+        );
+
         return {
           teamId: team.teamId,
           teamName: team.teamName,
           displayLabel: formatOperationalDisplayLabel(team.teamName),
-          rows: applyIntentRowNormalization(intent, teamResult.recordset),
+          rows: normalizedTeamRows,
+          customerBreakdown: teamCustomerBreakdown,
           allowedUserIdsCount: teamContext.allowedUserIds?.length || 0,
         };
       });
       let combinedContext = null;
       let combinedRows = [];
+      let combinedCustomerBreakdown = [];
       let combinedResult;
 
       if (
@@ -1701,6 +2188,14 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         combinedRows = applyIntentRowNormalization(intent, combinedResult.recordset);
       }
 
+      combinedCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        combinedRows,
+        combinedContext,
+        metric
+      );
+
       multiTeamScope = {
         mode: "multi_team",
         scopeSource: scopePlan.scopeSource || "managed",
@@ -1710,13 +2205,16 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         combined: {
           label: scopePlan.combinedLabel || null,
           rows: combinedRows,
+          customerBreakdown: combinedCustomerBreakdown,
           allowedUserIdsCount: combinedContext?.allowedUserIds?.length || 0,
         },
         displayLimit: TEAM_DISPLAY_LIMIT,
         teamTotalCount: breakdownTeams.length,
         hasMoreTeams: breakdownTeams.length > TEAM_DISPLAY_LIMIT,
         overlapNotice:
-          teamResults.length > 1 ? MULTI_TEAM_TOTAL_OVERLAP_NOTICE : null,
+          teamResults.length > 1
+            ? getTeamTotalNotice(intent, MULTI_TEAM_TOTAL_OVERLAP_NOTICE)
+            : null,
       };
       result = combinedResult;
     }
@@ -1735,6 +2233,23 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
     }
 
     const rows = result.recordset;
+    const hasStructuredScope = !!(
+      dualScope ||
+      singleTeamScope ||
+      multiTeamScope ||
+      companyTeamScope
+    );
+
+    const customerBreakdown = !hasStructuredScope
+      ? await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        rows,
+        userContextForQuery || userContext,
+        metric
+      )
+      : [];
+
     let llmSummary = null;
     try {
       llmSummary = await summarizeWithGemini({
@@ -1766,14 +2281,19 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       multiTeamScope,
       companyTeamScope,
       rows,
+      customerBreakdown,
     };
     const fallbackSummary = renderScopeAnswer(intent, params, scopePayload);
-    const structuredScopeAnswer =
-      dualScope || singleTeamScope || multiTeamScope || companyTeamScope;
-    const rawAnswer = structuredScopeAnswer ? fallbackSummary : llmSummary || fallbackSummary;
-    const answer = prefixScopeAnswer(
-      buildScopeAnswerPrefix(userContext, scopePlan, scopePayload),
-      rawAnswer
+    const structuredScopeAnswer = hasStructuredScope;
+    const rawAnswer =
+      structuredScopeAnswer || shouldUseCustomerBreakdown(intent)
+        ? fallbackSummary
+        : llmSummary || fallbackSummary;
+    const answer = normalizeAnswerTurkishText(
+      prefixScopeAnswer(
+        buildScopeAnswerPrefix(userContext, scopePlan, scopePayload),
+        rawAnswer
+      )
     );
 
     return res.json({
