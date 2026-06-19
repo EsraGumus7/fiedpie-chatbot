@@ -60,7 +60,7 @@
               "text": "Duruma göre müşteri dağılımı"
             },
             {
-              "text": "Ülklere göre müşteri dağılımı"
+              "text": "Ülkelere göre müşteri dağılımı"
             },
             {
               "text": "Şehirlere göre müşteri dağılımı"
@@ -168,6 +168,9 @@
               "text": "Toplam sipariş sayısı"
             },
             {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
               "text": "Fatura tahsilatı"
             }
           ]
@@ -247,6 +250,9 @@
             },
             {
               "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
             },
             {
               "text": "Fatura tahsilatı"
@@ -334,6 +340,9 @@
             },
             {
               "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
             },
             {
               "text": "Fatura tahsilatı"

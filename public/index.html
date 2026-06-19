@@ -2179,11 +2179,15 @@
     Object.assign(INTENT_CHART_CONFIG, {
       // SALES / FINANCE - KPI intents
       totalpurchaseorders: {
+        title: "Toplam Sipariş Sayısı",
+        label: "Toplam Sipariş Sayısı",
         chart: "kpiCards",
         mode: "kpi",
         allowed: ["kpiCards"],
       },
       totalpurchaseorderamount: {
+        title: "Toplam Sipariş Tutarı",
+        label: "Toplam Sipariş Tutarı",
         chart: "kpiCards",
         mode: "kpi",
         allowed: ["kpiCards"],
@@ -3242,12 +3246,17 @@
       const kpiTitleMap = {
         clientcountactive: "Aktif Firma Sayısı",
         clientcounttotal: "Toplam Firma Sayısı",
+
         totalinvoices: "Kesilen Fatura Adedi",
         totalinvoicecount: "Kesilen Fatura Adedi",
         invoicecount: "Kesilen Fatura Adedi",
         totalinvoiceamount: "Toplam Fatura Tutarı",
         totalinvoicebalance: "Ödenmemiş Fatura Bakiyesi",
-        totalinvoicepayments: "Fatura Tahsilat Toplamı",
+        totalinvoicepayments: "Fatura Tahsilatı",
+
+        totalpurchaseorders: "Toplam Sipariş Sayısı",
+        totalpurchaseorderamount: "Toplam Sipariş Tutarı",
+
         usertotalcount: "Toplam Kullanıcı Sayısı",
         userstatussummary: "Kullanıcı Durum Özeti",
         useradminsummary: "Yetki Özeti",
@@ -3561,7 +3570,7 @@
 
         renderKpiCards([
           {
-            title: isCompanySingleKpi ? `Sirket geneli — ${title}` : title,
+            title: isCompanySingleKpi ? `Şirket geneli — ${title}` : title,
             value: formatDisplayMetricValue(normalizedIntent, value),
           },
         ]);
