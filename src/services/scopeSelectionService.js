@@ -485,7 +485,6 @@ function resolveScopePlanFromSelection(userContext = null, rawSelection = {}, in
           : "selected",
       teamIds: breakdownTeams.map((team) => team.teamId),
       includeMemberBreakdown: breakdownTeams.length === 1,
-      useCompanyScopeForCombinedTotal: selection.teamScope === "all",
       combinedLabel:
         selection.teamScope === "all" && breakdownTeams.length > 1
           ? "Toplam"

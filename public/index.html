@@ -2678,7 +2678,7 @@ function readTeamsMenuSelection() {
           pickRowLabelKey(rows[0], chartConfig) ||
           Object.keys(rows[0]).find(
             (key) =>
-              !["total", "responseCount", "avgNumericValue", "avgDurationSec"].includes(key) &&
+              !["total", "responseCount", "avgNumericValue", "avgDurationSec", "avgDurationMin"].includes(key) &&
               Number.isNaN(Number(rows[0][key]))
           );
         const valueKey = chartConfig.valueKey || "total";
@@ -3320,6 +3320,16 @@ function readTeamsMenuSelection() {
     }
 
     function formatDisplayMetricValue(normalizedIntent = "", value) {
+      if (normalizedIntent === "avgvisitduration") {
+        if (value == null || value === "" || Number.isNaN(Number(value))) {
+          return "-";
+        }
+        const minutes = Number(value);
+        const asMinutes =
+          minutes > 300 ? Number((minutes / 60).toFixed(1)) : Number(minutes.toFixed(1));
+        return `${asMinutes.toLocaleString("tr-TR")} dk`;
+      }
+
       return isMoneyIntent(normalizedIntent)
         ? formatDisplayMoney(value)
         : formatDisplayNumber(value);
@@ -3368,6 +3378,7 @@ function readTeamsMenuSelection() {
         useradminsummary: "Yetki Özeti",
         userdevicesummary: "Cihaz Özeti",
         visitcountrealized: "Gerçekleşen Ziyaret Sayısı",
+        avgvisitduration: "Ortalama Ziyaret Süresi (dk)",
         activecampaigns: "Aktif Kampanya Sayısı",
       };
 
@@ -3436,6 +3447,8 @@ function readTeamsMenuSelection() {
       ];
 
       const valueCandidates = [
+        "avgDurationMin",
+        "avgDurationSec",
         "total",
         "totalUsers",
         "userCount",
@@ -3738,9 +3751,11 @@ function readTeamsMenuSelection() {
           {
             title: "Ort. Sure (dk)",
             value:
-              durationRes.rows?.[0]?.avgDurationSec != null
-                ? Math.round(durationRes.rows[0].avgDurationSec / 60)
-                : "-",
+              durationRes.rows?.[0]?.avgDurationMin != null
+                ? durationRes.rows[0].avgDurationMin
+                : durationRes.rows?.[0]?.avgDurationSec != null
+                  ? Math.round(durationRes.rows[0].avgDurationSec / 60)
+                  : "-",
           },
           { title: "Ziyaret Durum Cesidi", value: stateRes.rows?.length ?? 0 },
           { title: "Eslesen Field", value: fieldRes.rows?.length ?? 0 },

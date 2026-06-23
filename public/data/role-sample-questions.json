@@ -9,34 +9,25 @@
           "label": "Ziyaret",
           "questions": [
             {
-              "text": "ziyaret sayisi"
+              "text": "Ziyaret sayısı"
             },
             {
-              "text": "bugun ziyaret sayisi"
+              "text": "Ortalama ziyaret süresi"
             },
             {
-              "text": "ortalama ziyaret suresi kac"
+              "text": "Tamamlanan ve bekleyen ziyaret"
             },
             {
-              "text": "tamamlanan ve bekleyen ziyaret"
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
             },
             {
-              "text": "bugun bekleyen ziyaret"
+              "text": "Ziyaret tiplerine göre dağılım"
             },
             {
-              "text": "hangi durumda kac ziyaret var"
+              "text": "Ziyaret trendi"
             },
             {
-              "text": "ziyaret tiplerine gore dagilim"
-            },
-            {
-              "text": "ziyaret trendi nasil"
-            },
-            {
-              "text": "en cok doldurulan alanlar hangileri"
-            },
-            {
-              "text": "raf alani kac kayitta dolu"
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
             }
           ]
         },
@@ -96,13 +87,40 @@
           "label": "Kullanicilar",
           "questions": [
             {
-              "text": "kullanici ziyaret ozeti"
+              "text": "Toplam kullanıcı sayısı"
             },
             {
-              "text": "personel ziyaret ozeti"
+              "text": "Hangi rolde kaç kişi var?"
             },
             {
-              "text": "gerceklesen ziyaretlerim"
+              "text": "Admin kullanıcı sayısı"
+            },
+            {
+              "text": "Takımlara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
             }
           ]
         }
@@ -117,19 +135,25 @@
           "label": "Ziyaret",
           "questions": [
             {
-              "text": "ziyaret sayisi"
+              "text": "Ziyaret sayısı"
             },
             {
-              "text": "tamamlanan ve bekleyen ziyaret"
+              "text": "Ortalama ziyaret süresi"
             },
             {
-              "text": "ortalama ziyaret suresi kac"
+              "text": "Tamamlanan ve bekleyen ziyaret"
             },
             {
-              "text": "ziyaretler duruma gore nasil dagiliyor"
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
             },
             {
-              "text": "ziyaret trendi nasil"
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
             }
           ]
         },
@@ -180,19 +204,40 @@
           "label": "Kullanicilar",
           "questions": [
             {
-              "text": "takimlara gore kullanici dagilimi"
+              "text": "Toplam kullanıcı sayısı"
             },
             {
-              "text": "aktif kullanici sayisi kac"
+              "text": "Hangi rolde kaç kişi var?"
             },
             {
-              "text": "kullanici durum ozeti"
+              "text": "Admin kullanıcı sayısı"
             },
             {
-              "text": "basarili ve basarisiz login dagilimi"
+              "text": "Takımlara göre kullanıcı dağılımı"
             },
             {
-              "text": "kullanici ziyaret ozeti"
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
             }
           ]
         }
@@ -207,16 +252,25 @@
           "label": "Ziyaret",
           "questions": [
             {
-              "text": "ziyaret sayisi"
+              "text": "Ziyaret sayısı"
             },
             {
-              "text": "tamamlanan ve bekleyen ziyaret"
+              "text": "Ortalama ziyaret süresi"
             },
             {
-              "text": "ortalama ziyaret suresi kac"
+              "text": "Tamamlanan ve bekleyen ziyaret"
             },
             {
-              "text": "ziyaret trendi nasil"
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
+            },
+            {
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
             }
           ]
         },
@@ -264,16 +318,40 @@
           "label": "Kullanicilar",
           "questions": [
             {
-              "text": "takimlara gore kullanici dagilimi"
+              "text": "Toplam kullanıcı sayısı"
             },
             {
-              "text": "kullanici durum ozeti"
+              "text": "Hangi rolde kaç kişi var?"
             },
             {
-              "text": "aktif personel kac"
+              "text": "Admin kullanıcı sayısı"
             },
             {
-              "text": "kullanici ziyaret ozeti"
+              "text": "Takımlara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
             }
           ]
         }
@@ -288,19 +366,25 @@
           "label": "Ziyaret",
           "questions": [
             {
-              "text": "sirket ziyaret sayisi"
+              "text": "Ziyaret sayısı"
             },
             {
-              "text": "ziyaret sayisi"
+              "text": "Ortalama ziyaret süresi"
             },
             {
-              "text": "tamamlanan ve bekleyen ziyaret"
+              "text": "Tamamlanan ve bekleyen ziyaret"
             },
             {
-              "text": "ziyaret trendi nasil"
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
             },
             {
-              "text": "hangi durumda kac ziyaret var"
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
             }
           ]
         },
@@ -354,22 +438,40 @@
           "label": "Kullanicilar",
           "questions": [
             {
-              "text": "toplam kac kullanici var"
+              "text": "Toplam kullanıcı sayısı"
             },
             {
-              "text": "hangi rolde kac kisi var"
+              "text": "Hangi rolde kaç kişi var?"
             },
             {
-              "text": "takimlara gore kullanici dagilimi"
+              "text": "Admin kullanıcı sayısı"
             },
             {
-              "text": "son login kayitlari neler"
+              "text": "Takımlara göre kullanıcı dağılımı"
             },
             {
-              "text": "kac admin kullanici var"
+              "text": "Markalara göre kullanıcı dağılımı"
             },
             {
-              "text": "aktif kullanici sayisi kac"
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
             }
           ]
         }

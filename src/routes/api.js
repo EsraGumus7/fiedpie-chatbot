@@ -69,6 +69,9 @@ const MULTI_TEAM_QUERY_CONCURRENCY = 8;
 const COMPANY_TEAM_TOTAL_OVERLAP_NOTICE =
   "Not: Takim kartlari ortak uyeler nedeniyle ayni ziyareti birden fazla takimda gosterebilir. Toplam satirinda tekrarlanan ziyaretler 1 kez sayilmistir.";
 
+const AVG_DURATION_TEAM_NOTICE =
+  "Not: Takim kartlari her takimin kendi ortalamasini gosterir. Asagidaki satir, secili takimlarin tum uyelerinin ziyaretleri uzerinden hesaplanan gercek ortalamadir; takim ortalamalarinin aritmetik ortalamasi degildir.";
+
 const MULTI_TEAM_TOTAL_OVERLAP_NOTICE =
   "Not: Takim kartlari ortak uyeler nedeniyle ayni ziyareti birden fazla takimda gosterebilir. Toplam satirinda tekrarlanan ziyaretler 1 kez sayilmistir.";
 
@@ -142,6 +145,10 @@ function shouldUseCustomerBreakdown(intent = "") {
 }
 
 function getTeamTotalNotice(intent = "", fallbackNotice = "") {
+  if (String(intent).trim() === "avgVisitDuration") {
+    return AVG_DURATION_TEAM_NOTICE;
+  }
+
   if (!fallbackNotice) {
     return null;
   }
@@ -151,6 +158,13 @@ function getTeamTotalNotice(intent = "", fallbackNotice = "") {
   }
 
   return "Not: Şirket geneli / toplam satırı şirket kapsamındaki tüm ilgili kayıtları içerir. Takım kartları yalnızca ilgili takım üyelerine ait kayıtları gösterir. Takım kartlarına dahil olmayan kayıtlar Diğer şirket kayıtları altında gösterilir. Ortak üyeler varsa aynı kayıt birden fazla takım kartında görünebilir, toplam satırında tekilleştirilir.";
+}
+
+function getSelectedTeamsCombinedLabel(intent = "", fallbackLabel = "Secili takimlar toplami") {
+  if (String(intent).trim() === "avgVisitDuration") {
+    return "Secili takimlar birlesik ortalamasi";
+  }
+  return fallbackLabel;
 }
 
 function formatCustomerBreakdownTitle(title = "") {
@@ -486,6 +500,11 @@ function formatNumber(value) {
   return new Intl.NumberFormat("tr-TR").format(Number(value));
 }
 
+function secondsToMinutes(sec) {
+  if (sec == null || Number.isNaN(Number(sec))) return null;
+  return Number((Number(sec) / 60).toFixed(1));
+}
+
 const MONEY_INTENTS = new Set([
   "totalPurchaseOrderAmount",
   "totalInvoiceAmount",
@@ -510,6 +529,10 @@ function formatMoney(value, currencySymbol = "$") {
 }
 
 function formatMetricValue(intent = "", value) {
+  if (String(intent).trim() === "avgVisitDuration") {
+    if (value == null || Number.isNaN(Number(value))) return "-";
+    return `${formatNumber(Number(value))} dakika`;
+  }
   return isMoneyIntent(intent) ? formatMoney(value) : formatNumber(value);
 }
 
@@ -645,8 +668,7 @@ function extractPrimaryMetricValue(intent, rows = []) {
   }
 
   if (intent === "avgVisitDuration") {
-    const sec = first.avgDurationSec;
-    return sec != null ? `${(Number(sec) / 60).toFixed(1)} dk` : null;
+    return secondsToMinutes(first.avgDurationSec);
   }
 
   if (intent === "totalInvoiceBalance") {
@@ -857,14 +879,8 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
 
   const lines = [];
 
-  if (intent === "avgVisitDuration") {
-    lines.push(`${opTitle} (${rangeInfo}): ${formatNumber(opValue ?? "-")}`);
-    lines.push(`${coTitle} (${rangeInfo}): ${formatNumber(companyValue ?? "-")}`);
-    return lines.join("\n");
-  }
-
   lines.push(
-    `${opTitle} (${rangeInfo}): ${formatMetricValue(intent, opValue ?? 0)} ${metricLabel}`
+    `${opTitle} (${rangeInfo}): ${formatMetricValue(intent, opValue ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`
   );
   appendCustomerBreakdownLines(
     lines,
@@ -874,7 +890,7 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
   );
 
   lines.push(
-    `${coTitle} (${rangeInfo}): ${formatMetricValue(intent, companyValue ?? 0)} ${metricLabel}`
+    `${coTitle} (${rangeInfo}): ${formatMetricValue(intent, companyValue ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`
   );
   appendCustomerBreakdownLines(
     lines,
@@ -972,12 +988,7 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
 
   const selectedRows = companyTeamScope.selectedCombined?.rows || [];
   const selectedTeamCount = (companyTeamScope.teams || []).length;
-  const selectedCombinedLabel = String(selectedLabel || "").toLocaleLowerCase("tr-TR");
-
-  const shouldShowSelectedCombined =
-    selectedTeamCount > 1 &&
-    !selectedCombinedLabel.includes("şirket geneli toplam") &&
-    !selectedCombinedLabel.includes("sirket geneli toplam");
+  const shouldShowSelectedCombined = selectedTeamCount > 1;
 
   if (shouldShowSelectedCombined) {
     if (isDistributionIntent(intent)) {
@@ -989,7 +1000,7 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
         `${selectedLabel} (${rangeInfo}): ${formatMetricValue(
           intent,
           selectedValue ?? 0
-        )} ${metricLabel}`
+        )}${metricLabel ? ` ${metricLabel}` : ""}`
       );
     }
 
@@ -1026,15 +1037,9 @@ function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
 
   const value = extractPrimaryMetricValue(intent, singleTeamScope.rows || []);
 
-  if (intent === "avgVisitDuration") {
-    const lines = [`${title} (${rangeInfo}): ${formatNumber(value ?? "-")}`];
-    appendMemberSummaryLines(lines, singleTeamScope, intent);
-    return lines.join("\n");
-  }
-
   const metricLabel = getScopedMetricLabel(intent, filters);
   const lines = [
-    `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`,
+    `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`,
   ];
 
   appendCustomerBreakdownLines(
@@ -1152,13 +1157,9 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     const value = extractPrimaryMetricValue(intent, team.rows || []);
     const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
 
-    if (intent === "avgVisitDuration") {
-      lines.push(`${title} (${rangeInfo}): ${formatNumber(value ?? "-")}`);
-    } else {
-      lines.push(
-        `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`
-      );
-    }
+    lines.push(
+      `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`
+    );
 
     appendCustomerBreakdownLines(
       lines,
@@ -1174,16 +1175,12 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
   );
 
   if (combinedValue != null) {
-    if (intent === "avgVisitDuration") {
-      lines.push(`${combinedLabel} (${rangeInfo}): ${formatNumber(combinedValue ?? "-")}`);
-    } else {
-      lines.push(
-        `${combinedLabel} (${rangeInfo}): ${formatMetricValue(
-          intent,
-          combinedValue ?? 0
-        )} ${metricLabel}`
-      );
-    }
+    lines.push(
+      `${combinedLabel} (${rangeInfo}): ${formatMetricValue(
+        intent,
+        combinedValue ?? 0
+      )}${metricLabel ? ` ${metricLabel}` : ""}`
+    );
 
     appendCustomerBreakdownLines(
       lines,
@@ -1215,9 +1212,20 @@ function normalizeCompletionStatusRows(rows = []) {
 }
 
 function applyIntentRowNormalization(intent, rows = []) {
-  if (String(intent).trim() === "visitsByCompletionStatus") {
+  const normalizedIntent = String(intent).trim();
+
+  if (normalizedIntent === "visitsByCompletionStatus") {
     return normalizeCompletionStatusRows(rows);
   }
+
+  if (normalizedIntent === "avgVisitDuration") {
+    return (rows || []).map((row) => {
+      const minutes = secondsToMinutes(row?.avgDurationSec);
+      if (minutes == null) return row;
+      return { ...row, avgDurationMin: minutes };
+    });
+  }
+
   return rows;
 }
 
@@ -1443,10 +1451,9 @@ function summarizeRows(intent, rows, filters = {}) {
   }
 
   if (intent === "avgVisitDuration") {
-    const sec = rows[0]?.avgDurationSec;
-    const minutes = sec != null ? (Number(sec) / 60).toFixed(1) : null;
-    return minutes
-      ? `${rangeInfo} araliginda ortalama ziyaret suresi ${minutes} dakika.`
+    const minutes = secondsToMinutes(rows[0]?.avgDurationSec);
+    return minutes != null
+      ? `${rangeInfo} araliginda ortalama ziyaret suresi ${formatNumber(minutes)} dakika.`
       : `${rangeInfo} araliginda ortalama sure hesaplanamadi.`;
   }
 
@@ -1928,35 +1935,28 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       let selectedCombinedRows;
       let selectedCustomerBreakdown = [];
       let selectedAllowedUserIdsCount;
-      const useCompanyScopeForCombinedTotal = !!scopePlan.useCompanyScopeForCombinedTotal;
 
-      if (useCompanyScopeForCombinedTotal) {
-        selectedCombinedRows = normalizedCompanyRows;
-        selectedCustomerBreakdown = companyCustomerBreakdown;
-        selectedAllowedUserIdsCount = companyContext.allowedUserIds?.length || 0;
-      } else {
-        const selectedContext = await buildIntentSelectedTeamsCombinedContext(
-          intent,
-          userContext,
-          breakdownTeams.map((team) => team.teamId)
-        );
-        const selectedCombinedResult = await executeIntent(intent, params, {
-          userContext: selectedContext,
-          metric,
-        });
-        selectedCombinedRows = applyIntentRowNormalization(
-          intent,
-          selectedCombinedResult.recordset
-        );
-        selectedCustomerBreakdown = await buildCustomerBreakdownForMainRows(
-          intent,
-          params,
-          selectedCombinedRows,
-          selectedContext,
-          metric
-        );
-        selectedAllowedUserIdsCount = selectedContext.allowedUserIds?.length || 0;
-      }
+      const selectedContext = await buildIntentSelectedTeamsCombinedContext(
+        intent,
+        userContext,
+        breakdownTeams.map((team) => team.teamId)
+      );
+      const selectedCombinedResult = await executeIntent(intent, params, {
+        userContext: selectedContext,
+        metric,
+      });
+      selectedCombinedRows = applyIntentRowNormalization(
+        intent,
+        selectedCombinedResult.recordset
+      );
+      selectedCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        selectedCombinedRows,
+        selectedContext,
+        metric
+      );
+      selectedAllowedUserIdsCount = selectedContext.allowedUserIds?.length || 0;
 
       let memberBreakdown = null;
       if (scopePlan.includeMemberBreakdown && breakdownTeams.length === 1) {
@@ -1985,9 +1985,10 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         },
         teams: teamResults,
         selectedCombined: {
-          label: useCompanyScopeForCombinedTotal
-            ? "Sirket geneli toplam"
-            : scopePlan.combinedLabel || "Secili takimlar toplami",
+          label: getSelectedTeamsCombinedLabel(
+            intent,
+            scopePlan.combinedLabel || "Secili takimlar toplami"
+          ),
           rows: selectedCombinedRows,
           customerBreakdown: selectedCustomerBreakdown,
           allowedUserIdsCount: selectedAllowedUserIdsCount,
@@ -2474,7 +2475,11 @@ router.get("/visit/duration/avg", optionalAuthMiddleware, async (req, res) => {
     const filters = parseFilters(req.query);
     const options = await buildAuthIntentOptions(req, "avgVisitDuration");
     const result = await executeIntent("avgVisitDuration", filters, options);
-    res.json({ intent: "avgVisitDuration", rows: result.recordset, security: result.security || null });
+    res.json({
+      intent: "avgVisitDuration",
+      rows: applyIntentRowNormalization("avgVisitDuration", result.recordset),
+      security: result.security || null,
+    });
   } catch (error) {
     res.status(getRouteErrorStatus(error)).json({ error: error.message });
   }
