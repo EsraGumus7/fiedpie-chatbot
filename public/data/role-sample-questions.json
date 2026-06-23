@@ -33,19 +33,19 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Aktif şirket sayısı"
+              "text": "Aktif müşteri sayısı"
             },
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Pasif şirket sayısı"
+              "text": "Pasif müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Duruma göre müşteri dağılımı"
@@ -159,16 +159,16 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Aktif şirket sayısı"
+              "text": "Aktif müşteri sayısı"
             },
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Müşteri kazanım trendi"
@@ -276,13 +276,13 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Müşteri kazanım trendi"
@@ -315,7 +315,7 @@
         },
         {
           "id": "users",
-          "label": "Kullanicilar",
+          "label": "Kullanıcılar",
           "questions": [
             {
               "text": "Toplam kullanıcı sayısı"
@@ -390,16 +390,16 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Aktif şirket sayısı"
+              "text": "Aktif müşteri sayısı"
             },
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Ülkelere göre müşteri dağılımı"
@@ -435,7 +435,7 @@
         },
         {
           "id": "users",
-          "label": "Kullanicilar",
+          "label": "Kullanıcılar",
           "questions": [
             {
               "text": "Toplam kullanıcı sayısı"
