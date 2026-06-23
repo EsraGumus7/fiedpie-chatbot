@@ -1020,7 +1020,7 @@
 
     <section class="panel">
       <div class="center-header">
-      <h2 id="chartTitle">Duruma Gore Ziyaretler (Bar)</h2> 
+        <h2 id="chartTitle">Duruma Göre Ziyaretler (Bar)</h2>
         <button id="refreshBtn" class="secondary">Grafiği yenile</button>
       </div>
       <div class="row">
@@ -1368,11 +1368,11 @@
         ? `
           <div style="margin-left:22px; margin-top:4px;">
             ${members
-              .map((member) => {
-                const userId = Number(member.userId);
-                const userChecked = selectedUserIds.includes(userId);
+          .map((member) => {
+            const userId = Number(member.userId);
+            const userChecked = selectedUserIds.includes(userId);
 
-                return `
+            return `
                   <label style="font-size:12px; padding:4px 4px;">
                     <input
                       type="checkbox"
@@ -1384,8 +1384,8 @@
                     <span>${escapeHtml(member.userName || `Kullanici ${userId}`)}</span>
                   </label>
                 `;
-              })
-              .join("")}
+          })
+          .join("")}
           </div>
         `
         : "";
@@ -1505,57 +1505,57 @@
         teamInputs.length > 0 && teamInputs.every((el) => el.checked);
     }
 
-function readTeamsMenuSelection() {
-  if (!scopeTeamsMenu || !scopeToolbarConfig) {
-    return;
-  }
+    function readTeamsMenuSelection() {
+      if (!scopeTeamsMenu || !scopeToolbarConfig) {
+        return;
+      }
 
-  const teams = getManagedTeamsList();
+      const teams = getManagedTeamsList();
 
-  const teamInputs = scopeTeamsMenu.querySelectorAll(
-    'input[name="scopeManagedTeam"]'
-  );
-  const checkedTeams = [...teamInputs].filter((el) => el.checked);
+      const teamInputs = scopeTeamsMenu.querySelectorAll(
+        'input[name="scopeManagedTeam"]'
+      );
+      const checkedTeams = [...teamInputs].filter((el) => el.checked);
 
-  const userInputs = scopeTeamsMenu.querySelectorAll(
-    'input[name="scopeManagedUser"]'
-  );
-  const checkedUsers = [...userInputs].filter((el) => el.checked);
+      const userInputs = scopeTeamsMenu.querySelectorAll(
+        'input[name="scopeManagedUser"]'
+      );
+      const checkedUsers = [...userInputs].filter((el) => el.checked);
 
-  const userIds = checkedUsers
-    .map((el) => Number(el.value))
-    .filter((id) => Number.isFinite(id) && id > 0);
+      const userIds = checkedUsers
+        .map((el) => Number(el.value))
+        .filter((id) => Number.isFinite(id) && id > 0);
 
-  scopeSelection.userIds = userIds;
+      scopeSelection.userIds = userIds;
 
-  if (teams.length > 1 && checkedTeams.some((el) => el.value === "all")) {
-    scopeSelection.teamScope = "all";
-    scopeSelection.teamIds = [];
-  } else {
-    const teamIds = checkedTeams
-      .map((el) => Number(el.value))
-      .filter((id) => Number.isFinite(id) && id > 0);
+      if (teams.length > 1 && checkedTeams.some((el) => el.value === "all")) {
+        scopeSelection.teamScope = "all";
+        scopeSelection.teamIds = [];
+      } else {
+        const teamIds = checkedTeams
+          .map((el) => Number(el.value))
+          .filter((id) => Number.isFinite(id) && id > 0);
 
-    if (!teamIds.length) {
-      scopeSelection.teamScope = "none";
-      scopeSelection.teamIds = [];
-    } else if (teamIds.length === 1) {
-      scopeSelection.teamScope = "single";
-      scopeSelection.teamIds = teamIds;
-    } else {
-      scopeSelection.teamScope = "multi";
-      scopeSelection.teamIds = teamIds;
+        if (!teamIds.length) {
+          scopeSelection.teamScope = "none";
+          scopeSelection.teamIds = [];
+        } else if (teamIds.length === 1) {
+          scopeSelection.teamScope = "single";
+          scopeSelection.teamIds = teamIds;
+        } else {
+          scopeSelection.teamScope = "multi";
+          scopeSelection.teamIds = teamIds;
+        }
+      }
+
+      if (scopeSelection.userIds.length > 0) {
+        scopeSelection.teamsActive = true;
+      }
+
+      if (!scopeToolbarConfig.teamsButton?.locked) {
+        scopeSelection.teamsActive = true;
+      }
     }
-  }
-
-  if (scopeSelection.userIds.length > 0) {
-    scopeSelection.teamsActive = true;
-  }
-
-  if (!scopeToolbarConfig.teamsButton?.locked) {
-    scopeSelection.teamsActive = true;
-  }
-}
 
     function formatTeamsButtonLabel() {
       if (!scopeToolbarConfig || scopeToolbarConfig.teamsButton?.locked) {
@@ -1698,13 +1698,13 @@ function readTeamsMenuSelection() {
       };
 
       if (payload.userIds.length > 0) {
-      payload.mode = "users";
+        payload.mode = "users";
 
-      payload.teamIds = [];
-      payload.teamScope = "users";
+        payload.teamIds = [];
+        payload.teamScope = "users";
 
-      return payload;
-    }
+        return payload;
+      }
 
       if (payload.teamsActive) {
         if (payload.teamScope === "all") {
@@ -1731,7 +1731,7 @@ function readTeamsMenuSelection() {
       }
 
       return payload;
-}
+    }
 
     function applyScopeToggleLocks(config = scopeToolbarConfig) {
       if (!scopeToggleGroup || !scopeTeamsBtn || !scopeCompanyBtn) {
@@ -1875,54 +1875,20 @@ function readTeamsMenuSelection() {
       });
     }
 
-   if (scopeTeamsMenu) {
-  scopeTeamsMenu.addEventListener("change", (event) => {
-    const input = event.target;
+    if (scopeTeamsMenu) {
+      scopeTeamsMenu.addEventListener("change", (event) => {
+        const input = event.target;
 
-    if (
-      input?.name !== "scopeManagedTeam" &&
-      input?.name !== "scopeManagedUser"
-    ) {
-      return;
-    }
+        if (
+          input?.name !== "scopeManagedTeam" &&
+          input?.name !== "scopeManagedUser"
+        ) {
+          return;
+        }
 
-    if (input.name === "scopeManagedUser") {
-      const teamId = Number(input.dataset.teamId);
+        if (input.name === "scopeManagedUser") {
+          const teamId = Number(input.dataset.teamId);
 
-      const allInput = scopeTeamsMenu.querySelector(
-        'input[name="scopeManagedTeam"][value="all"]'
-      );
-
-      if (allInput) {
-        allInput.checked = false;
-      }
-
-      const teamInput = scopeTeamsMenu.querySelector(
-        `input[name="scopeManagedTeam"][value="${teamId}"]`
-      );
-
-      if (teamInput) {
-        teamInput.checked = true;
-      }
-    }
-
-    if (input.name === "scopeManagedTeam") {
-      if (input.value === "all") {
-        scopeTeamsMenu
-          .querySelectorAll('input[name="scopeManagedTeam"]')
-          .forEach((el) => {
-            if (el.value !== "all") {
-              el.checked = input.checked;
-            }
-          });
-
-        scopeTeamsMenu
-          .querySelectorAll('input[name="scopeManagedUser"]')
-          .forEach((el) => {
-            el.checked = false;
-          });
-      } else {
-        if (!input.checked) {
           const allInput = scopeTeamsMenu.querySelector(
             'input[name="scopeManagedTeam"][value="all"]'
           );
@@ -1931,27 +1897,61 @@ function readTeamsMenuSelection() {
             allInput.checked = false;
           }
 
-          scopeTeamsMenu
-            .querySelectorAll(
-              `input[name="scopeManagedUser"][data-team-id="${input.value}"]`
-            )
-            .forEach((el) => {
-              el.checked = false;
-            });
-        } else {
-          syncTeamsSelectAllCheckbox();
+          const teamInput = scopeTeamsMenu.querySelector(
+            `input[name="scopeManagedTeam"][value="${teamId}"]`
+          );
+
+          if (teamInput) {
+            teamInput.checked = true;
+          }
         }
-      }
+
+        if (input.name === "scopeManagedTeam") {
+          if (input.value === "all") {
+            scopeTeamsMenu
+              .querySelectorAll('input[name="scopeManagedTeam"]')
+              .forEach((el) => {
+                if (el.value !== "all") {
+                  el.checked = input.checked;
+                }
+              });
+
+            scopeTeamsMenu
+              .querySelectorAll('input[name="scopeManagedUser"]')
+              .forEach((el) => {
+                el.checked = false;
+              });
+          } else {
+            if (!input.checked) {
+              const allInput = scopeTeamsMenu.querySelector(
+                'input[name="scopeManagedTeam"][value="all"]'
+              );
+
+              if (allInput) {
+                allInput.checked = false;
+              }
+
+              scopeTeamsMenu
+                .querySelectorAll(
+                  `input[name="scopeManagedUser"][data-team-id="${input.value}"]`
+                )
+                .forEach((el) => {
+                  el.checked = false;
+                });
+            } else {
+              syncTeamsSelectAllCheckbox();
+            }
+          }
+        }
+
+        readTeamsMenuSelection();
+
+        console.log("SCOPE SELECTION AFTER MENU:", scopeSelection);
+        console.log("SCOPE PAYLOAD:", buildScopeSelectionPayload());
+
+        //syncScopeToggleUi();
+      });
     }
-
-    readTeamsMenuSelection();
-
-    console.log("SCOPE SELECTION AFTER MENU:", scopeSelection);
-    console.log("SCOPE PAYLOAD:", buildScopeSelectionPayload());
-
-    //syncScopeToggleUi();
-  });
-}
 
     if (scopeCompanyBtn) {
       scopeCompanyBtn.addEventListener("click", () => {
@@ -3221,16 +3221,16 @@ function readTeamsMenuSelection() {
             normalizedIntent === "visittrend" && teamRows.length
               ? formatVisitTrendValue(teamRows)
               : isUserSummaryIntent(normalizedIntent) && teamRows.length
-              ? formatUserSummaryRow(teamRows[0] || {}, normalizedIntent)
-              : isCardDistributionIntent(normalizedIntent) && teamRows.length
-                ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
-                : (() => {
-                  const first = teamRows[0] || {};
-                  const valueKeyLocal =
-                    valueCandidates.find((key) => first[key] !== undefined) ||
-                    Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-                  return formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-");
-                })();
+                ? formatUserSummaryRow(teamRows[0] || {}, normalizedIntent)
+                : isCardDistributionIntent(normalizedIntent) && teamRows.length
+                  ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
+                  : (() => {
+                    const first = teamRows[0] || {};
+                    const valueKeyLocal =
+                      valueCandidates.find((key) => first[key] !== undefined) ||
+                      Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+                    return formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-");
+                  })();
           cards.push({
             title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
             value: cardValue,
@@ -3246,16 +3246,16 @@ function readTeamsMenuSelection() {
               : isCardDistributionIntent(normalizedIntent) && combinedRows.length
                 ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
                 : (() => {
-                    const combinedFirst = combinedRows[0] || {};
-                    const combinedValueKey =
-                      valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
-                      Object.keys(combinedFirst).find((key) =>
-                        !Number.isNaN(Number(combinedFirst[key]))
-                      );
-                    return formatDisplayNumber(
-                      combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                  const combinedFirst = combinedRows[0] || {};
+                  const combinedValueKey =
+                    valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
+                    Object.keys(combinedFirst).find((key) =>
+                      !Number.isNaN(Number(combinedFirst[key]))
                     );
-                  })();
+                  return formatDisplayNumber(
+                    combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                  );
+                })();
 
         cards.push({
           title: combinedTitle,
@@ -3509,7 +3509,7 @@ function readTeamsMenuSelection() {
         resetChartArea(true);
         applyChartAvailability(chartConfig.allowed);
         applySelectedChart(chartConfig.chart);
-        chartTitle.textContent = "";
+        chartTitle.textContent = title || "KPI Özet Kartları";
 
         const opCardTitle =
           data.dualScope.operational.displayLabel ||
@@ -3568,7 +3568,7 @@ function readTeamsMenuSelection() {
           resetChartArea(true);
           applyChartAvailability(["kpiCards"]);
           applySelectedChart("kpiCards");
-          chartTitle.textContent = "";
+          chartTitle.textContent = title || "KPI Özet Kartları";
           renderTeamMemberBreakdown(data, {
             title,
             normalizedIntent,
@@ -3587,8 +3587,7 @@ function readTeamsMenuSelection() {
           resetChartArea(true);
           applyChartAvailability(chartConfig.allowed);
           applySelectedChart(chartConfig.chart);
-          chartTitle.textContent = "";
-
+          chartTitle.textContent = title || "KPI Özet Kartları";
           const cardTitle =
             data.singleTeamScope.displayLabel ||
             `Takim (${data.singleTeamScope.teamName || "-"})`;
@@ -3628,8 +3627,7 @@ function readTeamsMenuSelection() {
           resetChartArea(true);
           applyChartAvailability(chartConfig.allowed);
           applySelectedChart(chartConfig.chart);
-          chartTitle.textContent = "";
-          renderCompanyTeamBreakdown(data, {
+          chartTitle.textContent = title || "KPI Özet Kartları"; renderCompanyTeamBreakdown(data, {
             title,
             normalizedIntent,
             valueCandidates,
@@ -3655,7 +3653,7 @@ function readTeamsMenuSelection() {
           resetChartArea(true);
           applyChartAvailability(chartConfig.allowed);
           applySelectedChart(chartConfig.chart);
-          chartTitle.textContent = "";
+          chartTitle.textContent = title || "KPI Özet Kartları";
           renderMultiTeamBreakdown(data, {
             title,
             normalizedIntent,
@@ -3682,7 +3680,7 @@ function readTeamsMenuSelection() {
         resetChartArea(true);
         applyChartAvailability(chartConfig.allowed);
         applySelectedChart(chartConfig.chart);
-        chartTitle.textContent = "";
+        chartTitle.textContent = title || "KPI Özet Kartları";
 
         renderKpiCards([
           {
@@ -4124,60 +4122,60 @@ function readTeamsMenuSelection() {
     });
 
     async function submitQuestion(rawQuestion) {
-  const question = String(rawQuestion || "").trim();
-  const filters = getFilters();
+      const question = String(rawQuestion || "").trim();
+      const filters = getFilters();
 
-  if (!question) {
-    addMessage("Lutfen soru gir.", "bot");
-    return;
-  }
+      if (!question) {
+        addMessage("Lutfen soru gir.", "bot");
+        return;
+      }
 
-  addMessage(question, "user");
-  addMessage("Sorgu calisiyor...", "bot");
+      addMessage(question, "user");
+      addMessage("Sorgu calisiyor...", "bot");
 
-  try {
-    const scopePayload = buildScopeSelectionPayload();
+      try {
+        const scopePayload = buildScopeSelectionPayload();
 
-    console.log("SCOPE PAYLOAD:", scopePayload);
+        console.log("SCOPE PAYLOAD:", scopePayload);
 
-    const data = await fetchJson("/api/chat/query", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+        const data = await fetchJson("/api/chat/query", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
 
-      body: JSON.stringify({
-        question,
-        filters,
-        ...(scopePayload
-          ? { scopeSelection: scopePayload }
-          : {}),
-      }),
-    });
+          body: JSON.stringify({
+            question,
+            filters,
+            ...(scopePayload
+              ? { scopeSelection: scopePayload }
+              : {}),
+          }),
+        });
 
-    const dateInfo =
-      data.filters?.startDate || data.filters?.endDate
-        ? `\nTarih: ${data.filters?.startDate || "-"} / ${data.filters?.endDate || "-"}`
-        : "";
+        const dateInfo =
+          data.filters?.startDate || data.filters?.endDate
+            ? `\nTarih: ${data.filters?.startDate || "-"} / ${data.filters?.endDate || "-"}`
+            : "";
 
-    applyFiltersToInputs(data.filters || {});
+        applyFiltersToInputs(data.filters || {});
 
-    const cleanAnswer = cleanAssistantAnswer(data.answer);
-    const botText = `${cleanAnswer}${dateInfo}`;
+        const cleanAnswer = cleanAssistantAnswer(data.answer);
+        const botText = `${cleanAnswer}${dateInfo}`;
 
-    chatLog.lastElementChild.remove();
-    addMessage(botText, "bot");
+        chatLog.lastElementChild.remove();
+        addMessage(botText, "bot");
 
-    lastChatResult = data;
-    renderChatResultVisualization(data);
+        lastChatResult = data;
+        renderChatResultVisualization(data);
 
-    questionEl.value = "";
-  } catch (error) {
-    chatLog.lastElementChild.remove();
-    addMessage(`Hata: ${error.message}`, "bot");
-  }
-}
+        questionEl.value = "";
+      } catch (error) {
+        chatLog.lastElementChild.remove();
+        addMessage(`Hata: ${error.message}`, "bot");
+      }
+    }
 
     loadChartData().catch((error) => addMessage(`Grafik hatasi: ${error.message}`, "bot"));
     loginBtn.addEventListener("click", login);
