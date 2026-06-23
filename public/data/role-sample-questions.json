@@ -2,7 +2,7 @@
   "roles": {
     "L1": {
       "title": "Saha calisani (L1)",
-      "subtitle": "Yalnizca kendi veriniz ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PKG_FIELD (50 intent)",
+      "subtitle": "Yalnizca kendi veriniz — PKG_FIELD (50 intent)",
       "domains": [
         {
           "id": "visit",
@@ -45,52 +45,49 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Aktif şirket sayısı"
             },
             {
-              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam şirket sayısı"
             },
             {
-              "text": "Pasif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Pasif şirket sayısı"
             },
             {
-              "text":"KullanÃƒâ€Ã‚Â±cÃƒâ€Ã‚Â±larÃƒâ€Ã‚Â±n ziyaret ettiÃƒâ€Ã…Â¸i mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teriler ve ziyaret sayÃƒâ€Ã‚Â±larÃƒâ€Ã‚Â±"
+              "text": "Şirketlerin kategorilere göre dağılımı"
             },
             {
-              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Duruma göre müşteri dağılımı"
             },
             {
-              "text": "Duruma gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Ülkelere göre müşteri dağılımı"
             },
             {
-              "text": "ÃƒÆ’Ã…â€œlklere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Şehirlere göre müşteri dağılımı"
             },
             {
-              "text": "Ãƒâ€¦Ã‚Âehirlere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
-            },
-            {
-              "text": "MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri kazanÃƒâ€Ã‚Â±m trendi"
+              "text": "Müşteri kazanım trendi"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸",
+          "label": "Satış",
           "questions": [
             {
-              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam sipariş sayısı"
             },
             {
-              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ tutarÃƒâ€Ã‚Â±"
+              "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "SipariÃƒâ€¦Ã…Â¸ durum daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Sipariş durum dağılımı"
             },
             {
-              "text": "GÃƒÆ’Ã‚Â¼nlÃƒÆ’Ã‚Â¼k sipariÃƒâ€¦Ã…Â¸ trendi"
+              "text": "Günlük sipariş trendi"
             },
             {
-              "text": "Aktif kampanya sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Aktif kampanya sayısı"
             }
           ]
         },
@@ -113,7 +110,7 @@
     },
     "L2": {
       "title": "Takim lideri (L2)",
-      "subtitle": "Takim birlesik veri + finans ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PKG_MANAGER (68 intent)",
+      "subtitle": "Takim birlesik veri + finans — PKG_MANAGER (68 intent)",
       "domains": [
         {
           "id": "visit",
@@ -141,40 +138,40 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Aktif şirket sayısı"
             },
             {
-              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam şirket sayısı"
             },
             {
-              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Şirketlerin kategorilere göre dağılımı"
             },
             {
-              "text": "MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri kazanÃƒâ€Ã‚Â±m trendi"
+              "text": "Müşteri kazanım trendi"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ / Finans",
+          "label": "Satış / Finans",
           "questions": [
             {
-              "text": "Toplam fatura sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam fatura sayısı"
             },
             {
-              "text": "Toplam fatura tutarÃƒâ€Ã‚Â±"
+              "text": "Toplam fatura tutarı"
             },
             {
-              "text": "ÃƒÆ’Ã¢â‚¬â€œdenmemiÃƒâ€¦Ã…Â¸ fatura bakiyesi"
+              "text": "Ödenmemiş fatura bakiyesi"
             },
             {
-              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam sipariş sayısı"
             },
             {
-              "text": "Toplam sipariÃ…Å¸ tutarÃ„Â±"
+              "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "Fatura tahsilatÃ„Â±"
+              "text": "Fatura tahsilatı"
             }
           ]
         },
@@ -203,7 +200,7 @@
     },
     "L3": {
       "title": "Coklu takim lideri (L3)",
-      "subtitle": "5 takim + toplam veya tek takim + uyeler ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PKG_MANAGER",
+      "subtitle": "5 takim + toplam veya tek takim + uyeler — PKG_MANAGER",
       "domains": [
         {
           "id": "visit",
@@ -228,37 +225,37 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam şirket sayısı"
             },
             {
-              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Şirketlerin kategorilere göre dağılımı"
             },
             {
-              "text": "MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri kazanÃƒâ€Ã‚Â±m trendi"
+              "text": "Müşteri kazanım trendi"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ / Finans",
+          "label": "Satış / Finans",
           "questions": [
             {
-              "text": "Toplam fatura sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam fatura sayısı"
             },
             {
-              "text": "Toplam fatura tutarÃƒâ€Ã‚Â±"
+              "text": "Toplam fatura tutarı"
             },
             {
-              "text": "ÃƒÆ’Ã¢â‚¬â€œdenmemiÃƒâ€¦Ã…Â¸ fatura bakiyesi"
+              "text": "Ödenmemiş fatura bakiyesi"
             },
             {
-              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam sipariş sayısı"
             },
             {
-              "text": "Toplam sipariÃ…Å¸ tutarÃ„Â±"
+              "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "Fatura tahsilatÃ„Â±"
+              "text": "Fatura tahsilatı"
             }
           ]
         },
@@ -284,7 +281,7 @@
     },
     "L4": {
       "title": "Admin (L4)",
-      "subtitle": "Sirket geneli ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â tum intentler (* paketi)",
+      "subtitle": "Sirket geneli — tum intentler (* paketi)",
       "domains": [
         {
           "id": "visit",
@@ -312,43 +309,43 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Aktif şirket sayısı"
             },
             {
-              "text": "Toplam Ãƒâ€¦Ã…Â¸irket sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam şirket sayısı"
             },
             {
-              "text": "Ãƒâ€¦Ã‚Âirketlerin kategorilere gÃƒÆ’Ã‚Â¶re daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Şirketlerin kategorilere göre dağılımı"
             },
             {
-              "text": "ÃƒÆ’Ã…â€œlkelere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Ülkelere göre müşteri dağılımı"
             },
             {
-              "text": "Ãƒâ€¦Ã‚Âehirlere gÃƒÆ’Ã‚Â¶re mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri daÃƒâ€Ã…Â¸Ãƒâ€Ã‚Â±lÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â±"
+              "text": "Şehirlere göre müşteri dağılımı"
             }
           ]
         },
         {
           "id": "sales",
-          "label": "SatÃƒâ€Ã‚Â±Ãƒâ€¦Ã…Â¸ / Finans",
+          "label": "Satış / Finans",
           "questions": [
             {
-              "text": "Toplam fatura sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam fatura sayısı"
             },
             {
-              "text": "Toplam fatura tutarÃƒâ€Ã‚Â±"
+              "text": "Toplam fatura tutarı"
             },
             {
-              "text": "ÃƒÆ’Ã¢â‚¬â€œdenmemiÃƒâ€¦Ã…Â¸ fatura bakiyesi"
+              "text": "Ödenmemiş fatura bakiyesi"
             },
             {
-              "text": "Toplam sipariÃƒâ€¦Ã…Â¸ sayÃƒâ€Ã‚Â±sÃƒâ€Ã‚Â±"
+              "text": "Toplam sipariş sayısı"
             },
             {
-              "text": "Toplam sipariÃ…Å¸ tutarÃ„Â±"
+              "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "Fatura tahsilatÃ„Â±"
+              "text": "Fatura tahsilatı"
             }
           ]
         },

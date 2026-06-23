@@ -933,24 +933,6 @@ function mergeSqlScope(builtQuery, userContext, metric = {}) {
   const finalClauses = [...(clauses || [])];
   const finalBind = { ...(bind || {}) };
 
-  if (
-    userContext.activeScopeMode === "users" &&
-    Array.isArray(userContext.allowedUserIds) &&
-    userContext.allowedUserIds.length > 0
-  ) {
-    const userPlaceholders = userContext.allowedUserIds.map((userId, index) => {
-      const key = `scopeUser${index}`;
-      finalBind[key] = Number(userId);
-      return `@${key}`;
-    });
-
-    const userClause = `v.UserId IN (${userPlaceholders.join(", ")})`;
-
-    if (!finalClauses.some((c) => String(c).includes("v.UserId IN"))) {
-      finalClauses.push(userClause);
-    }
-  }
-
   return {
     query: appendClausesToQuery(builtQuery.query, finalClauses),
     bind: { ...(builtQuery.bind || {}), ...finalBind },
