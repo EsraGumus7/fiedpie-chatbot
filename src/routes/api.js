@@ -296,9 +296,159 @@ function getCustomerBreakdownKey(row = {}) {
   return `${row.clientName || "Müşteri bilgisi yok"}|||${row.userName || "Kullanıcı bilgisi yok"}`;
 }
 
+function buildOtherCompanyInvoiceBreakdown(companyRows = [], teamRows = []) {
+  const companyMap = new Map();
+
+  (companyRows || []).forEach((row) => {
+    const key = getCustomerBreakdownKey(row);
+    const current = companyMap.get(key) || {
+      row,
+      total: 0,
+      totalAmount: 0,
+    };
+
+    current.total += Number(row.total || 0);
+    current.totalAmount += Number(row.totalAmount || 0);
+    companyMap.set(key, current);
+  });
+
+  const teamMap = new Map();
+
+  (teamRows || []).forEach((row) => {
+    const key = getCustomerBreakdownKey(row);
+    const current = teamMap.get(key) || {
+      total: 0,
+      totalAmount: 0,
+    };
+
+    /*
+      Aynı kullanıcı birden fazla takımda yer alabiliyorsa aynı kayıt birden
+      fazla takım kartında görünebilir. Bu yüzden burada SUM yerine MAX almak
+      daha güvenli: şirket toplamından aynı kaydı iki kez düşmemiş oluruz.
+    */
+    teamMap.set(key, {
+      total: Math.max(current.total, Number(row.total || 0)),
+      totalAmount: Math.max(current.totalAmount, Number(row.totalAmount || 0)),
+    });
+  });
+
+  const epsilon = 0.0001;
+
+  return Array.from(companyMap.entries())
+    .map(([key, item]) => {
+      const teamValue = teamMap.get(key) || { total: 0, totalAmount: 0 };
+      const remainingTotal = item.total - teamValue.total;
+      const remainingAmount = item.totalAmount - teamValue.totalAmount;
+
+      return {
+        key,
+        row: {
+          ...item.row,
+          total: remainingTotal,
+          totalAmount: remainingAmount,
+        },
+        value: remainingTotal,
+        amount: remainingAmount,
+      };
+    })
+    .filter((item) => item.value > epsilon || item.amount > epsilon)
+    .sort((a, b) => {
+      if (b.value !== a.value) {
+        return b.value - a.value;
+      }
+
+      if (b.amount !== a.amount) {
+        return b.amount - a.amount;
+      }
+
+      return String(a.row.clientName || "").localeCompare(
+        String(b.row.clientName || ""),
+        "tr"
+      );
+    })
+    .map((item) => item.row);
+}
+
+function buildOtherCompanyInvoiceBreakdown(companyRows = [], teamRows = []) {
+  const companyMap = new Map();
+
+  (companyRows || []).forEach((row) => {
+    const key = getCustomerBreakdownKey(row);
+    const current = companyMap.get(key) || {
+      row,
+      total: 0,
+      totalAmount: 0,
+    };
+
+    current.total += Number(row.total || 0);
+    current.totalAmount += Number(row.totalAmount || 0);
+    companyMap.set(key, current);
+  });
+
+  const teamMap = new Map();
+
+  (teamRows || []).forEach((row) => {
+    const key = getCustomerBreakdownKey(row);
+    const current = teamMap.get(key) || {
+      total: 0,
+      totalAmount: 0,
+    };
+
+    /*
+      Aynı kullanıcı birden fazla takımda yer alabiliyorsa aynı kayıt birden
+      fazla takım kartında görünebilir. Bu yüzden burada SUM yerine MAX almak
+      daha güvenli: şirket toplamından aynı kaydı iki kez düşmemiş oluruz.
+    */
+    teamMap.set(key, {
+      total: Math.max(current.total, Number(row.total || 0)),
+      totalAmount: Math.max(current.totalAmount, Number(row.totalAmount || 0)),
+    });
+  });
+
+  const epsilon = 0.0001;
+
+  return Array.from(companyMap.entries())
+    .map(([key, item]) => {
+      const teamValue = teamMap.get(key) || { total: 0, totalAmount: 0 };
+      const remainingTotal = item.total - teamValue.total;
+      const remainingAmount = item.totalAmount - teamValue.totalAmount;
+
+      return {
+        key,
+        row: {
+          ...item.row,
+          total: remainingTotal,
+          totalAmount: remainingAmount,
+        },
+        value: remainingTotal,
+        amount: remainingAmount,
+      };
+    })
+    .filter((item) => item.value > epsilon || item.amount > epsilon)
+    .sort((a, b) => {
+      if (b.value !== a.value) {
+        return b.value - a.value;
+      }
+
+      if (b.amount !== a.amount) {
+        return b.amount - a.amount;
+      }
+
+      return String(a.row.clientName || "").localeCompare(
+        String(b.row.clientName || ""),
+        "tr"
+      );
+    })
+    .map((item) => item.row);
+}
+
 function buildOtherCompanyCustomerBreakdown(intent = "", companyRows = [], teamRows = []) {
   if (!shouldUseCustomerBreakdown(intent)) {
     return [];
+  }
+
+  if (isInvoiceCountIntent(intent)) {
+    return buildOtherCompanyInvoiceBreakdown(companyRows, teamRows);
   }
 
   const companyMap = new Map();
@@ -534,6 +684,55 @@ function formatMetricValue(intent = "", value) {
     return `${formatNumber(Number(value))} dakika`;
   }
   return isMoneyIntent(intent) ? formatMoney(value) : formatNumber(value);
+}
+
+function isInvoiceCountIntent(intent = "") {
+  return String(intent || "").trim() === "totalInvoices";
+}
+
+function getInvoiceCountAmountFromRows(rows = [], options = {}) {
+  const items = Array.isArray(rows) ? rows : [rows];
+
+  if (options.sum === true) {
+    return items.reduce(
+      (acc, row) => ({
+        count: acc.count + Number(row?.total ?? row?.responseCount ?? 0),
+        amount: acc.amount + Number(row?.totalAmount ?? 0),
+      }),
+      { count: 0, amount: 0 }
+    );
+  }
+
+  const first = items[0] || {};
+  return {
+    count: Number(first.total ?? first.responseCount ?? 0),
+    amount: Number(first.totalAmount ?? 0),
+  };
+}
+
+function formatInvoiceCountAmount(countValue, amountValue) {
+  return `${formatNumber(countValue)} fatura | ${formatMoney(amountValue)}`;
+}
+
+function formatScopedMetricRowsValue(intent = "", rows = [], filters = {}, options = {}) {
+  if (isInvoiceCountIntent(intent)) {
+    const invoiceValue = getInvoiceCountAmountFromRows(rows, options);
+    return formatInvoiceCountAmount(invoiceValue.count, invoiceValue.amount);
+  }
+
+  const value = extractPrimaryMetricValue(intent, rows || []);
+  const metricLabel = getScopedMetricLabel(intent, filters);
+
+  return `${formatMetricValue(intent, value ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`;
+}
+
+function summarizeInvoiceCountRows(rows = [], rangeInfo = "Tum donem") {
+  const invoiceValue = getInvoiceCountAmountFromRows(rows);
+  return `${rangeInfo} araliginda toplam ${formatNumber(
+    invoiceValue.count
+  )} kesilen fatura bulundu. Toplam fatura tutarı: ${formatMoney(
+    invoiceValue.amount
+  )}.`;
 }
 
 function formatDateTime(value) {
@@ -872,15 +1071,14 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
     ].join("\n");
   }
 
-  const opValue = extractPrimaryMetricValue(intent, operational.rows || []);
-  const companyValue = extractPrimaryMetricValue(intent, company.rows || []);
-
-  const metricLabel = getScopedMetricLabel(intent, filters);
-
   const lines = [];
 
   lines.push(
-    `${opTitle} (${rangeInfo}): ${formatMetricValue(intent, opValue ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`
+    `${opTitle} (${rangeInfo}): ${formatScopedMetricRowsValue(
+      intent,
+      operational.rows || [],
+      filters
+    )}`
   );
   appendCustomerBreakdownLines(
     lines,
@@ -890,7 +1088,11 @@ function summarizeDualScope(intent, dualScope = {}, filters = {}) {
   );
 
   lines.push(
-    `${coTitle} (${rangeInfo}): ${formatMetricValue(intent, companyValue ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`
+    `${coTitle} (${rangeInfo}): ${formatScopedMetricRowsValue(
+      intent,
+      company.rows || [],
+      filters
+    )}`
   );
   appendCustomerBreakdownLines(
     lines,
@@ -912,10 +1114,11 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
 
   const companyBody = isDistributionIntent(intent)
     ? summarizeDistributionBullets(intent, companyTeamScope.company?.rows || [])
-    : `${formatMetricValue(
+    : formatScopedMetricRowsValue(
       intent,
-      extractPrimaryMetricValue(intent, companyTeamScope.company?.rows || []) ?? 0
-    )} ${metricLabel}`;
+      companyTeamScope.company?.rows || [],
+      filters
+    );
 
   const lines = [`${companyTitle} (${rangeInfo}):`, companyBody];
 
@@ -928,9 +1131,12 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
       lines.push(`${title} (${rangeInfo}):`);
       lines.push(summarizeDistributionBullets(intent, team.rows || []));
     } else {
-      const value = extractPrimaryMetricValue(intent, team.rows || []);
       lines.push(
-        `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)} ${metricLabel}`
+        `${title} (${rangeInfo}): ${formatScopedMetricRowsValue(
+          intent,
+          team.rows || [],
+          filters
+        )}`
       );
     }
 
@@ -959,16 +1165,13 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
     (companyTeamScope.teams || []).length > 1 &&
     otherCompanyCustomerBreakdown.length
   ) {
-    const otherCompanyValue = sumCustomerBreakdownRows(
-      intent,
-      otherCompanyCustomerBreakdown
-    );
-
     lines.push(
-      `Diğer şirket kayıtları (${rangeInfo}): ${formatMetricValue(
+      `Diğer şirket kayıtları (${rangeInfo}): ${formatScopedMetricRowsValue(
         intent,
-        otherCompanyValue
-      )} ${metricLabel}`
+        otherCompanyCustomerBreakdown,
+        filters,
+        { sum: true }
+      )}`
     );
 
     appendCustomerBreakdownLines(
@@ -995,12 +1198,12 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
       lines.push(`${selectedLabel} (${rangeInfo}):`);
       lines.push(summarizeDistributionBullets(intent, selectedRows));
     } else {
-      const selectedValue = extractPrimaryMetricValue(intent, selectedRows);
       lines.push(
-        `${selectedLabel} (${rangeInfo}): ${formatMetricValue(
+        `${selectedLabel} (${rangeInfo}): ${formatScopedMetricRowsValue(
           intent,
-          selectedValue ?? 0
-        )}${metricLabel ? ` ${metricLabel}` : ""}`
+          selectedRows,
+          filters
+        )}`
       );
     }
 
@@ -1035,11 +1238,12 @@ function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
     return lines.join("\n");
   }
 
-  const value = extractPrimaryMetricValue(intent, singleTeamScope.rows || []);
-
-  const metricLabel = getScopedMetricLabel(intent, filters);
   const lines = [
-    `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`,
+    `${title} (${rangeInfo}): ${formatScopedMetricRowsValue(
+      intent,
+      singleTeamScope.rows || [],
+      filters
+    )}`,
   ];
 
   appendCustomerBreakdownLines(
@@ -1154,11 +1358,14 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
   const lines = [];
 
   (multiTeamScope.teams || []).forEach((team) => {
-    const value = extractPrimaryMetricValue(intent, team.rows || []);
     const title = team.displayLabel || formatOperationalDisplayLabel(team.teamName);
 
     lines.push(
-      `${title} (${rangeInfo}): ${formatMetricValue(intent, value ?? 0)}${metricLabel ? ` ${metricLabel}` : ""}`
+      `${title} (${rangeInfo}): ${formatScopedMetricRowsValue(
+        intent,
+        team.rows || [],
+        filters
+      )}`
     );
 
     appendCustomerBreakdownLines(
@@ -1169,17 +1376,16 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
     );
   });
 
-  const combinedValue = extractPrimaryMetricValue(
-    intent,
-    multiTeamScope.combined?.rows || []
-  );
+  const combinedRows = multiTeamScope.combined?.rows || [];
+  const combinedValue = extractPrimaryMetricValue(intent, combinedRows);
 
   if (combinedValue != null) {
     lines.push(
-      `${combinedLabel} (${rangeInfo}): ${formatMetricValue(
+      `${combinedLabel} (${rangeInfo}): ${formatScopedMetricRowsValue(
         intent,
-        combinedValue ?? 0
-      )}${metricLabel ? ` ${metricLabel}` : ""}`
+        combinedRows,
+        filters
+      )}`
     );
 
     appendCustomerBreakdownLines(
@@ -1331,6 +1537,10 @@ function summarizeRows(intent, rows, filters = {}) {
     "totalDistributorCommercials"
   ];
   if (countIntents.includes(intent)) {
+    if (isInvoiceCountIntent(intent)) {
+      return summarizeInvoiceCountRows(rows, rangeInfo);
+    }
+
     const total = rows[0]?.total ?? rows[0]?.responseCount ?? 0;
 
     const countLabels = {
@@ -1382,15 +1592,15 @@ function summarizeRows(intent, rows, filters = {}) {
   }
 
   if (intent === "visitedClientsByUser") {
-  const top = rows.slice(0, 20);
+    const top = rows.slice(0, 20);
 
-  const lines = top.map((r) => {
-    return `- ${r.userName || "Bilinmeyen Kullanici"} → ${r.clientName || "Bilinmeyen Musteri"}: ${formatNumber(r.total)} ziyaret`;
-  });
+    const lines = top.map((r) => {
+      return `- ${r.userName || "Bilinmeyen Kullanici"} → ${r.clientName || "Bilinmeyen Musteri"}: ${formatNumber(r.total)} ziyaret`;
+    });
 
-  return `${rangeInfo} kullanici bazli musteri ziyaretleri:\n${lines.join("\n")}`;
+    return `${rangeInfo} kullanici bazli musteri ziyaretleri:\n${lines.join("\n")}`;
   }
-  
+
   // 4. Dağılım ve Gruplama (Group By) İşlemleri
   const groupIntents = [
     "clientsByGroup",
@@ -1812,7 +2022,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       userContextForQuery = buildScopedUserContext(userContext, "company");
     }
 
-   if (scopePlan.mode === "users" && scopePlan.userIds?.length) {
+    if (scopePlan.mode === "users" && scopePlan.userIds?.length) {
       userContextForQuery = {
         ...userContextForQuery,
 
@@ -1890,7 +2100,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       });
     }
 
-     if (runCompanyTeamScope) {
+    if (runCompanyTeamScope) {
       const toolbarConfig = buildScopeToolbarConfig(userContext);
       const companyContext = buildScopedUserContext(userContext, "company");
       const breakdownTeams = resolveBreakdownTeamList(
@@ -2022,7 +2232,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       };
       result = companyResult;
       userContextForQuery = companyContext;
-    } 
+    }
     else if (runDualScope) {
       const operationalContext = buildScopedUserContext(userContext, "operational");
       const companyContext = buildScopedUserContext(userContext, "company");
@@ -2123,7 +2333,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         recordset: singleTeamScope.rows,
       };
       userContextForQuery = teamContext;
-    } 
+    }
     else if (runMultiTeamScope) {
       const toolbarConfig =
         scopePlan.source === "toolbar" ? buildScopeToolbarConfig(userContext) : null;
@@ -2233,7 +2443,7 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
       };
       result = combinedResult;
     }
-     else if (userContextForQuery) {
+    else if (userContextForQuery) {
       result = await executeIntent(intent, params, {
         userContext: userContextForQuery,
         metric,

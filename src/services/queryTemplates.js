@@ -884,7 +884,9 @@ const TEMPLATES = {
 
   totalInvoices: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS total
+      SELECT
+        COUNT(1) AS total,
+        SUM(ISNULL(TotalAmountWithTax, 0)) AS totalAmount
       FROM dbo.Invoice
       WHERE Deleted = 0
         AND (@startDate IS NULL OR CreateTime >= @startDate)

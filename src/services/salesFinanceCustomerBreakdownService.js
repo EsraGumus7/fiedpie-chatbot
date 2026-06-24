@@ -55,6 +55,16 @@ function buildInvoiceCustomerBreakdownQuery(
     const valueExpression = valueExpressionByIntent[intent];
     const valueAlias = valueAliasByIntent[intent];
 
+    const selectValueColumns =
+        intent === "totalInvoices"
+            ? `
+        COUNT(DISTINCT i.Id) AS total,
+        SUM(ISNULL(i.TotalAmountWithTax, 0)) AS totalAmount`
+            : `
+        ${valueExpression} AS ${valueAlias}`;
+
+    const orderValueAlias = intent === "totalInvoices" ? "total" : valueAlias;
+
     const paidFilter =
         intent === "totalInvoiceBalance" ? "AND ISNULL(i.Paid, 0) = 0" : "";
 
@@ -63,10 +73,10 @@ function buildInvoiceCustomerBreakdownQuery(
 
     return {
         query: `
-      SELECT TOP (${topLimit})
+          SELECT TOP (${topLimit})
         ${clientExpression} AS clientName,
         ${userExpression} AS userName,
-        ${valueExpression} AS ${valueAlias}
+        ${selectValueColumns}
       FROM dbo.Invoice i
       LEFT JOIN dbo.ClientInvoice ci
         ON ci.Id = i.ClientInvoiceId
@@ -87,8 +97,8 @@ function buildInvoiceCustomerBreakdownQuery(
       GROUP BY
         ${clientExpression},
         ${userExpression}
-      ORDER BY
-        ${valueAlias} DESC,
+           ORDER BY
+        ${orderValueAlias} DESC,
         ${clientExpression} ASC,
         ${userExpression} ASC;
     `,
@@ -284,10 +294,26 @@ function formatMoney(value, currencySymbol = "$") {
     }).format(Number(value))}`;
 }
 
+function isInvoiceCountIntent(intent = "") {
+    return String(intent || "").trim() === "totalInvoices";
+}
+
+function formatInvoiceCountAmount(countValue, amountValue) {
+    return `${formatNumber(countValue)} fatura | ${formatMoney(amountValue)}`;
+}
+
 function formatCustomerBreakdownValue(intent, value) {
     return MONEY_BREAKDOWN_INTENTS.has(intent)
         ? formatMoney(value)
         : formatNumber(value);
+}
+
+function formatCustomerBreakdownDisplay(intent, countValue, amountValue = 0) {
+    if (isInvoiceCountIntent(intent)) {
+        return formatInvoiceCountAmount(countValue, amountValue);
+    }
+
+    return formatCustomerBreakdownValue(intent, countValue);
 }
 
 function getCustomerBreakdownUnit(intent) {
@@ -322,20 +348,28 @@ function formatSalesFinanceCustomerBreakdown(
         const userName =
             String(row.userName || "").trim() || "Kullanıcı bilgisi yok";
         const value = Number(getBreakdownValue(intent, row) || 0);
+        const amountValue = Number(row.totalAmount || 0);
 
         if (!groupedByClient.has(clientName)) {
             groupedByClient.set(clientName, {
                 clientName,
                 totalValue: 0,
+                totalAmount: 0,
                 users: [],
             });
         }
 
         const clientGroup = groupedByClient.get(clientName);
         clientGroup.totalValue += value;
+
+        if (isInvoiceCountIntent(intent)) {
+            clientGroup.totalAmount += amountValue;
+        }
+
         clientGroup.users.push({
             userName,
             value,
+            totalAmount: amountValue,
         });
     });
 
@@ -352,11 +386,12 @@ function formatSalesFinanceCustomerBreakdown(
             lines.push("");
         }
 
-        const formattedClientValue = formatCustomerBreakdownValue(
+        const formattedClientValue = formatCustomerBreakdownDisplay(
             intent,
-            clientGroup.totalValue
+            clientGroup.totalValue,
+            clientGroup.totalAmount
         );
-        const clientSuffix = unit ? ` ${unit}` : "";
+        const clientSuffix = unit && !isInvoiceCountIntent(intent) ? ` ${unit}` : "";
 
         lines.push(
             `• ${clientGroup.clientName}: ${formattedClientValue}${clientSuffix}`
@@ -371,11 +406,12 @@ function formatSalesFinanceCustomerBreakdown(
                 return String(a.userName).localeCompare(String(b.userName), "tr");
             })
             .forEach((user) => {
-                const formattedUserValue = formatCustomerBreakdownValue(
+                const formattedUserValue = formatCustomerBreakdownDisplay(
                     intent,
-                    user.value
+                    user.value,
+                    user.totalAmount
                 );
-                const userSuffix = unit ? ` ${unit}` : "";
+                const userSuffix = unit && !isInvoiceCountIntent(intent) ? ` ${unit}` : "";
 
                 lines.push(`  ↳ ${user.userName}: ${formattedUserValue}${userSuffix}`);
             });
