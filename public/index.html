@@ -2914,11 +2914,7 @@
       }
 
       const first = scopeRows[0] || {};
-      const valueKeyLocal =
-        valueCandidates.find((key) => first[key] !== undefined) ||
-        Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-
-      return formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-");
+      return formatDisplayMetricRowValue(normalizedIntent, first, valueCandidates);
     }
 
     function isCardDistributionIntent(normalizedIntent) {
@@ -3106,12 +3102,9 @@
         }
 
         const first = (rows || [])[0] || {};
-        const valueKeyLocal =
-          valueCandidates.find((key) => first[key] !== undefined) ||
-          Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
         cards.push({
           title: cardTitle,
-          value: formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-"),
+          value: formatDisplayMetricRowValue(normalizedIntent, first, valueCandidates),
         });
       };
 
@@ -3138,10 +3131,7 @@
           card.value = formatListRowCountValue(team.rows || []);
         } else {
           const first = (team.rows || [])[0] || {};
-          const valueKeyLocal =
-            valueCandidates.find((key) => first[key] !== undefined) ||
-            Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-          card.value = formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-");
+          card.value = formatDisplayMetricRowValue(normalizedIntent, first, valueCandidates);
         }
         cards.push(card);
       });
@@ -3226,10 +3216,7 @@
                   ? formatTeamScopeValue(normalizedIntent, teamRows, valueCandidates)
                   : (() => {
                     const first = teamRows[0] || {};
-                    const valueKeyLocal =
-                      valueCandidates.find((key) => first[key] !== undefined) ||
-                      Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
-                    return formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-");
+                    return formatDisplayMetricRowValue(normalizedIntent, first, valueCandidates);
                   })();
           cards.push({
             title: `${team.displayLabel || `Takim (${team.teamName || "-"})`} — ${title}`,
@@ -3247,14 +3234,10 @@
                 ? formatTeamScopeValue(normalizedIntent, combinedRows, valueCandidates)
                 : (() => {
                   const combinedFirst = combinedRows[0] || {};
-                  const combinedValueKey =
-                    valueCandidates.find((key) => combinedFirst[key] !== undefined) ||
-                    Object.keys(combinedFirst).find((key) =>
-                      !Number.isNaN(Number(combinedFirst[key]))
-                    );
-                  return formatDisplayMetricValue(
+                  return formatDisplayMetricRowValue(
                     normalizedIntent,
-                    combinedValueKey ? combinedFirst[combinedValueKey] : "-"
+                    combinedFirst,
+                    valueCandidates
                   );
                 })();
 
@@ -3336,6 +3319,38 @@
         : formatDisplayNumber(value);
     }
 
+    function isInvoiceCountIntent(normalizedIntent = "") {
+      return String(normalizedIntent || "").trim().toLowerCase() === "totalinvoices";
+    }
+
+    function formatInvoiceCountAmountFromRow(row = {}) {
+      const countValue = row?.total ?? row?.responseCount ?? row?.count ?? 0;
+      const rawAmount = row?.totalAmount;
+      const amountValue =
+        rawAmount === null || rawAmount === undefined || rawAmount === ""
+          ? 0
+          : rawAmount;
+
+      return `${formatDisplayNumber(countValue)} fatura | ${formatDisplayMoney(amountValue)}`;
+    }
+
+    function formatDisplayMetricRowValue(normalizedIntent = "", row = {}, valueCandidates = []) {
+      const normalized = String(normalizedIntent || "").trim().toLowerCase();
+
+      if (isInvoiceCountIntent(normalized)) {
+        return formatInvoiceCountAmountFromRow(row || {});
+      }
+
+      const first = row || {};
+      const valueKeyLocal =
+        valueCandidates.find((key) => first[key] !== undefined) ||
+        Object.keys(first).find((key) => !Number.isNaN(Number(first[key])));
+
+      return formatDisplayMetricValue(
+        normalized,
+        valueKeyLocal ? first[valueKeyLocal] : "-"
+      );
+    }
     function renderChatResultVisualization(data, overrideChart = null) {
       renderSqlPanel(data);
 
@@ -3525,13 +3540,13 @@
             title: `${opCardTitle} — ${title}`,
             value: isUserSummaryIntent(normalizedIntent)
               ? formatUserSummaryRow(opRows[0] || {}, normalizedIntent)
-              : pickScopeRowValue(opRows, valueCandidates),
+              : pickScopeRowValue(opRows, valueCandidates, normalizedIntent),
           },
           {
             title: `${coCardTitle} — ${title}`,
             value: isUserSummaryIntent(normalizedIntent)
               ? formatUserSummaryRow(coRows[0] || {}, normalizedIntent)
-              : pickScopeRowValue(coRows, valueCandidates),
+              : pickScopeRowValue(coRows, valueCandidates, normalizedIntent),
           },
         ]);
 
@@ -3597,7 +3612,7 @@
           renderKpiCards([
             {
               title: `${cardTitle} — ${title}`,
-              value: formatDisplayMetricValue(normalizedIntent, valueKeyLocal ? first[valueKeyLocal] : "-"),
+              value: formatDisplayMetricRowValue(normalizedIntent, first, valueCandidates),
             },
           ]);
 
@@ -3671,7 +3686,6 @@
       // Tek satır + sayısal sonuç: KPI kartı
       if (chartConfig.mode === "kpi" && rows.length === 1 && valueKey) {
         const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
-        const value = firstRow[valueKey];
 
         const userScopeIds = Array.isArray(data.userScope?.userIds)
           ? data.userScope.userIds
@@ -3703,7 +3717,7 @@
               : isMultiUserScope
                 ? `Secili kullanicilar — ${title}`
                 : title,
-            value: formatDisplayMetricValue(normalizedIntent, value),
+            value: formatDisplayMetricRowValue(normalizedIntent, firstRow, valueCandidates),
           },
         ]);
 
