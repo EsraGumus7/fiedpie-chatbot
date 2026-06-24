@@ -1,0 +1,6 @@
+node_modules/
+data/admin-audit.json
+.env
+.env.local
+*.log
+data/admin-audit.json

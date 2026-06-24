@@ -1,0 +1,481 @@
+{
+  "roles": {
+    "L1": {
+      "title": "Saha çalışanı (L1)",
+      "subtitle": "Yalnızca kendi veriniz — PKG_FIELD (50 intent)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "Ziyaret sayısı"
+            },
+            {
+              "text": "Ortalama ziyaret süresi"
+            },
+            {
+              "text": "Tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
+            },
+            {
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Müşteri",
+          "questions": [
+            {
+              "text": "Aktif müşteri sayısı"
+            },
+            {
+              "text": "Toplam müşteri sayısı"
+            },
+            {
+              "text": "Pasif müşteri sayısı"
+            },
+            {
+              "text": "Müşterilerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Duruma göre müşteri dağılımı"
+            },
+            {
+              "text": "Ülkelere göre müşteri dağılımı"
+            },
+            {
+              "text": "Şehirlere göre müşteri dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış",
+          "questions": [
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Sipariş durum dağılımı"
+            },
+            {
+              "text": "Günlük sipariş trendi"
+            },
+            {
+              "text": "Aktif kampanya sayısı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanıcılar",
+          "questions": [
+            {
+              "text": "Toplam kullanıcı sayısı"
+            },
+            {
+              "text": "Hangi rolde kaç kişi var?"
+            },
+            {
+              "text": "Admin kullanıcı sayısı"
+            },
+            {
+              "text": "Takımlara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
+            }
+          ]
+        }
+      ]
+    },
+    "L2": {
+      "title": "Takım lideri (L2)",
+      "subtitle": "Takım verileri + finans — PKG_MANAGER (68 intent)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "Ziyaret sayısı"
+            },
+            {
+              "text": "Ortalama ziyaret süresi"
+            },
+            {
+              "text": "Tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
+            },
+            {
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Müşteri",
+          "questions": [
+            {
+              "text": "Aktif müşteri sayısı"
+            },
+            {
+              "text": "Toplam müşteri sayısı"
+            },
+            {
+              "text": "Müşterilerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış / Finans",
+          "questions": [
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanıcılar",
+          "questions": [
+            {
+              "text": "Toplam kullanıcı sayısı"
+            },
+            {
+              "text": "Hangi rolde kaç kişi var?"
+            },
+            {
+              "text": "Admin kullanıcı sayısı"
+            },
+            {
+              "text": "Takımlara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
+            }
+          ]
+        }
+      ]
+    },
+    "L3": {
+      "title": "Çoklu takım lideri (L3)",
+      "subtitle": "5 takım + toplam veya tek takım + üyeler — PKG_MANAGER",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "Ziyaret sayısı"
+            },
+            {
+              "text": "Ortalama ziyaret süresi"
+            },
+            {
+              "text": "Tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
+            },
+            {
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Müşteri",
+          "questions": [
+            {
+              "text": "Toplam müşteri sayısı"
+            },
+            {
+              "text": "Müşterilerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Müşteri kazanım trendi"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış / Finans",
+          "questions": [
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanıcılar",
+          "questions": [
+            {
+              "text": "Toplam kullanıcı sayısı"
+            },
+            {
+              "text": "Hangi rolde kaç kişi var?"
+            },
+            {
+              "text": "Admin kullanıcı sayısı"
+            },
+            {
+              "text": "Takımlara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
+            }
+          ]
+        }
+      ]
+    },
+    "L4": {
+      "title": "Admin (L4)",
+      "subtitle": "Şirket geneli — tüm intentler (* paketi)",
+      "domains": [
+        {
+          "id": "visit",
+          "label": "Ziyaret",
+          "questions": [
+            {
+              "text": "Ziyaret sayısı"
+            },
+            {
+              "text": "Ortalama ziyaret süresi"
+            },
+            {
+              "text": "Tamamlanan ve bekleyen ziyaret"
+            },
+            {
+              "text": "Ziyaretler duruma göre nasıl dağılıyor"
+            },
+            {
+              "text": "Ziyaret tiplerine göre dağılım"
+            },
+            {
+              "text": "Ziyaret trendi"
+            },
+            {
+              "text": "Kullanıcıların ziyaret ettiği müşteriler ve ziyaret sayıları"
+            }
+          ]
+        },
+        {
+          "id": "client",
+          "label": "Musteri",
+          "questions": [
+            {
+              "text": "Aktif müşteri sayısı"
+            },
+            {
+              "text": "Toplam müşteri sayısı"
+            },
+            {
+              "text": "Müşterilerin kategorilere göre dağılımı"
+            },
+            {
+              "text": "Ülkelere göre müşteri dağılımı"
+            },
+            {
+              "text": "Şehirlere göre müşteri dağılımı"
+            }
+          ]
+        },
+        {
+          "id": "sales",
+          "label": "Satış / Finans",
+          "questions": [
+            {
+              "text": "Toplam fatura sayısı"
+            },
+            {
+              "text": "Toplam fatura tutarı"
+            },
+            {
+              "text": "Ödenmemiş fatura bakiyesi"
+            },
+            {
+              "text": "Toplam sipariş sayısı"
+            },
+            {
+              "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Fatura tahsilatı"
+            }
+          ]
+        },
+        {
+          "id": "users",
+          "label": "Kullanıcılar",
+          "questions": [
+            {
+              "text": "Toplam kullanıcı sayısı"
+            },
+            {
+              "text": "Hangi rolde kaç kişi var?"
+            },
+            {
+              "text": "Admin kullanıcı sayısı"
+            },
+            {
+              "text": "Takımlara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Markalara göre kullanıcı dağılımı"
+            },
+            {
+              "text": "Müşterilere göre kullanıcı dağılımı"
+            },
+            {
+              "text": "En son giriş yapan kullanıcılar"
+            },
+            {
+              "text": "Başarılı ve başarısız girişler"
+            },
+            {
+              "text": "Kullanıcı cihaz özeti"
+            },
+            {
+              "text": "Kayıtlı görünüm özeti"
+            },
+            {
+              "text": "Kullanıcı adım özeti"
+            },
+            {
+              "text": "Kullanıcı ziyaret özeti"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel — Yetki Yönetimi</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Admin</h1>
+        <p class="subtitle">Permission Management</p>
+        <nav>
+          <button type="button" class="nav-btn active" data-page="roles">Rol Yetkileri</button>
+          <button type="button" class="nav-btn" data-page="users">Kullanıcı Yetkileri</button>
+          <button type="button" class="nav-btn" data-page="audit">Audit Log</button>
+        </nav>
+        <span id="modeBadge" class="badge">MOCK API</span>
+        <div id="loginPanel" class="login-panel">
+          <p class="login-title">Giriş</p>
+          <input type="email" id="loginEmail" placeholder="E-posta" autocomplete="username" />
+          <input type="password" id="loginPassword" placeholder="Şifre" autocomplete="current-password" />
+          <button type="button" id="loginBtn" class="btn btn-primary btn-block">Giriş yap</button>
+          <button type="button" id="logoutBtn" class="btn btn-secondary btn-block hidden">Çıkış</button>
+          <p id="loginUserLabel" class="muted login-user hidden"></p>
+        </div>
+        <a class="link-back" href="/">← Chatbot</a>
+      </aside>
+
+      <main id="appMain" class="content">
+        <!-- ROL YETKİLERİ -->
+        <section id="page-roles" class="page active">
+          <div class="page-header">
+            <h2>Rol Yetkileri (Intent)</h2>
+            <button type="button" id="saveRoleBtn" class="btn btn-primary">Kaydet</button>
+          </div>
+
+          <div class="grid two">
+            <div class="card">
+              <label for="roleCompanySelect">Company (Subscription)</label>
+              <select id="roleCompanySelect"></select>
+              <label for="roleSelect">Rol</label>
+              <select id="roleSelect"></select>
+              <p class="muted">Rol listesi seçili company'ye göre filtrelenir.</p>
+            </div>
+            <div class="card">
+              <h3>Domain filtresi</h3>
+              <div id="domainTabs" class="toolbar"></div>
+              <p class="muted">Intent listesi katalogdan yüklenir.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="toolbar">
+              <button type="button" id="selectAllIntentsBtn" class="btn btn-secondary">Tümünü seç</button>
+              <button type="button" id="clearIntentsBtn" class="btn btn-secondary">Temizle</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 48px">İzin</th>
+                    <th>Intent</th>
+                    <th>Metric ID</th>
+                    <th>Domain</th>
+                    <th>Açıklama</th>
+                  </tr>
+                </thead>
+                <tbody id="intentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- KULLANICI YETKİLERİ -->
+        <section id="page-users" class="page">
+          <div class="page-header">
+            <h2>Kullanıcı Yetkileri</h2>
+            <button type="button" id="saveUserBtn" class="btn btn-primary">Kaydet</button>
+          </div>
+
+          <div class="grid two">
+            <div class="card">
+              <label for="userSearch">Kullanıcı ara</label>
+              <input type="text" id="userSearch" placeholder="Ad veya e-posta..." />
+              <label for="userSelect">Kullanıcı</label>
+              <select id="userSelect" size="6"></select>
+              <p id="selectedUserHint" class="muted">
+                Sohbette giriş yapan kullanıcı ile aynı UserId seçilmelidir.
+              </p>
+              <label for="userRoleSelect">Roller (çoklu)</label>
+              <select id="userRoleSelect" multiple></select>
+            </div>
+
+            <div class="card scope-card">
+              <h3>Hiyerarşi ve Scope</h3>
+              <div id="hierarchyPreview" class="hierarchy-preview muted">
+                Kullanıcı seçildiğinde hiyerarşi bilgisi yüklenecek.
+              </div>
+              <p class="muted">
+                Veri kapsamı (allowedUserIds) otomatik hesaplanır. Company ve Team salt okunurdur.
+                Country ve Brand isteğe bağlı daraltma filtresidir.
+              </p>
+              <div class="scope-grid">
+                <div>
+                  <label for="scopeCompanySelect">Company (salt okunur)</label>
+                  <select id="scopeCompanySelect" multiple size="5" disabled></select>
+                </div>
+                <div>
+                  <label for="scopeCountrySelect">Country (opsiyonel)</label>
+                  <select id="scopeCountrySelect" multiple size="5"></select>
+                </div>
+                <div>
+                  <label for="scopeTeamSelect">Team (salt okunur)</label>
+                  <select id="scopeTeamSelect" multiple size="5" disabled></select>
+                </div>
+                <div>
+                  <label for="scopeBrandSelect">Brand (opsiyonel)</label>
+                  <select id="scopeBrandSelect" multiple size="5"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Kullanıcıya özel Intent izinleri</h3>
+            <p class="muted">
+              Rol izinlerine ek olarak doğrudan bu kullanıcıya verilen intentler. Sohbet hatası
+              (ör. visitCountRealized is not allowed) bu listeden çözülür.
+            </p>
+            <div id="userDomainTabs" class="toolbar"></div>
+            <div class="toolbar">
+              <button type="button" id="selectAllUserIntentsBtn" class="btn btn-secondary">Tümünü seç</button>
+              <button type="button" id="clearUserIntentsBtn" class="btn btn-secondary">Temizle</button>
+              <label class="inline-check">
+                <input type="checkbox" id="userSuperAdminChk" />
+                Süper admin (*)
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 48px">İzin</th>
+                    <th>Intent</th>
+                    <th>Metric ID</th>
+                    <th>Domain</th>
+                    <th>Açıklama</th>
+                  </tr>
+                </thead>
+                <tbody id="userIntentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Efektif yetki önizleme</h3>
+            <pre id="effectivePreview" class="preview">{}</pre>
+          </div>
+        </section>
+
+        <!-- AUDIT -->
+        <section id="page-audit" class="page">
+          <div class="page-header">
+            <h2>Audit Log</h2>
+            <button type="button" id="refreshAuditBtn" class="btn btn-secondary">Yenile</button>
+          </div>
+          <div class="card table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Target</th>
+                  <th>Özet</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/admin/mockData.js"></script>
+    <script src="/admin/adminApi.js"></script>
+    <script src="/admin/app.js"></script>
+  </body>
+</html>
