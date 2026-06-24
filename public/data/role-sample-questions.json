@@ -75,10 +75,7 @@
               "text": "Sipariş durum dağılımı"
             },
             {
-              "text": "Günlük sipariş trendi"
-            },
-            {
-              "text": "Aktif kampanya sayısı"
+              "text": "Sipariş trendi"
             }
           ]
         },
@@ -195,6 +192,9 @@
               "text": "Toplam sipariş tutarı"
             },
             {
+              "text": "Sipariş trendi"
+            },
+            {
               "text": "Fatura tahsilatı"
             }
           ]
@@ -307,6 +307,9 @@
             },
             {
               "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Sipariş trendi"
             },
             {
               "text": "Fatura tahsilatı"
@@ -427,6 +430,9 @@
             },
             {
               "text": "Toplam sipariş tutarı"
+            },
+            {
+              "text": "Sipariş trendi"
             },
             {
               "text": "Fatura tahsilatı"
