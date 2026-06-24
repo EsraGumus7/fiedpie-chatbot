@@ -3252,7 +3252,8 @@
                     Object.keys(combinedFirst).find((key) =>
                       !Number.isNaN(Number(combinedFirst[key]))
                     );
-                  return formatDisplayNumber(
+                  return formatDisplayMetricValue(
+                    normalizedIntent,
                     combinedValueKey ? combinedFirst[combinedValueKey] : "-"
                   );
                 })();
@@ -3670,8 +3671,20 @@
       if (chartConfig.mode === "kpi" && rows.length === 1 && valueKey) {
         const title = kpiTitleMap[normalizedIntent] || data.intent || "Sorgu Sonucu";
         const value = firstRow[valueKey];
+
+        const userScopeIds = Array.isArray(data.userScope?.userIds)
+          ? data.userScope.userIds
+          : [];
+
+        const isUserScope =
+          data.userScope?.mode === "users" && userScopeIds.length > 0;
+
+        const isSingleUserScope = isUserScope && userScopeIds.length === 1;
+        const isMultiUserScope = isUserScope && userScopeIds.length > 1;
+
         const isCompanySingleKpi =
           data.scope?.isPureCompanyScopeUser &&
+          !isUserScope &&
           !data.singleTeamScope &&
           !data.multiTeamScope?.teams?.length &&
           !data.dualScope;
@@ -3684,7 +3697,11 @@
 
         renderKpiCards([
           {
-            title: isCompanySingleKpi ? `Sirket geneli — ${title}` : title,
+            title: isCompanySingleKpi
+              ? `Sirket geneli — ${title}`
+              : isMultiUserScope
+                ? `Secili kullanicilar — ${title}`
+                : title,
             value: formatDisplayMetricValue(normalizedIntent, value),
           },
         ]);
