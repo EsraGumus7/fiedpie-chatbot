@@ -1855,9 +1855,20 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
 
       const userRows = applyIntentRowNormalization(intent, result.recordset);
 
-      console.log("USER SCOPE RESULT:", result);
-      console.log("USER SCOPE RECORDSET:", result.recordset);
-      console.log("USER ROWS:", userRows);
+      const userCustomerBreakdown = await buildCustomerBreakdownForMainRows(
+        intent,
+        params,
+        userRows,
+        userContextForQuery,
+        metric
+      );
+
+      const answer = normalizeAnswerTurkishText(
+        renderScopeAnswer(intent, params, {
+          rows: userRows,
+          customerBreakdown: userCustomerBreakdown,
+        })
+      );
 
       return res.json({
         question,
@@ -1865,12 +1876,15 @@ router.post("/chat/query", optionalAuthMiddleware, async (req, res) => {
         filters: params,
         scopePlan,
         sql,
+        scope: buildScopePreview(userContextForQuery || userContext, metric, scopeDecision),
+        security: result.security || null,
         rows: userRows,
-        answer: summarizeRows(intent, userRows, params),
+        answer,
         userScope: {
           mode: "users",
           userIds: scopePlan.userIds || [],
           rows: userRows,
+          customerBreakdown: userCustomerBreakdown,
           label: "Secili kullanici",
         },
       });
