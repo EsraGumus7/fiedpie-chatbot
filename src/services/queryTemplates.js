@@ -538,13 +538,24 @@ const TEMPLATES = {
 
   clientsByCountry: ({ startDate, endDate }) => ({
     query: `
-      SELECT COALESCE(co.Name, 'Bilinmeyen Ulke') AS groupName, COUNT(1) AS total
+      SELECT
+        COALESCE(
+          NULLIF(LTRIM(RTRIM(co.Name)), ''),
+          'Bilinmeyen Ulke'
+        ) AS groupName,
+        COUNT(1) AS total
       FROM dbo.Client c
-      LEFT JOIN dbo.Country co ON co.Id = c.CountryId
+      LEFT JOIN dbo.Country co
+        ON co.Id = c.CountryId
+       AND co.Deleted = 0
       WHERE c.Deleted = 0
         AND (@startDate IS NULL OR c.CreateTime >= @startDate)
         AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
-      GROUP BY COALESCE(co.Name, 'Bilinmeyen Ulke')
+      GROUP BY
+        COALESCE(
+          NULLIF(LTRIM(RTRIM(co.Name)), ''),
+          'Bilinmeyen Ulke'
+        )
       ORDER BY total DESC;
     `,
     bind: { startDate, endDate }
