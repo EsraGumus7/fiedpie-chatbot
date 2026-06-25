@@ -1,8 +1,8 @@
 {
   "roles": {
     "L1": {
-      "title": "Saha calisani (L1)",
-      "subtitle": "Yalnizca kendi veriniz — PKG_FIELD (50 intent)",
+      "title": "Saha çalışanı (L1)",
+      "subtitle": "Yalnızca kendi veriniz — PKG_FIELD (50 intent)",
       "domains": [
         {
           "id": "visit",
@@ -33,19 +33,19 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Aktif şirket sayısı"
+              "text": "Aktif müşteri sayısı"
             },
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Pasif şirket sayısı"
+              "text": "Pasif müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Duruma göre müşteri dağılımı"
@@ -75,13 +75,16 @@
               "text": "Sipariş durum dağılımı"
             },
             {
-              "text": "Sipariş trendi"
+              "text": "Günlük sipariş trendi"
+            },
+            {
+              "text": "Aktif kampanya sayısı"
             }
           ]
         },
         {
           "id": "users",
-          "label": "Kullanicilar",
+          "label": "Kullanıcılar",
           "questions": [
             {
               "text": "Toplam kullanıcı sayısı"
@@ -124,8 +127,8 @@
       ]
     },
     "L2": {
-      "title": "Takim lideri (L2)",
-      "subtitle": "Takim birlesik veri + finans — PKG_MANAGER (68 intent)",
+      "title": "Takım lideri (L2)",
+      "subtitle": "Takım verileri + finans — PKG_MANAGER (68 intent)",
       "domains": [
         {
           "id": "visit",
@@ -156,16 +159,16 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Aktif şirket sayısı"
+              "text": "Aktif müşteri sayısı"
             },
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Müşteri kazanım trendi"
@@ -192,16 +195,13 @@
               "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "Sipariş trendi"
-            },
-            {
               "text": "Fatura tahsilatı"
             }
           ]
         },
         {
           "id": "users",
-          "label": "Kullanicilar",
+          "label": "Kullanıcılar",
           "questions": [
             {
               "text": "Toplam kullanıcı sayısı"
@@ -244,8 +244,8 @@
       ]
     },
     "L3": {
-      "title": "Coklu takim lideri (L3)",
-      "subtitle": "5 takim + toplam veya tek takim + uyeler — PKG_MANAGER",
+      "title": "Çoklu takım lideri (L3)",
+      "subtitle": "5 takım + toplam veya tek takım + üyeler — PKG_MANAGER",
       "domains": [
         {
           "id": "visit",
@@ -276,13 +276,13 @@
         },
         {
           "id": "client",
-          "label": "Musteri",
+          "label": "Müşteri",
           "questions": [
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Müşteri kazanım trendi"
@@ -309,16 +309,13 @@
               "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "Sipariş trendi"
-            },
-            {
               "text": "Fatura tahsilatı"
             }
           ]
         },
         {
           "id": "users",
-          "label": "Kullanicilar",
+          "label": "Kullanıcılar",
           "questions": [
             {
               "text": "Toplam kullanıcı sayısı"
@@ -362,7 +359,7 @@
     },
     "L4": {
       "title": "Admin (L4)",
-      "subtitle": "Sirket geneli — tum intentler (* paketi)",
+      "subtitle": "Şirket geneli — tüm intentler (* paketi)",
       "domains": [
         {
           "id": "visit",
@@ -396,13 +393,13 @@
           "label": "Musteri",
           "questions": [
             {
-              "text": "Aktif şirket sayısı"
+              "text": "Aktif müşteri sayısı"
             },
             {
-              "text": "Toplam şirket sayısı"
+              "text": "Toplam müşteri sayısı"
             },
             {
-              "text": "Şirketlerin kategorilere göre dağılımı"
+              "text": "Müşterilerin kategorilere göre dağılımı"
             },
             {
               "text": "Ülkelere göre müşteri dağılımı"
@@ -432,16 +429,13 @@
               "text": "Toplam sipariş tutarı"
             },
             {
-              "text": "Sipariş trendi"
-            },
-            {
               "text": "Fatura tahsilatı"
             }
           ]
         },
         {
           "id": "users",
-          "label": "Kullanicilar",
+          "label": "Kullanıcılar",
           "questions": [
             {
               "text": "Toplam kullanıcı sayısı"
