@@ -2322,7 +2322,7 @@
       totalinvoices: {
         chart: "kpiCards",
         mode: "kpi",
-        allowed: ["kpiCards"],
+        allowed: ["kpiCards", "stateBar", "stateHBar"],
       },
       totalinvoiceamount: {
         chart: "kpiCards",
@@ -2805,6 +2805,23 @@
 
       const defaultOptions = { responsive: true, maintainAspectRatio: false };
       const options = Object.assign({}, defaultOptions, cfg.options || {});
+
+      if (typeof cfg.tooltipLabelFormatter === "function") {
+        const existingPlugins = options.plugins || {};
+        const existingTooltip = existingPlugins.tooltip || {};
+        const existingCallbacks = existingTooltip.callbacks || {};
+
+        options.plugins = {
+          ...existingPlugins,
+          tooltip: {
+            ...existingTooltip,
+            callbacks: {
+              ...existingCallbacks,
+              label: cfg.tooltipLabelFormatter,
+            },
+          },
+        };
+      }
 
       chartInstance = new Chart(ctx, {
         type: type === "area" ? "line" : type,
@@ -3351,6 +3368,133 @@
         valueKeyLocal ? first[valueKeyLocal] : "-"
       );
     }
+    function getFirstInvoiceCountRow(rows = []) {
+      return Array.isArray(rows) && rows.length ? rows[0] || {} : {};
+    }
+
+    function pushInvoiceCountChartItem(items, label, rows = []) {
+      const row = getFirstInvoiceCountRow(rows);
+      items.push({
+        label: String(label || "Toplam").trim() || "Toplam",
+        row,
+        total: Number(row?.total ?? row?.responseCount ?? row?.count ?? 0),
+        totalAmount: row?.totalAmount ?? 0,
+      });
+    }
+
+    function buildInvoiceCountChartItems(data = {}, title = "Toplam Fatura Sayısı") {
+      const items = [];
+
+      if (data.companyTeamScope?.company) {
+        const company = data.companyTeamScope.company;
+        pushInvoiceCountChartItem(
+          items,
+          company.displayLabel || "Şirket geneli",
+          company.rows || []
+        );
+
+        (data.companyTeamScope.teams || []).forEach((team) => {
+          pushInvoiceCountChartItem(
+            items,
+            team.displayLabel || team.teamName || "Takım",
+            team.rows || []
+          );
+        });
+
+        if ((data.companyTeamScope.teams || []).length > 1) {
+          const selected = data.companyTeamScope.selectedCombined || {};
+          pushInvoiceCountChartItem(
+            items,
+            selected.label || "Toplam",
+            selected.rows || []
+          );
+        }
+
+        return items;
+      }
+
+      if (data.multiTeamScope?.teams?.length) {
+        (data.multiTeamScope.teams || []).forEach((team) => {
+          pushInvoiceCountChartItem(
+            items,
+            team.displayLabel || team.teamName || "Takım",
+            team.rows || []
+          );
+        });
+
+        if ((data.multiTeamScope.teams || []).length > 1) {
+          const combined = data.multiTeamScope.combined || {};
+          pushInvoiceCountChartItem(
+            items,
+            combined.displayLabel || combined.label || "Toplam",
+            combined.rows || []
+          );
+        }
+
+        return items;
+      }
+
+      if (data.dualScope?.operational || data.dualScope?.company) {
+        const operational = data.dualScope.operational || {};
+        const company = data.dualScope.company || {};
+
+        pushInvoiceCountChartItem(
+          items,
+          operational.displayLabel || operational.label || "Takım",
+          operational.rows || []
+        );
+        pushInvoiceCountChartItem(
+          items,
+          company.displayLabel || company.label || "Şirket geneli",
+          company.rows || []
+        );
+
+        return items;
+      }
+
+      if (data.singleTeamScope?.rows) {
+        pushInvoiceCountChartItem(
+          items,
+          data.singleTeamScope.displayLabel || data.singleTeamScope.teamName || title,
+          data.singleTeamScope.rows || []
+        );
+        return items;
+      }
+
+      if (Array.isArray(data.rows) && data.rows.length) {
+        pushInvoiceCountChartItem(items, title, data.rows);
+      }
+
+      return items;
+    }
+
+    function renderInvoiceCountChart(data = {}, chartConfig = {}, title = "Toplam Fatura Sayısı") {
+      const items = buildInvoiceCountChartItems(data, title);
+
+      applyChartAvailability(chartConfig.allowed);
+      applySelectedChart(chartConfig.chart);
+      chartTitle.textContent = title;
+
+      if (!items.length) {
+        resetChartArea(true);
+        renderKpiCards([{ title, value: "Veri bulunamadı." }]);
+        return;
+      }
+
+      const labels = items.map((item) => item.label);
+      const values = items.map((item) => Number(item.total || 0));
+      const chartType = chartTypeForKey(chartConfig.chart);
+      const options = chartConfig.chart === "stateHBar" ? { indexAxis: "y" } : {};
+
+      resetChartArea(false);
+      createChart(chartType, labels, values, "Fatura Sayısı", {
+        options,
+        tooltipLabelFormatter: (context) => {
+          const item = items[context.dataIndex] || {};
+          return formatInvoiceCountAmountFromRow(item.row || item);
+        },
+      });
+    }
     function renderChatResultVisualization(data, overrideChart = null) {
       renderSqlPanel(data);
 
@@ -3504,6 +3648,18 @@
         applySelectedChart("kpiCards");
         chartTitle.textContent = data.intent || "Sorgu Sonucu";
         renderKpiCards([{ title: "Bilgi", value: data.answer }]);
+        return true;
+      }
+
+      if (isInvoiceCountIntent(normalizedIntent) && chartConfig.chart !== "kpiCards") {
+        const invoiceChartTitle =
+          chartTitleMap[normalizedIntent] ||
+          kpiTitleMap[normalizedIntent] ||
+          data.intent ||
+          "Toplam Fatura Sayısı";
+
+        chartLoadSeq++;
+        renderInvoiceCountChart(data, chartConfig, invoiceChartTitle);
         return true;
       }
 
