@@ -30,6 +30,15 @@
       "security_scope": "tenant_user_scope"
     },
     {
+      "metric_id": "client_names_list",
+      "intent": "clientNamesList",
+      "description_tr": "Müşteri isimleri listesi",
+      "source_tables": ["dbo.Client"],
+      "aggregation": "list",
+      "default_filters": ["Client.Deleted = 0"],
+      "security_scope": "tenant_user_scope"
+    },
+    {
       "metric_id": "client_count_archived",
       "intent": "clientCountArchived",
       "description_tr": "Arsivlenmis musteri sayisi",
