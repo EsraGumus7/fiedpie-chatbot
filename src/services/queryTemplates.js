@@ -521,7 +521,25 @@ const TEMPLATES = {
     `,
     bind: { startDate, endDate }
   }),
-
+  
+  clientNamesList: ({ startDate, endDate, limit = 50 }) => ({
+      query: `
+        SELECT TOP (@limit)
+          c.Id AS clientId,
+          c.Name AS clientName
+        FROM dbo.Client c
+        WHERE c.Deleted = 0
+          AND (@startDate IS NULL OR c.CreateTime >= @startDate)
+          AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
+        ORDER BY c.Name ASC;
+      `,
+      bind: {
+        startDate,
+        endDate,
+        limit: Number(limit || 50),
+      },
+    }),
+  
   clientsByState: ({ startDate, endDate }) => ({
     query: `
       SELECT COALESCE(cs.Name, 'Bilinmeyen Durum') AS groupName, COUNT(1) AS total
