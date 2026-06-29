@@ -21,6 +21,22 @@
       "metric_id": "client_count_total"
     },
     {
+      "intent": "clientNamesList",
+      "description_tr": "Müşteri isimleri listesi",
+      "keywords": ["müşteri", "musteri", "isim", "isimleri", "liste", "listesi", "adları", "adlari", "firmalar"],
+      "aliases": [
+        "müşteri isimleri",
+        "müşterilerin isimlerini ver",
+        "müşteri listesini göster",
+        "firma isimleri",
+        "firmaların isimlerini listele",
+        "kayıtlı müşteriler kimler"
+      ],
+      "negative_keywords": ["sayı", "sayısı", "aktif müşteri sayısı", "pasif", "dağılım", "ülke", "şehir", "trend"],
+      "priority": 25,
+      "metric_id": "client_names_list"
+    },
+    {
       "intent": "clientCountPassive",
       "description_tr": "Pasif / Durdurulmuş müşteri sayısı",
       "keywords": ["pasif", "durdurulmus", "musteri", "sayisi", "kac", "firma", "kurum", "calismayan", "bekleyen"],
