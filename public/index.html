@@ -2702,7 +2702,19 @@
         renderKpiCards([{ title: title || data.intent || "Sorgu", value: "Veri bulunamadi." }]);
         return;
       }
+      
+      if (chartConfig.mode === "list") {
+        resetChartArea(true);
 
+        renderKpiCards(
+            rows.slice(0, 20).map((row, index) => ({
+                title: `${index + 1}. ${row.clientName || row.name || "Bilinmeyen Müşteri"}`,
+                value: "",
+            }))
+        );
+
+        return;
+        
       if (chartConfig.mode === "summary") {
         const row = rows[0] || {};
         const summaryFields = getUserSummaryFields(normalizedIntent);
