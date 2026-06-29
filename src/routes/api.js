@@ -1507,6 +1507,15 @@ function summarizeRows(intent, rows, filters = {}) {
       ? `${filters.startDate || "-"} - ${filters.endDate || "-"}`
       : "Tum donem";
 
+  if (intent === "clientNamesList") {
+    const top = rows.slice(0, 20);
+  
+    const lines = top
+      .map((row, index) => `${index + 1}. ${row.clientName || "Bilinmeyen Müşteri"}`)
+      .join("\n");
+  
+    return `Müşteri isimleri listesi:\n${lines}`;
+  }
   // ==========================================
   // YENİ MODÜLLER İÇİN DİNAMİK ÖZETLEYİCİLER
   // ==========================================
