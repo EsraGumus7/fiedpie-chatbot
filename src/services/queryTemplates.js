@@ -132,17 +132,18 @@ const TEMPLATES = {
 
   visitTrend: ({ startDate, endDate }) => ({
     query: `
-      SELECT
-        CONVERT(date, v.StartedAt) AS visitDate,
-        COUNT(1) AS total
-      FROM dbo.Visit v
-      WHERE v.Realized = 1
-        AND v.StartedAt IS NOT NULL
-        AND (@startDate IS NULL OR v.StartedAt >= @startDate)
-        AND (@endDate IS NULL OR v.StartedAt < DATEADD(day, 1, @endDate))
-      GROUP BY CONVERT(date, v.StartedAt)
-      ORDER BY CONVERT(date, v.StartedAt);
-    `,
+    SELECT
+      CONVERT(date, v.StartedAt) AS visitDate,
+      COUNT(1) AS total
+    FROM dbo.Visit v
+    WHERE v.Deleted = 0
+      AND v.Realized = 1
+      AND v.StartedAt IS NOT NULL
+      AND (@startDate IS NULL OR v.StartedAt >= @startDate)
+      AND (@endDate IS NULL OR v.StartedAt < DATEADD(day, 1, @endDate))
+    GROUP BY CONVERT(date, v.StartedAt)
+    ORDER BY CONVERT(date, v.StartedAt);
+  `,
     bind: { startDate, endDate },
   }),
 
