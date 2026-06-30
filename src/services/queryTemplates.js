@@ -42,6 +42,15 @@ const USER_ADMIN_ROLE_JOIN = `
 
 const USER_IS_ADMIN_EXPR = `(u.Admin = 1 OR adminRole.UserId IS NOT NULL)`;
 
+const HUMAN_USER_FILTER = `
+  u.Deleted = 0
+  AND NOT (
+    UPPER(LTRIM(RTRIM(u.Name))) LIKE N'% TAKIMI'
+    OR UPPER(LTRIM(RTRIM(u.Name))) LIKE N'% TAKIM'
+    OR UPPER(LTRIM(RTRIM(u.Name))) LIKE N'% TEAM'
+  )
+`;
+
 const TEMPLATES = {
   visitCountRealized: ({ startDate, endDate, visitRealized = 1 }) => ({
     query: `
@@ -211,27 +220,27 @@ const TEMPLATES = {
 
   userTotalCount: ({ startDate, endDate }) => ({
     query: `
-      SELECT COUNT(1) AS totalUsers
-      FROM dbo.[User] u
-      WHERE u.Deleted = 0
-        AND (@startDate IS NULL OR u.CreateTime >= @startDate)
-        AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
-    `,
+    SELECT COUNT(1) AS totalUsers
+    FROM dbo.[User] u
+    WHERE ${HUMAN_USER_FILTER}
+      AND (@startDate IS NULL OR u.CreateTime >= @startDate)
+      AND (@endDate IS NULL OR u.CreateTime < DATEADD(day, 1, @endDate));
+  `,
     bind: { startDate, endDate },
   }),
 
   userStatusSummary: ({ startDate, endDate }) => ({
     query: `
       SELECT
-        COUNT(1) AS totalUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.Blocked = 0 AND u.DeleteRequest = 0 THEN 1 ELSE 0 END) AS activeUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.Blocked = 1 THEN 1 ELSE 0 END) AS blockedUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.DeleteRequest = 1 THEN 1 ELSE 0 END) AS deleteRequestUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND ${USER_IS_ADMIN_EXPR} THEN 1 ELSE 0 END) AS adminUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} THEN 1 ELSE 0 END) AS totalUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.Blocked = 0 AND u.DeleteRequest = 0 THEN 1 ELSE 0 END) AS activeUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.Blocked = 1 THEN 1 ELSE 0 END) AS blockedUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.DeleteRequest = 1 THEN 1 ELSE 0 END) AS deleteRequestUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND ${USER_IS_ADMIN_EXPR} THEN 1 ELSE 0 END) AS adminUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
       FROM dbo.[User] u
       ${USER_ADMIN_ROLE_JOIN}
       WHERE (@startDate IS NULL OR u.CreateTime >= @startDate)
@@ -243,11 +252,11 @@ const TEMPLATES = {
   userAdminSummary: ({ startDate, endDate }) => ({
     query: `
       SELECT
-        SUM(CASE WHEN u.Deleted = 0 AND ${USER_IS_ADMIN_EXPR} THEN 1 ELSE 0 END) AS adminUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
-        SUM(CASE WHEN u.Deleted = 0 AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND ${USER_IS_ADMIN_EXPR} THEN 1 ELSE 0 END) AS adminUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.ApiUser = 1 THEN 1 ELSE 0 END) AS apiUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.ClientUser = 1 THEN 1 ELSE 0 END) AS clientUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND u.Contractor = 1 THEN 1 ELSE 0 END) AS contractorUsers,
+        SUM(CASE WHEN ${HUMAN_USER_FILTER} AND ISNULL(u.ManagerOfAllTeams, 0) = 1 THEN 1 ELSE 0 END) AS managerOfAllTeamsUsers
       FROM dbo.[User] u
       ${USER_ADMIN_ROLE_JOIN}
       WHERE (@startDate IS NULL OR u.CreateTime >= @startDate)
@@ -459,7 +468,7 @@ const TEMPLATES = {
     bind: { startDate, endDate, limit: Number(limit) || 20 },
   }),
 
-    // =============================
+  // =============================
   // CLIENT (MÜŞTERİ) TEMPLATES
   // Sadece client.intents.json içindeki intentler entegre edildi
   // =============================
@@ -521,9 +530,9 @@ const TEMPLATES = {
     `,
     bind: { startDate, endDate }
   }),
-  
+
   clientNamesList: ({ startDate, endDate, limit = 50 }) => ({
-      query: `
+    query: `
         SELECT TOP (@limit)
           c.Id AS clientId,
           c.Name AS clientName
@@ -533,13 +542,13 @@ const TEMPLATES = {
           AND (@endDate IS NULL OR c.CreateTime < DATEADD(day, 1, @endDate))
         ORDER BY c.Name ASC;
       `,
-      bind: {
-        startDate,
-        endDate,
-        limit: Number(limit || 50),
-      },
-    }),
-  
+    bind: {
+      startDate,
+      endDate,
+      limit: Number(limit || 50),
+    },
+  }),
+
   clientsByState: ({ startDate, endDate }) => ({
     query: `
       SELECT COALESCE(cs.Name, 'Bilinmeyen Durum') AS groupName, COUNT(1) AS total
@@ -601,7 +610,7 @@ const TEMPLATES = {
       ORDER BY total DESC;
     `,
     bind: { startDate, endDate }
-    }),
+  }),
 
   clientsByProgramType: ({ startDate, endDate }) => ({
     query: `
@@ -666,8 +675,8 @@ const TEMPLATES = {
     bind: { startDate, endDate }
   }),
 
-   distributorsByGroup: ({ startDate, endDate }) => ({
-  query: `
+  distributorsByGroup: ({ startDate, endDate }) => ({
+    query: `
     SELECT
       COALESCE(CAST(d.GroupId AS NVARCHAR(50)), 'Bilinmeyen Grup') AS groupName,
       COUNT(1) AS total
@@ -678,10 +687,10 @@ const TEMPLATES = {
     GROUP BY d.GroupId
     ORDER BY total DESC;
   `,
-  bind: { startDate, endDate }
-}),
+    bind: { startDate, endDate }
+  }),
   distributorsByType: ({ startDate, endDate }) => ({
-  query: `
+    query: `
     SELECT
       COALESCE(CAST(d.TypeId AS nvarchar(100)), 'Bilinmeyen Tip') AS groupName,
       COUNT(1) AS total
@@ -692,8 +701,8 @@ const TEMPLATES = {
     GROUP BY d.TypeId
     ORDER BY total DESC;
   `,
-  bind: { startDate, endDate }
-}),
+    bind: { startDate, endDate }
+  }),
 
   distributorsByStatus: ({ startDate, endDate }) => ({
     query: `
@@ -849,7 +858,7 @@ const TEMPLATES = {
   // =============================
   // SALES & FINANCE TEMPLATES
   // =============================
-   totalPurchaseOrders: ({ startDate, endDate }) => ({
+  totalPurchaseOrders: ({ startDate, endDate }) => ({
     query: `
       SELECT COUNT(1) AS total
       FROM dbo.PurchaseOrder
@@ -924,7 +933,7 @@ const TEMPLATES = {
     bind: { startDate, endDate }
   }),
   visitedClientsByUser: ({ startDate, endDate }) => ({
-  query: `
+    query: `
     SELECT TOP 100
       u.Id AS userId,
       u.Name AS userName,
@@ -948,7 +957,7 @@ const TEMPLATES = {
       c.Name
     ORDER BY total DESC;
   `,
-  bind: { startDate, endDate }
+    bind: { startDate, endDate }
   }),
   totalInvoiceAmount: ({ startDate, endDate }) => ({
     query: `

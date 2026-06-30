@@ -144,6 +144,10 @@ function shouldUseCustomerBreakdown(intent = "") {
   );
 }
 
+function shouldSuppressTeamBreakdown(intent = "") {
+  return String(intent || "").trim() === "userTotalCount";
+}
+
 function getTeamTotalNotice(intent = "", fallbackNotice = "") {
   if (String(intent).trim() === "avgVisitDuration") {
     return AVG_DURATION_TEAM_NOTICE;
@@ -1112,6 +1116,14 @@ function summarizeCompanyTeamScope(intent, companyTeamScope = {}, filters = {}) 
   const selectedLabel = companyTeamScope.selectedCombined?.label || "Secili takimlar toplami";
   const metricLabel = getScopedMetricLabel(intent, filters);
 
+  if (shouldSuppressTeamBreakdown(intent)) {
+    return `${companyTitle} (${rangeInfo}): ${formatScopedMetricRowsValue(
+      intent,
+      companyTeamScope.company?.rows || [],
+      filters
+    )}`;
+  }
+
   const companyBody = isDistributionIntent(intent)
     ? summarizeDistributionBullets(intent, companyTeamScope.company?.rows || [])
     : formatScopedMetricRowsValue(
@@ -1231,6 +1243,14 @@ function summarizeSingleTeamScope(intent, singleTeamScope = {}, filters = {}) {
     singleTeamScope.displayLabel ||
     formatOperationalDisplayLabel(singleTeamScope.teamName);
 
+  if (shouldSuppressTeamBreakdown(intent)) {
+    return `${title} (${rangeInfo}): ${formatScopedMetricRowsValue(
+      intent,
+      singleTeamScope.rows || [],
+      filters
+    )}`;
+  }
+
   if (isDistributionIntent(intent)) {
     const body = summarizeRows(intent, singleTeamScope.rows || [], filters);
     const lines = [`${title} (${rangeInfo})`, body];
@@ -1292,6 +1312,14 @@ function summarizeMultiTeamScope(intent, multiTeamScope = {}, filters = {}) {
       : multiTeamScope.scopeSource === "selected"
         ? multiTeamScope.combined?.label || "Secili takimlar toplami"
         : "Toplam";
+
+  if (shouldSuppressTeamBreakdown(intent)) {
+    return `${combinedLabel} (${rangeInfo}): ${formatScopedMetricRowsValue(
+      intent,
+      multiTeamScope.combined?.rows || [],
+      filters
+    )}`;
+  }
 
   if (isDistributionIntent(intent)) {
     const lines = (multiTeamScope.teams || []).map((team) => {
@@ -1509,11 +1537,11 @@ function summarizeRows(intent, rows, filters = {}) {
 
   if (intent === "clientNamesList") {
     const top = rows.slice(0, 20);
-  
+
     const lines = top
       .map((row, index) => `${index + 1}. ${row.clientName || "Bilinmeyen Müşteri"}`)
       .join("\n");
-  
+
     return `Müşteri isimleri listesi:\n${lines}`;
   }
   // ==========================================
